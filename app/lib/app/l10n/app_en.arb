@@ -1,0 +1,334 @@
+{
+  "@@locale": "en",
+  "appName": "Khutwa",
+  "switchLanguage": "العربية",
+  "back": "Back",
+  "continueLabel": "Continue",
+  "welcomeGreeting": "Hey! I'm ",
+  "welcomeSubtitle": "Let's work together, one step at a time, to help you feel calmer, ease stress and lighten your mind.",
+  "termsOfService": "Terms of Service",
+  "termsAnd": " and ",
+  "privacyPolicy": "Privacy Policy",
+  "consentTitle": "Before we start",
+  "consentSubtitle": "A few things you should know about Khutwa.",
+  "consentPointCompanion": "I'm an AI companion, not a doctor or therapist, and I'm not an emergency service.",
+  "consentPointPrivacy": "What you write stays on your device. I never send any message on your behalf.",
+  "consentPointUrgent": "If you ever feel unsafe, tap Urgent at the top of any screen.",
+  "consentCheckAge": "I am 13 years old or older",
+  "consentCheckUnderstand": "I understand Khutwa doesn't replace professional help or emergency services",
+  "consentCheckTermsPrefix": "I accept the ",
+  "consentAgree": "I agree, let's start",
+  "nicknameTitle": "What do I call you?",
+  "nicknameSubtitle": "Our conversations are private and anonymous. No login is needed. Just set a nickname and we're good to go!",
+  "nicknameHint": "Type a nickname...",
+  "nicknameRequired": "Please enter a nickname",
+  "nicknameTooLong": "Nickname must be {max} characters or fewer",
+  "@nicknameTooLong": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "ageTitle": "{name}, how old are you?",
+  "@ageTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "ageSubtitle": "I want to make sure I'm giving you the right kind of support. I'm an AI-powered wellbeing companion, and you can also connect with a human coach along the way.",
+  "ageUnder13": "Under 13 years old",
+  "ageTeen": "13-17 years old",
+  "ageAdult": "18 years and older",
+  "personalityTitle": "How should I talk to you?",
+  "personalitySubtitle": "Pick my personality. You can always change this from the settings later.",
+  "personalityWarmTitle": "Warm (Khutwa Original)",
+  "personalityWarmDesc": "I'll be gentle and encouraging, and we'll take things at your pace",
+  "personalityDirectTitle": "Direct",
+  "personalityDirectDesc": "I'll skip the extra talk and keep it simple",
+  "maybeLater": "Maybe later",
+  "supportTitle": "Let's find the right support for you",
+  "supportSubtitle": "Choose a style that works best for you",
+  "supportSelfCareTitle": "Self-care",
+  "supportSelfCareDesc": "I prefer working on challenges by myself",
+  "supportGuidedTitle": "Guided support",
+  "supportGuidedDesc": "I would work with a therapist if it were affordable",
+  "urgentLabel": "Urgent",
+  "urgentTitle": "Do you need help right now?",
+  "urgentBody": "If you are in danger or thinking about hurting yourself, contact emergency services or a trusted adult right away. You are not alone.",
+  "urgentCall": "Call emergency services ({number})",
+  "@urgentCall": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "urgentCallFailed": "Couldn't open the dialer. Please call {number}.",
+  "@urgentCallFailed": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "urgentTipAdult": "Go to a trusted adult near you — a parent, relative or teacher.",
+  "urgentTipBreathe": "Breathe slowly: in for 4 seconds, hold for 4, out for 6.",
+  "close": "Close",
+  "chatHint": "Send a message",
+  "chatTooLong": "Messages must be {max} characters or fewer",
+  "@chatTooLong": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "chatSend": "Send",
+  "chatVoice": "Voice message",
+  "chatListen": "Listen",
+  "comingSoon": "This feature is coming soon",
+  "chatWarm1": "Hey {name} — let's keep this first chat relaxed and simply get to know each other a little, with nothing to fix or fill out. What's been taking up most of your time lately: work, study, or something else?",
+  "@chatWarm1": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "chatWarm2": "Got it, “{answer}” is the main thing right now. Outside that, what's something you actually enjoy?",
+  "@chatWarm2": {
+    "placeholders": {
+      "answer": {
+        "type": "String"
+      }
+    }
+  },
+  "chatWarm3": "“{answer}” is a lovely escape. Quick one before we wrap this intro: what's been on your mind lately, and how does it make you feel?",
+  "@chatWarm3": {
+    "placeholders": {
+      "answer": {
+        "type": "String"
+      }
+    }
+  },
+  "chatDirect1": "Hi {name}. Quick intro: what takes up most of your time — work, study, or something else?",
+  "@chatDirect1": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "chatDirect2": "OK: “{answer}”. What do you enjoy outside of that?",
+  "@chatDirect2": {
+    "placeholders": {
+      "answer": {
+        "type": "String"
+      }
+    }
+  },
+  "chatDirect3": "Good. Last one: what's on your mind these days, and how do you feel about it?",
+  "chatFallback": "I'm listening. Tell me more.",
+  "reflectionTitle": "What I understood",
+  "reflectionBody": "From what you shared, it sounds like “{topic}” takes up a lot of your day, and you're going through {feeling}. What you feel makes sense, and it's good that you talked about it.",
+  "@reflectionBody": {
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      },
+      "feeling": {
+        "type": "String"
+      }
+    }
+  },
+  "reflectionDisclaimer": "AI reflection — it may not be exactly right.",
+  "reflectionSeeSuggestions": "Show me support options",
+  "feelingStressed": "stress and pressure",
+  "feelingAnxious": "anxiety",
+  "feelingSad": "sadness",
+  "feelingAngry": "anger",
+  "feelingLonely": "loneliness",
+  "feelingUnclear": "something heavy",
+  "suggestionsTitle": "Steps that may help",
+  "suggestionsSubtitle": "I picked these based on what you shared. Choose one.",
+  "suggestionsWhy": "Why this suggestion?",
+  "suggestionsWriteDraft": "Write a draft",
+  "suggestionTrustedAdultTitle": "Talk to a trusted adult",
+  "suggestionTrustedAdultDesc": "A parent, relative or teacher you trust",
+  "suggestionTrustedAdultWhy": "You mentioned you're going through {feeling}. Sharing it with an adult you trust lightens the load and gets you real support.",
+  "@suggestionTrustedAdultWhy": {
+    "placeholders": {
+      "feeling": {
+        "type": "String"
+      }
+    }
+  },
+  "suggestionFriendTitle": "Reach out to a friend",
+  "suggestionFriendDesc": "Someone you feel comfortable with",
+  "suggestionFriendWhy": "When you're feeling {feeling}, talking to a friend reminds you that you're not alone.",
+  "@suggestionFriendWhy": {
+    "placeholders": {
+      "feeling": {
+        "type": "String"
+      }
+    }
+  },
+  "suggestionCounselorTitle": "Message the school counselor",
+  "suggestionCounselorDesc": "A specialist at your school or university",
+  "suggestionCounselorWhy": "Since “{topic}” takes up so much of your time, a counselor can help you organize the pressure and find practical solutions.",
+  "@suggestionCounselorWhy": {
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "suggestionSpecialistTitle": "Book a session with a specialist",
+  "suggestionSpecialistDesc": "A consultation with a licensed professional",
+  "suggestionSpecialistWhy": "You said you'd work with a therapist if it were affordable. A short message is an easy first step to ask about options and costs.",
+  "suggestionSelfNoteTitle": "Write a note to yourself",
+  "suggestionSelfNoteDesc": "Kind words you can come back to",
+  "suggestionSelfNoteWhy": "You prefer working on challenges by yourself. Writing kind words to yourself helps you see things more clearly.",
+  "draftTitle": "Your draft",
+  "draftSubtitle": "Edit it however you like, then copy it and send it yourself whenever you're ready.",
+  "draftNeverSent": "Khutwa will never send this message. You decide if, when and how to send it.",
+  "draftCopy": "Copy message",
+  "draftCopied": "Copied to clipboard",
+  "draftReset": "Restore original text",
+  "draftTrustedAdult": "Hi, I need to talk to you about something that's been on my mind. Lately I've been going through {feeling}, and I don't know how to deal with it on my own. Can we sit down together soon?",
+  "@draftTrustedAdult": {
+    "placeholders": {
+      "feeling": {
+        "type": "String"
+      }
+    }
+  },
+  "draftFriend": "Hey! I miss talking with you. I'm going through a time with a lot of {feeling}... do you have time to talk soon?",
+  "@draftFriend": {
+    "placeholders": {
+      "feeling": {
+        "type": "String"
+      }
+    }
+  },
+  "draftCounselor": "Hello, I'm a student and lately I've been going through {feeling} because of “{topic}”. Could I book a time to talk with you?",
+  "@draftCounselor": {
+    "placeholders": {
+      "feeling": {
+        "type": "String"
+      },
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "draftSpecialist": "Hello, I'd like to book a counseling session. Lately I've been going through {feeling} and would like to talk to a specialist. What times are available, and what does it cost?",
+  "@draftSpecialist": {
+    "placeholders": {
+      "feeling": {
+        "type": "String"
+      }
+    }
+  },
+  "draftSelfNote": "Dear {name}, I know you're going through {feeling} right now, and that doesn't make you weak. You're doing your best, and every small step counts. Remember to be kind to yourself.",
+  "@draftSelfNote": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "feeling": {
+        "type": "String"
+      }
+    }
+  },
+  "consentPointAi": "I'm an AI, not a person.",
+  "consentPointRedaction": "Before anything leaves your phone, names, places and numbers are removed, and you see exactly what will be sent.",
+  "consentPointModel": "The redacted text goes to a Google AI model through Khutwa's server.",
+  "consentPointNoStorage": "Our server doesn't store or log what you write.",
+  "consentPointPlan": "Your plan is saved on your phone only.",
+  "consentPointNotEmergency": "Khutwa isn't an emergency service. If you're in danger, tap the urgent button at the top.",
+  "writeTitle": "What's on your mind?",
+  "writeSubtitle": "Write however feels natural, in Arabic or Latin letters. Nothing leaves your phone before you see it and agree.",
+  "writeHint": "Write like you'd talk…",
+  "writeNext": "See what will be sent",
+  "myPlan": "My plan",
+  "privacyTitle": "Before we send it",
+  "privacySubtitle": "Tap any word to hide it. Tap it again to bring it back.",
+  "privacyOriginalLabel": "What you wrote (stays on your phone)",
+  "privacyOutgoingLabel": "This is what leaves your phone",
+  "privacyHonestLimit": "Redaction can't remove everything, and context may still identify you",
+  "privacySend": "Send",
+  "privacyError": "Redaction failed on your phone. Nothing was sent.",
+  "reflectionWaiting": "Reading what you wrote…",
+  "reflectionQuestionsTitle": "Think about these while you wait:",
+  "reflectionQuestion1": "What's weighing on you most these days?",
+  "reflectionQuestion2": "Is there someone you feel at ease talking to?",
+  "reflectionQuestion3": "What helped you through a hard time before?",
+  "analysisErrorTitle": "We couldn't reach the server",
+  "analysisErrorBody": "Check your connection and try again. The urgent button works even offline.",
+  "retry": "Try again",
+  "supportTypeTrustedFriend": "A friend you trust",
+  "supportTypeAcademicAdviser": "A teacher or academic adviser",
+  "supportTypeTrustedRelative": "A relative you trust",
+  "supportTypeCommunityFigure": "Someone you trust in your community",
+  "supportTypeSpecialist": "A specialist",
+  "fallbackWhyFriend": "Talking to someone who knows and cares about you lightens the load.",
+  "fallbackDraftFriend": "Hi, something has been on my mind and I'd like to talk to you about it. Do you have time soon?",
+  "fallbackWhyRelative": "A family member you trust can be there for you.",
+  "fallbackDraftRelative": "Hi, I'd like to talk to you about something that's been weighing on me. Can we sit together?",
+  "fallbackWhySpecialist": "A specialist listens in confidence and helps you with a clear plan.",
+  "fallbackDraftSpecialist": "Hello, I'd like to book a session. I've been under a lot of pressure lately and want to talk to a specialist. What times are available?",
+  "draftSendYourself": "You're the one who sends it",
+  "draftSaveToPlan": "Save to my plan",
+  "planTitle": "My plan",
+  "planSubtitle": "Saved on your phone only, and opens without internet.",
+  "planSupportLabel": "The step you chose",
+  "planDraftLabel": "Your message",
+  "planCopingTitle": "Things that can help right now",
+  "planSavedOn": "Saved: {date}",
+  "@planSavedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "planEmpty": "You don't have a saved plan yet.",
+  "planDeleteAll": "Delete everything",
+  "planDeleteConfirmTitle": "Are you sure?",
+  "planDeleteConfirmBody": "Everything in the app will be deleted: the plan, drafts and any saved text. This can't be undone.",
+  "planDeleteConfirm": "Delete",
+  "cancel": "Cancel",
+  "planDeleted": "Everything was deleted.",
+  "planStartOver": "Start over",
+  "copingBreathingTitle": "Breathe slowly",
+  "copingBreathingBody": "Breathe in for 4 seconds, hold for 4, and breathe out slowly for 6. Repeat 4 times.",
+  "copingGroundingTitle": "Come back to the moment",
+  "copingGroundingBody": "Find 5 things you can see, 4 you can hear, 3 you can touch, 2 you can smell, and 1 you can taste.",
+  "copingMessageTitle": "Message someone you trust",
+  "copingMessageBody": "You don't have to say everything. \"Can we talk?\" is enough to start.",
+  "urgentScreenTitle": "Do you need help right now?",
+  "urgentScreenBody": "If you're in danger or thinking about hurting yourself, don't wait.",
+  "urgentStep1": "Tell a person near you right now.",
+  "urgentStep2": "Go to the nearest hospital emergency department.",
+  "urgentStep3Title": "Verified contacts",
+  "urgentVerifiedOn": "Verified: {date}",
+  "@urgentVerifiedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "urgentCallContact": "Call {name}",
+  "@urgentCallContact": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
+}

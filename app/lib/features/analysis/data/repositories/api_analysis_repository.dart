@@ -50,9 +50,10 @@ class ApiAnalysisRepository implements AnalysisRepository {
     }
 
     return switch (response.statusCode) {
+      // Real names go back in here, on the phone, after the response arrives.
       200 => AnalyzeResponse.fromJson(
         jsonDecode(utf8.decode(response.bodyBytes)),
-      ),
+      ).restoredWith(redaction),
       401 || 403 => throw const AppFailure(FailureKind.unauthorized),
       _ => throw AppFailure(FailureKind.server, 'HTTP ${response.statusCode}'),
     };

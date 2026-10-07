@@ -12,36 +12,36 @@ class LibyanRedactorTest {
     // Appendix A privacy cases
 
     @Test fun appendixA_nameCityNumberBrother() = assertEquals(
-        "أنا [اسم] من [مكان]، ورقمي [رقم]، خوي [اسم] ما يفهمنيش.",
+        "أنا [اسم1] من [مكان1]، ورقمي [رقم]، خوي [اسم2] ما يفهمنيش.",
         r("أنا سلمى من سبها، ورقمي 091xxxxxxx، خوي أحمد ما يفهمنيش."),
     )
 
     @Test fun appendixA_arabiziKinNames() = assertEquals(
-        "khoya [اسم] w ommi [اسم] dayman y3ayto 3liya",
+        "khoya [اسم1] w ommi [اسم2] dayman y3ayto 3liya",
         r("khoya ahmed w ommi fatima dayman y3ayto 3liya"),
     )
 
     @Test fun appendixA_professorAndAttachedCity() = assertEquals(
-        "الدكتور [اسم] في كلية الهندسة ب[مكان] قالي نعيد السنة",
+        "الدكتور [اسم1] في كلية الهندسة ب[مكان1] قالي نعيد السنة",
         r("الدكتور مصطفى في كلية الهندسة بسبها قالي نعيد السنة"),
     )
 
     // Names and places
 
     @Test fun attachedPrefixes() = assertEquals(
-        "ساكن في [مكان] و[اسم] خوي في [مكان]",
+        "ساكن في [مكان1] و[اسم1] خوي في [مكان2]",
         r("ساكن في طرابلس ومحمد خوي في بنغازي"),
     )
 
     @Test fun spellingVariants() = assertEquals(
-        "[اسم] و[اسم] و[اسم]",
+        "[اسم1] و[اسم2] و[اسم3]",
         r("احمد وفاطمه وعبد الله"),
     )
 
     @Test fun unlistedNameAfterKinWord() {
-        assertEquals("ختي [اسم] زعلانة مني", r("ختي سندس زعلانة مني"))
-        assertEquals("sa7bi [اسم] ma ja", r("sa7bi sanad ma ja"))
-        assertEquals("اسمي [اسم]", r("اسمي غفران"))
+        assertEquals("ختي [اسم1] زعلانة مني", r("ختي سندس زعلانة مني"))
+        assertEquals("sa7bi [اسم1] ma ja", r("sa7bi sanad ma ja"))
+        assertEquals("اسمي [اسم1]", r("اسمي غفران"))
     }
 
     @Test fun kinWordFollowedByCommonWordIsKept() {
@@ -54,12 +54,12 @@ class LibyanRedactorTest {
     }
 
     @Test fun universityAndNeighbourhood() = assertEquals(
-        "نقرا في جامعة [مكان] وساكن في [مكان]",
+        "نقرا في جامعة [مكان1] وساكن في [مكان2]",
         r("نقرا في جامعة طرابلس وساكن في سوق الجمعة"),
     )
 
     @Test fun arabiziPlaces() = assertEquals(
-        "ana men [مكان] w na9ra f [مكان]",
+        "ana men [مكان1] w na9ra f [مكان2]",
         r("ana men Misrata w na9ra f Benghazi"),
     )
 
@@ -73,7 +73,7 @@ class LibyanRedactorTest {
     }
 
     @Test fun emailAndHandle() = assertEquals(
-        "إيميلي [بريد] والانستا [اسم]",
+        "إيميلي [بريد] والانستا [اسم1]",
         r("إيميلي salma.test@example.com والانستا @salma_ly99"),
     )
 
@@ -103,6 +103,34 @@ class LibyanRedactorTest {
             "حطيت الكتاب عليا وقعدت",
             "بعمر 20 سنة وما زلت نقرا",
         )) assertEquals(text, r(text))
+    }
+
+    // Numbered placeholders and putting real names back on the phone
+
+    @Test fun sameNameGetsSameNumber() = assertEquals(
+        "[اسم1] قالي و[اسم2] سمع، ومن بعد [اسم1] ضحك",
+        r("أحمد قالي ومحمد سمع، ومن بعد أحمد ضحك"),
+    )
+
+    @Test fun restorePutsRealNamesBackIntoTheDraft() {
+        val result = redactor.redact("صاحبي سند ديما يسمعني، وأنا ساكن في سبها ورقمي 0912345678")
+        assertEquals("صاحبي [اسم1] ديما يسمعني، وأنا ساكن في [مكان1] ورقمي [رقم]", result.redacted)
+        assertEquals(
+            "يا سند، نبي نحكي معاك شوية لما نرجع سبها. رقمي [رقم]",
+            result.restore("يا [اسم1]، نبي نحكي معاك شوية لما نرجع [مكان1]. رقمي [رقم]"),
+        )
+    }
+
+    @Test fun restoreToleratesModelVariants() {
+        val result = redactor.redact("خوي أحمد ما يفهمنيش")
+        assertEquals("يا أحمد", result.restore("يا [اسم ١]"))
+        assertEquals("يا أحمد", result.restore("يا [اسم]"))           // only one name, so a bare placeholder is safe
+        assertEquals("يا [اسم7]", result.restore("يا [اسم7]"))        // unknown number stays as is
+    }
+
+    @Test fun bareNamePlaceholderIsKeptWhenAmbiguous() {
+        val result = redactor.redact("khoya ahmed w ommi fatima")
+        assertEquals("يا [اسم]", result.restore("يا [اسم]"))
     }
 
     // Result shape and tap-to-hide

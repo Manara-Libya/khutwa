@@ -14,8 +14,41 @@ void main() {
 
     expect(
       result.redacted,
-      'انا [اسم] من [مكان]، خوي [اسم] ديما يتعارك، رقمي [رقم]',
+      'انا [اسم1] من [مكان1]، خوي [اسم2] ديما يتعارك، رقمي [رقم]',
     );
+  });
+
+  test('the same name gets the same number, and restore puts it back', () {
+    const original = 'سند قالي ومحمد سمع، وسند ضحك، رقمي 0912345678';
+    final result = RedactionResult(original, [
+      const Span(0, 3, IdentifierType.name),
+      Span(
+        original.indexOf('محمد'),
+        original.indexOf('محمد') + 4,
+        IdentifierType.name,
+      ),
+      Span(
+        original.lastIndexOf('سند'),
+        original.lastIndexOf('سند') + 3,
+        IdentifierType.name,
+      ),
+      Span(
+        original.indexOf('0912345678'),
+        original.length,
+        IdentifierType.phone,
+      ),
+    ]);
+
+    expect(result.redacted, '[اسم1] قالي و[اسم2] سمع، و[اسم1] ضحك، رقمي [رقم]');
+    expect(
+      result.restore('يا [اسم1] و[اسم ٢]، رقمي [رقم]'),
+      'يا سند ومحمد، رقمي [رقم]',
+    );
+    expect(
+      result.restore('يا [اسم]'),
+      'يا [اسم]',
+    ); // two names: ambiguous, kept
+    expect(result.restore('يا [اسم9]'), 'يا [اسم9]'); // unknown number, kept
   });
 
   test('no spans leaves the text unchanged', () {

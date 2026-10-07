@@ -34,7 +34,7 @@ void main() {
     expect(calls.single.method, 'redact');
     expect(calls.single.arguments, {'text': 'I am Salma'});
     expect(result.spans.single, const Span(5, 10, IdentifierType.name));
-    expect(result.redacted, 'I am [اسم]');
+    expect(result.redacted, 'I am [اسم1]');
   });
 
   test('toggle sends the current spans with Kotlin enum names', () async {

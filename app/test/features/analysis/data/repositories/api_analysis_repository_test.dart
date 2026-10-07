@@ -48,8 +48,35 @@ void main() {
     expect(sent.method, 'POST');
     expect(sent.url.toString(), 'https://api.example.test/v1/analyze');
     expect(sent.headers['Authorization'], 'Bearer test-key');
-    expect(jsonDecode(sent.body), {'text': 'انا [اسم]'});
+    expect(jsonDecode(sent.body), {'text': 'انا [اسم1]'});
     expect(sent.body, isNot(contains('سلمى')));
+  });
+
+  test('puts the real name back into the reply, on the phone', () async {
+    final repo = repoWith(
+      (_) async => http.Response(
+        jsonEncode({
+          'urgent': false,
+          'risk': 'none',
+          'reflection': 'شكراً يا [اسم1]',
+          'suggestions': [
+            {
+              'type': 'trusted_friend',
+              'why': 'w',
+              'draft': 'يا [اسم1]، نبي نحكي معاك',
+            },
+          ],
+          'elapsed_ms': 1,
+        }),
+        200,
+        headers: {'content-type': 'application/json; charset=utf-8'},
+      ),
+    );
+
+    final result = await repo.analyze(redaction);
+
+    expect(result.reflection, 'شكراً يا سلمى');
+    expect(result.suggestions.single.draft, 'يا سلمى، نبي نحكي معاك');
   });
 
   test('maps 401 to unauthorized and 5xx to server', () async {

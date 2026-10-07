@@ -16,11 +16,12 @@ Built for the AI4LY Codathon: Mental Health in Libya. Final pitch: 8 October 202
 
 | Name | Role |
 |---|---|
-| Marwan Elamami | Team leader, AI engineer |
+| Marwan Elamami | Team Lead & AI Engineer |
 | Hiba Alshabani | AI lead |
-| Ahmed Alaeb | Frontend |
-| Kawtar Gdoure | Language and testing |
-| Anas Al-Thaabit | Privacy shield |
+| Ahmed Alaeb | Frontend Engineer |
+| Kawtar Gdoure | AI Evaluation & Localization Specialist |
+| Anas Al-Thaabit | Privacy Engineer |
+| TBD | Pitch & Safety Lead |
 
 ## Status
 

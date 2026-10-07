@@ -19,7 +19,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from . import agents, config, guardrails
 from .agy import TASKS, AgyRouter, AgyUnavailable
-from .schemas import (AnalyzeOut, ChatCompletionRequest, DevPrompt, DevTryIn, DevTryOut, ReflectModelOut, ReflectOut,
+from .schemas import (AnalyzeIn, AnalyzeOut, ChatCompletionRequest, DevPrompt, DevTryIn, DevTryOut, ReflectModelOut, ReflectOut,
                       RiskModelOut, RiskOut, SuggestModelOut, SuggestOut, TextIn)
 
 
@@ -175,21 +175,49 @@ def health(request: Request) -> dict:
           summary="Risk check, reflection and support suggestions in one call",
           description="Runs all three in parallel. If the risk check returns anything but `none`, "
                       "returns `urgent: true` with no AI text.")
-def analyze(body: TextIn, request: Request) -> AnalyzeOut:
+def analyze(body: AnalyzeIn, request: Request) -> AnalyzeOut:
     start = time.perf_counter()
     agy = router(request)
-    risk_f = _executor.submit(_risk, agy, body.text)
-    reflect_f = _executor.submit(_reflect, agy, body.text)
-    suggest_f = _executor.submit(_suggest, agy, body.text)
+    convo = conversation_text(body.text, body.history or [])
+    ready = support_ready(body.text, body.history)
+    risk_f = _executor.submit(_risk, agy, body.text)  # every message is checked on its own
+    reflect_f = _executor.submit(_reflect, agy, convo)
+    suggest_f = _executor.submit(_suggest, agy, convo) if ready else None
     risk = risk_f.result()
     elapsed = lambda: int((time.perf_counter() - start) * 1000)  # noqa: E731
     if risk != "none":
         return AnalyzeOut(urgent=True, risk=risk, elapsed_ms=elapsed())
-    reflection, suggestions = reflect_f.result(), suggest_f.result()
+    reflection = reflect_f.result()
+    suggestions = suggest_f.result() if suggest_f else None
     return AnalyzeOut(urgent=False, risk=risk, reflection=reflection.reflection,
                       situation=suggestions.situation if suggestions else [],
                       suggestions=suggestions.suggestions if suggestions else [],
-                      fallback=reflection.fallback or suggestions is None, elapsed_ms=elapsed())
+                      fallback=reflection.fallback or (ready and suggestions is None),
+                      support_ready=ready, elapsed_ms=elapsed())
+
+
+# Phrases that ask who to turn to; then support options come straight away.
+HELP_REQUESTS = ("مع مني نحكي", "مع منو نحكي", "مع من نحكي", "نحكي مع مني", "نحكي مع منو", "نحكي مع من",
+                 "منو نكلم", "مني نكلم", "شن ندير", "شنو ندير", "دبرني", "نبي نحكي مع حد",
+                 "m3a men nahki", "m3a mni nahki", "chen ndir", "chnou ndir", "who should i talk", "who can i talk")
+
+
+def support_ready(text: str, history: list | None) -> bool:
+    """Listen first: no support options until the user's SUGGEST_AFTER-th message, unless they ask who to talk to.
+    Without `history` (old clients) options come every time, as before."""
+    if history is None:
+        return True
+    low = text.lower()
+    user_messages = 1 + sum(t.role == "user" for t in history)
+    return user_messages >= config.SUGGEST_AFTER or any(p in low for p in HELP_REQUESTS)
+
+
+def conversation_text(text: str, history: list) -> str:
+    """The new message with the earlier turns, in the plain format the agents' prompts describe."""
+    if not history:
+        return text
+    lines = [f"earlier {'user' if t.role == 'user' else 'khutwa'}: {t.text}" for t in history]
+    return "\n".join(lines + [f"new: {text}"])
 
 
 @app.post("/v1/risk", response_model=RiskOut, dependencies=Auth, tags=["khutwa"], summary="Risk check only")

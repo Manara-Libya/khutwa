@@ -20,7 +20,7 @@ from textual import on, work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
-from textual.screen import ModalScreen
+from textual.screen import ModalScreen, Screen
 from rich.text import Text
 from textual.widgets import Button, DataTable, Footer, Header, Input, Label, Select, Static, TextArea
 
@@ -46,6 +46,7 @@ HELP = """\
   [b]Ctrl+E[/b]   Run ALL test messages with your current draft
   [b]Ctrl+R[/b]   Run the SELECTED message
   [b]Ctrl+F[/b]   Run the full app flow (/v1/analyze, live prompts) on the selected message
+  [b]Ctrl+T[/b]   Conversation: talk to Khutwa turn by turn; every reply is sent with what was said before
   [b]Ctrl+S[/b]   Save your draft as the live prompt for the whole team (asks first, old version backed up)
   [b]Ctrl+N[/b]   Add a test message        [b]Ctrl+D[/b]   Delete the selected message
   [b]Ctrl+J[/b]   Show the raw JSON of the selected result
@@ -152,8 +153,11 @@ class Api:
         r.raise_for_status()
         return r.json()
 
-    def try_(self, task: str, text: str, model: str, prompt: str | None) -> dict:
-        r = self._request("POST", "/v1/dev/try", json={"task": task, "text": text, "model": model, "prompt": prompt})
+    def try_(self, task: str, text: str, model: str, prompt: str | None, history: list | None = None) -> dict:
+        body = {"task": task, "text": text, "model": model, "prompt": prompt}
+        if history:
+            body["history"] = history
+        r = self._request("POST", "/v1/dev/try", json=body)
         if r.status_code != 200:
             try:
                 return {"error": f"{r.status_code}: {r.json().get('detail', r.text)}"}
@@ -164,8 +168,9 @@ class Api:
     def save(self, task: str, prompt: str) -> None:
         self._request("PUT", f"/v1/dev/prompts/{task}", json={"prompt": prompt}).raise_for_status()
 
-    def analyze(self, text: str) -> dict:
-        r = self._request("POST", "/v1/analyze", json={"text": text})
+    def analyze(self, text: str, history: list | None = None) -> dict:
+        body = {"text": text} if history is None else {"text": text, "history": history}
+        r = self._request("POST", "/v1/analyze", json=body)
         return r.json() if r.status_code == 200 else {"error": f"{r.status_code}: {r.text}"}
 
 
@@ -253,6 +258,113 @@ class HelpScreen(ModalScreen):
             yield Static(HELP)
 
 
+class ConversationScreen(Screen):
+    """Talk to Khutwa turn by turn. Every message goes out with the earlier turns, like the app will send them."""
+    BINDINGS = [Binding("escape", "app.pop_screen", "Back"), Binding("f3", "toggle_mode", "Draft / full app"),
+                Binding("ctrl+k", "restart", "New conversation")]
+    CSS = """
+    #conv-mode { height: 1; padding: 0 1; background: $primary 25%; }
+    #conv-log { height: 1fr; padding: 1 2; background: $surface; }
+    #conv-input { dock: bottom; height: 1; margin: 1 0 0 0; }
+    .turn-user { margin-bottom: 1; color: $text; }
+    .turn-bot { margin-bottom: 1; color: $success; }
+    .turn-note { margin-bottom: 1; color: $text-muted; }
+    """
+
+    def __init__(self, tuner: "Tuner"):
+        super().__init__()
+        self.tuner, self.app_mode, self.history = tuner, False, []
+
+    def compose(self) -> ComposeResult:
+        yield Header(show_clock=True, icon="K")
+        yield Static("", id="conv-mode")
+        yield VerticalScroll(id="conv-log")
+        yield Input(placeholder="Write as the user would (fictional), then Enter", id="conv-input")
+        yield Footer()
+
+    def on_mount(self) -> None:
+        self.show_mode()
+        self.query_one("#conv-input", Input).focus()
+
+    def show_mode(self) -> None:
+        task = self.tuner.current_task
+        what = ("FULL APP FLOW (live prompts: risk check, reply, support options when ready)" if self.app_mode
+                else f"YOUR {task.upper()} PROMPT ({'draft' if self.tuner.draft() else 'live'})")
+        self.query_one("#conv-mode", Static).update(f"Conversation - {what}   F3 switch   Ctrl+K new   Esc back")
+
+    def action_toggle_mode(self) -> None:
+        self.app_mode = not self.app_mode
+        self.show_mode()
+
+    def action_restart(self) -> None:
+        self.history = []
+        self.query_one("#conv-log", VerticalScroll).remove_children()
+
+    def add(self, text: str, cls: str) -> None:
+        log = self.query_one("#conv-log", VerticalScroll)
+        log.mount(Static(text, classes=cls))
+        log.scroll_end(animate=False)
+
+    @on(Input.Submitted, "#conv-input")
+    def send(self, event: Input.Submitted) -> None:
+        text = event.value.strip()
+        if not text or not self.tuner.api:
+            return
+        event.input.value = ""
+        self.add(f"[b]User:[/b] {shape(text)}", "turn-user")
+        self.ask(text, list(self.history[-12:]), self.app_mode, self.tuner.current_task,
+                 self.tuner.query_one("#model", Select).value, self.tuner.draft())
+
+    @work(thread=True, group="conversation")
+    def ask(self, text: str, history: list, app_mode: bool, task: str, model: str, prompt: str | None) -> None:
+        self.app.call_from_thread(self.add, "[dim]...[/dim]", "turn-note")
+        reply, note = None, ""
+        try:
+            if app_mode:
+                res = self.tuner.call(Api.analyze, text, history)
+                if "error" in res:
+                    note = f"[red]{res['error']}[/red]"
+                elif res.get("urgent"):
+                    note = f"[b red]URGENT[/b red] the app opens the urgent-help screen (risk: {res.get('risk')})"
+                else:
+                    reply = res.get("reflection")
+                    if res.get("support_ready"):
+                        names = [TYPE_LABELS.get(s["type"], s["type"]) for s in res.get("suggestions", [])]
+                        note = "Support options now: " + (", ".join(names) or "the generic ones")
+                    else:
+                        note = "Still listening: no support options yet"
+            else:
+                res = self.tuner.call(Api.try_, task, text, model, prompt, history)
+                parsed = res.get("parsed") or {}
+                if "error" in res:
+                    note = f"[red]{res['error']}[/red]"
+                elif task == "reflect":
+                    reply = parsed.get("reflection")
+                    note = "" if res.get("valid") else "[red]invalid answer[/red]"
+                elif task == "risk":
+                    note = f"risk: {parsed.get('risk', '?')}  (checks only the newest message)"
+                else:
+                    note = "\n".join(f"- {TYPE_LABELS.get(s.get('type'), s.get('type'))}: {shape(s.get('draft', ''))}"
+                                      for s in parsed.get("suggestions", [])) or "[red]no suggestions[/red]"
+                if res.get("guardrail"):
+                    note += "  [red]GUARDRAIL: forbidden term[/red]"
+        except ServerDown:
+            note = "[red]server unreachable[/red]"
+        self.history.append({"role": "user", "text": text})
+        if reply:
+            self.history.append({"role": "assistant", "text": reply})
+        self.app.call_from_thread(self.finish, reply, note)
+
+    def finish(self, reply: str | None, note: str) -> None:
+        log = self.query_one("#conv-log", VerticalScroll)
+        if log.children:
+            log.children[-1].remove()  # the "..." line
+        if reply:
+            self.add(f"[b]Khutwa:[/b] {shape(reply)}", "turn-bot")
+        if note:
+            self.add(note, "turn-note")
+
+
 class Tuner(App):
     TITLE = "Khutwa prompt tuner"
     ENABLE_COMMAND_PALETTE = False
@@ -297,6 +409,7 @@ class Tuner(App):
         Binding("ctrl+e", "run_all", "Run all", priority=True),
         Binding("ctrl+r", "run_selected", "Run one", priority=True),
         Binding("ctrl+f", "full_flow", "Full flow", priority=True),
+        Binding("ctrl+t", "conversation", "Conversation", priority=True),
         Binding("ctrl+s", "save", "Save live", priority=True),
         Binding("ctrl+n", "new_message", "Add msg", priority=True),
         Binding("ctrl+d", "delete_message", "Delete msg", show=False, priority=True),
@@ -611,6 +724,10 @@ class Tuner(App):
         self.call_from_thread(self.set_status, f"Done: [b]{ok}/{len(rows)} OK[/b] in {time.perf_counter() - start:.1f}s "
                                                f"({kind}, {model})")
 
+    def action_conversation(self) -> None:
+        if self.api:
+            self.push_screen(ConversationScreen(self))
+
     def action_run_selected(self) -> None:
         self.run_rows([self.query_one(DataTable).cursor_row])
 
@@ -730,6 +847,29 @@ class Tuner(App):
         actions[event.button.id]()
 
 
+def self_update() -> None:
+    """Fetch the tuner the server is serving; if it changed, replace this file and restart, so fixes arrive
+    without reinstalling. Skipped quietly when the server can't be reached (the tuner reconnects later)."""
+    import os
+    url = load_config().get("url")
+    if not url or os.environ.get("KHUTWA_TUNE_UPDATED"):
+        return
+    try:
+        r = httpx.get(f"{url.rstrip('/')}/tools/khutwa-tune.py", timeout=8)
+        new, me = r.text, Path(__file__)
+        if r.status_code != 200 or not new.startswith("# /// script") or new == me.read_text(encoding="utf-8"):
+            return
+        me.write_text(new, encoding="utf-8")
+    except (httpx.HTTPError, OSError):
+        return
+    os.environ["KHUTWA_TUNE_UPDATED"] = "1"
+    args = [sys.executable, str(Path(__file__)), *sys.argv[1:]]
+    if sys.platform == "win32":  # execv mangles paths with spaces on Windows; start a child and pass its exit code on
+        import subprocess
+        sys.exit(subprocess.call(args))
+    os.execv(sys.executable, args)
+
+
 if __name__ == "__main__":
     if "--check" in sys.argv:  # used by the installer to pre-download dependencies
         print("Khutwa tuner is ready.")
@@ -739,4 +879,5 @@ if __name__ == "__main__":
             cfg["discovery"] = sys.argv[sys.argv.index("--set-discovery") + 1]
         save_config(cfg)
     else:
+        self_update()
         Tuner().run()

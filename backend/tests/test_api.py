@@ -349,3 +349,14 @@ def test_history_is_limited(client):
     with client() as c:
         r = c.post("/v1/analyze", headers=AUTH, json={"text": "x", "history": [{"role": "user", "text": "y"}] * 13})
         assert r.status_code == 422
+
+
+def test_dev_try_can_run_a_draft_mid_conversation(dev_client):
+    client, _, _ = dev_client
+    body = {"task": "reflect", "text": "سكتت", "history": [{"role": "user", "text": "حد يتمسخر عليا"},
+                                                          {"role": "assistant", "text": "رديت عليه ولا سكتت؟"}]}
+    with client() as c:
+        seen = {}
+        main.app.state.agy.try_once = lambda task, text, model, prompt=None: seen.setdefault(task, text) and '{"reflection": "ok"}'
+        assert c.post("/v1/dev/try", headers=DEV, json=body).status_code == 200
+    assert seen["reflect"].startswith("earlier user: حد يتمسخر عليا") and seen["reflect"].endswith("new: سكتت")

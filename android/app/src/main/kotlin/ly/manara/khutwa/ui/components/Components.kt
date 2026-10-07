@@ -195,6 +195,7 @@ fun Bubble(text: String, mine: Boolean, modifier: Modifier = Modifier, reveal: B
         onGrow(); onRevealed()
     }
     val visible = if (shown >= words.size) text else words.take(shown).joinToString(" ")
+    val revealing = shown < words.size
     val shape: Shape = if (mine) KhShapes.bubbleMe else KhShapes.bubbleBot
     Column(modifier.fillMaxWidth(), horizontalAlignment = if (mine) Alignment.Start else Alignment.End) {
         // Who is speaking, above the first of Khutwa's messages in a run (kh-bubble__who in the brand stylesheet).
@@ -205,6 +206,8 @@ fun Bubble(text: String, mine: Boolean, modifier: Modifier = Modifier, reveal: B
             color = if (mine) c.onGreen else c.ink,
             modifier = Modifier
                 .widthIn(max = 300.dp)
+                // reading at your own pace: a tap shows the rest of the reply at once
+                .then(if (revealing) Modifier.clickable(interactionSource = null, indication = null) { shown = words.size } else Modifier)
                 .background(if (mine) c.green else c.paperRaised, shape)
                 .border(PenWidth, if (mine) c.onGreen else c.ink, shape)
                 .padding(horizontal = 16.dp, vertical = 10.dp),

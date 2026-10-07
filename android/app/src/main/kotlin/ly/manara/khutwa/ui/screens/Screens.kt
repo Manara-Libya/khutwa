@@ -1,5 +1,7 @@
 package ly.manara.khutwa.ui.screens
 
+import ly.manara.khutwa.ui.components.UrgentPill
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.widthIn
@@ -322,8 +324,12 @@ fun ChatScreen(
                 .padding(end = 18.dp, bottom = with(density) { composerHeight.toDp() } + 10.dp),
         )
         var confirmNew by remember { mutableStateOf(false) }
+        val online = rememberOnline()
+        var calm by remember { mutableStateOf(false) }
         Composer(state, onSend, onWhoToTalk, { confirmNew = true }, showChips = atEnd || state.lines.size <= 2,
+            online = online, onCalm = { calm = true },
             modifier = Modifier.align(Alignment.BottomCenter).onSizeChanged { composerHeight = it.height })
+        if (calm) CalmSheet(onDismiss = { calm = false }, onUrgent = onUrgent)
         if (confirmNew) ConfirmNewChat(onConfirm = { confirmNew = false; onNewChat() }, onDismiss = { confirmNew = false })
         }
     }
@@ -336,6 +342,8 @@ private fun Composer(
     onWhoToTalk: () -> Unit,
     onNewChat: () -> Unit,
     showChips: Boolean,
+    online: Boolean,
+    onCalm: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val c = Kh.colors
@@ -351,7 +359,7 @@ private fun Composer(
     val focus = remember { MutableInteractionSource() }
     val focused by focus.collectIsFocusedAsState()
     val lift by animateFloatAsState(if (focused) 1f else 0f, KhMotion.gentle(), label = "lift")
-    val canSend = text.isNotBlank() && !state.waiting
+    val canSend = text.isNotBlank() && !state.waiting && online
     val flight = remember { Animatable(0f) }
     val fieldFocus = remember { FocusRequester() }
 
@@ -364,6 +372,20 @@ private fun Composer(
 
     // No bar behind it: each control carries its own outlined shape, so the composer floats.
     Column(modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+        // No connection (power and internet cuts are common): say so plainly and point to what still works.
+        AnimatedVisibility(!online, enter = fadeIn(tween(200)) + expandVertically(KhMotion.gentle()),
+            exit = fadeOut(tween(150)) + shrinkVertically(tween(200))) {
+            Row(
+                Modifier.padding(bottom = 10.dp).fillMaxWidth().background(c.sunSoft, KhShapes.card)
+                    .border(1.5.dp, c.border, KhShapes.card).clickable(role = Role.Button, onClick = onCalm)
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.Top,
+            ) {
+                KhIcon(R.drawable.ic_kh_offline, c.ink, size = 18.dp, modifier = Modifier.padding(top = 2.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(Texts.OFFLINE, style = KhType.small, color = c.ink)
+            }
+        }
         // Shortcuts only at the end of the conversation, so they never sit on top of what the user is reading.
         AnimatedVisibility(
             visible = showChips && (!state.supportReady || state.lines.size > 1) && !(state.lines.size == 1 && text.isNotEmpty()),
@@ -378,6 +400,7 @@ private fun Composer(
                     Chip(s, R.drawable.ic_kh_edit, { text = "$s، "; fieldFocus.requestFocus() }, enabled = true)
                 }
                 if (!state.supportReady) Chip(Texts.WHO_TO_TALK, R.drawable.ic_kh_users, onWhoToTalk, enabled = !state.waiting)
+                if (state.lines.size > 1) Chip(Texts.CALM, R.drawable.ic_kh_heart, onCalm, enabled = true)
                 if (state.lines.size > 1) Chip(Texts.NEW_CHAT, R.drawable.ic_kh_edit, onNewChat, enabled = !state.waiting)
             }
         }
@@ -758,6 +781,7 @@ private fun SentReceipt(sent: String?, id: Long, onOpen: () -> Unit) {
                 Text(Texts.RECEIPT_TITLE, style = KhType.label, color = c.inkMuted)
                 Text(marked, style = KhType.bubble, color = c.ink)
                 Text(Texts.RECEIPT_NOTE, style = KhType.small, color = c.inkMuted)
+                Text(Texts.RECEIPT_LIMIT, style = KhType.small, color = c.inkMuted)
             }
         }
     }
@@ -833,6 +857,65 @@ private fun BreathingGuide() {
             }
             Spacer(Modifier.height(8.dp))
             KhButton(Texts.BREATH_STOP, { running = false }, Modifier.fillMaxWidth(), kind = ButtonKind.Quiet)
+        }
+    }
+}
+
+// ---------------------------------------------------------------- calm tools and connection
+
+/** Whether the phone has a usable connection right now; follows changes live. */
+@Composable
+private fun rememberOnline(): Boolean {
+    val context = LocalContext.current
+    val cm = remember { context.getSystemService(android.net.ConnectivityManager::class.java) }
+    fun now() = cm.getNetworkCapabilities(cm.activeNetwork)
+        ?.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
+    var online by remember { mutableStateOf(now()) }
+    androidx.compose.runtime.DisposableEffect(cm) {
+        val callback = object : android.net.ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: android.net.Network) { online = true }
+            override fun onLost(network: android.net.Network) { online = now() }
+        }
+        cm.registerDefaultNetworkCallback(callback)
+        onDispose { cm.unregisterNetworkCallback(callback) }
+    }
+    return online
+}
+
+/**
+ * The reviewed coping tools, one tap from the conversation (proposal: one immediate coping option).
+ * Fixed text only, and they work without a connection.
+ */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+private fun CalmSheet(onDismiss: () -> Unit, onUrgent: () -> Unit) {
+    val c = Kh.colors
+    androidx.compose.material3.ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = c.paper,
+        shape = KhShapes.panel,
+        dragHandle = { Box(Modifier.padding(top = 10.dp).size(width = 44.dp, height = 5.dp).background(c.border, KhShapes.chip)) },
+    ) {
+        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+            Column(
+                Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp)
+                    .navigationBarsPadding(),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Column(Modifier.weight(1f)) {
+                        Text(Texts.CALM_TITLE, style = KhType.heading, color = c.ink)
+                        Doodle(Doodles.UNDERLINE, c.green, Modifier.width(130.dp).height(10.dp), key = "calm-underline",
+                            delayMillis = 200, durationMillis = 600)
+                    }
+                    // the sheet covers the top bar's scrim, so urgent help stays one tap away here too
+                    UrgentPill { onDismiss(); onUrgent() }
+                }
+                CopingCard(R.drawable.ill_breathe, Texts.CARD_BREATH_TITLE, Texts.CARD_BREATH_BODY) { BreathingGuide() }
+                CopingCard(R.drawable.ill_stones_three, Texts.CARD_GROUND_TITLE, Texts.CARD_GROUND_BODY)
+                Spacer(Modifier.height(8.dp))
+            }
         }
     }
 }

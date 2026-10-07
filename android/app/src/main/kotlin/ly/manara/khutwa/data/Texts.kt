@@ -45,6 +45,11 @@ object Texts {
     const val RECEIPT_TITLE = "هذا اللي وصل للذكاء الاصطناعي:"
     const val RECEIPT_NOTE = "الأسماء الحقيقية ترجع على تلفونك بس."
     const val RECEIPT_LOCAL = "ما طلع شي من تلفونك"
+    const val RECEIPT_LIMIT = "الكلام نفسه ممكن يبيّن شكون انت، فخلي بالك من التفاصيل."
+    const val AFTER_SEND_NOTE = "لو ما ردّش زي ما تبي، هذا مش ذنبك. تقدر تجرب حد ثاني."
+    const val OFFLINE = "ما فيش نت توا. كلامك يقعد هنا لين يرجع النت، والتنفس وصفحة المساعدة يخدموا من غير نت."
+    const val CALM = "نهدّي شوية"
+    const val CALM_TITLE = "خذ نفس على راحتك"
     const val QUICK_EXIT = "خروج سريع"
     val STARTERS = listOf("مضغوط من القراية", "حاس روحي وحدي", "مش عارف من وين نبدا")
     const val BREATH_START = "نتنفسوا مع بعض"

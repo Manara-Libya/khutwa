@@ -51,14 +51,21 @@ import ly.manara.khutwa.ui.theme.KhType
 @Composable
 fun A2uiView(surface: A2ui.Surface, modifier: Modifier = Modifier) {
     val data = remember(surface.id) { mutableStateMapOf<String, String>().apply { putAll(surface.data) } }
+    val acted = remember(surface.id) { mutableStateMapOf<String, Boolean>() }
     Column(modifier.fillMaxWidth()) {
-        Node(surface, surface.root, data, cardIndex = 0)
+        androidx.compose.runtime.CompositionLocalProvider(LocalActedMap provides acted) {
+            Node(surface, surface.root, data, cardIndex = 0)
+        }
     }
 }
+
+private val LocalActedMap = androidx.compose.runtime.staticCompositionLocalOf<MutableMap<String, Boolean>> { mutableMapOf() }
+private val LocalActed = androidx.compose.runtime.compositionLocalOf<() -> Unit> { {} }
 
 @Composable
 private fun Node(surface: A2ui.Surface, id: String, data: MutableMap<String, String>, cardIndex: Int) {
     val c = Kh.colors
+    val actedOn = LocalActedMap.current
     when (val comp = surface.components[id]) {
         is A2ui.Text -> when (comp.hint) {
             "h1", "h2", "h3" -> Row(verticalAlignment = Alignment.Bottom) {
@@ -98,6 +105,8 @@ private fun Node(surface: A2ui.Surface, id: String, data: MutableMap<String, Str
         }
         is A2ui.Card -> {
             val (stone, rot) = when (cardIndex % 3) { 0 -> c.clay to -12f; 1 -> c.sun to 10f; else -> c.green to -6f }
+            val acted = actedOn[surface.id + id] == true
+            Column {
             Row(
                 Modifier.fillMaxWidth()
                     .background(c.paperRaised, KhShapes.card)
@@ -107,7 +116,22 @@ private fun Node(surface: A2ui.Surface, id: String, data: MutableMap<String, Str
             ) {
                 Stone(stone, rot, Modifier.padding(top = 2.dp))
                 Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f)) { Node(surface, comp.child, data, cardIndex) }
+                Column(Modifier.weight(1f)) {
+                    androidx.compose.runtime.CompositionLocalProvider(LocalActed provides { actedOn[surface.id + id] = true }) {
+                        Node(surface, comp.child, data, cardIndex)
+                    }
+                }
+            }
+            // After the user shares or copies: getting a cold reply is not their fault, and there are other people.
+            androidx.compose.animation.AnimatedVisibility(acted,
+                enter = androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(240, 120)) +
+                    androidx.compose.animation.expandVertically(KhMotion.gentle())) {
+                Row(Modifier.padding(start = 14.dp, end = 14.dp, top = 8.dp), verticalAlignment = Alignment.Top) {
+                    KhIcon(R.drawable.ic_kh_heart, c.clay, size = 16.dp, modifier = Modifier.padding(top = 2.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(ly.manara.khutwa.data.Texts.AFTER_SEND_NOTE, style = KhType.small, color = c.inkMuted)
+                }
+            }
             }
         }
         is A2ui.TextField -> {
@@ -137,6 +161,7 @@ private fun ActionButton(surface: A2ui.Surface, b: A2ui.Button, data: Map<String
     var taps by remember { mutableIntStateOf(0) }
     LaunchedEffect(done) { if (done) { delay(1600); done = false } }
     val text = b.textPath?.let { data[it] }.orEmpty()
+    val markActed = LocalActed.current
     if (compact) {
         // A secondary action next to the primary one: an outlined round icon button with its label for screen readers.
         val c = Kh.colors
@@ -147,6 +172,7 @@ private fun ActionButton(surface: A2ui.Surface, b: A2ui.Button, data: Map<String
                 .background(if (done) c.greenSoft else c.paperRaised, KhShapes.chip)
                 .border(PenWidth, c.ink, KhShapes.chip)
                 .clickable(enabled = text.isNotBlank(), role = Role.Button) {
+                    markActed()
                     if (b.action == "khutwa.copy") { copyText(context, text); taps++; done = true } else if (b.action == "khutwa.share") shareText(context, text)
                 }
                 .semantics { contentDescription = if (done) "تنسخت" else label },
@@ -158,9 +184,9 @@ private fun ActionButton(surface: A2ui.Surface, b: A2ui.Button, data: Map<String
         return
     }
     when (b.action) {
-        "khutwa.share" -> KhButton(label, { shareText(context, text) }, Modifier.fillMaxWidth(),
+        "khutwa.share" -> KhButton(label, { markActed(); shareText(context, text) }, Modifier.fillMaxWidth(),
             kind = if (b.primary) ButtonKind.Primary else ButtonKind.Quiet, icon = R.drawable.ic_kh_share, enabled = text.isNotBlank())
-        "khutwa.copy" -> KhButton(if (done) "تنسخت" else label, { copyText(context, text); done = true }, Modifier.fillMaxWidth(),
+        "khutwa.copy" -> KhButton(if (done) "تنسخت" else label, { markActed(); copyText(context, text); done = true }, Modifier.fillMaxWidth(),
             kind = if (b.primary) ButtonKind.Primary else ButtonKind.Quiet,
             icon = if (done) R.drawable.ic_kh_check else R.drawable.ic_kh_copy, enabled = text.isNotBlank())
         else -> Unit  // only phone-side actions are allowed; anything else is ignored

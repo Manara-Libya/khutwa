@@ -20,9 +20,9 @@ These texts are shown exactly as written. **The AI never generates or changes th
 
 | File | Drafted | Arabic reviewed by a Libyan teammate | Safety reviewed |
 |---|---|---|---|
-| consent.md | ✅ | ☐ | ☐ |
-| urgent-help.md | ✅ | ☐ | ☐ |
-| coping-cards.md | ✅ | ☐ | ☐ |
+| consent.md | ✅ | ✅ Marwan, 7 Oct | ☐ |
+| urgent-help.md | ✅ | ✅ Marwan, 7 Oct | ☐ |
+| coping-cards.md | ✅ | ✅ Marwan, 7 Oct | ☐ |
 | verified-contacts.md | template | n/a | ☐ calls made |
 
 Reviewer for the Arabic: Marwan (covering language review while Kawtar is away).

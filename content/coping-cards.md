@@ -9,7 +9,7 @@ Three fixed cards, saved with the plan and available offline. They are simple st
 > Breathe slowly
 
 ### card_breath_body
-اقعد في مكان مريح. خش نفس من خشمك على راحتك وانت تعد لين ٤، ومن بعد طلّعه من فمك على راحتك وانت تعد لين ٦. عاودها ٥ مرات. لو حسيت بدوخة، ارجع تنفس عادي.
+اقعد في مكان مريح، تنفس من خشمك على راحتك وانت تعد من لعند 4، وطلّعه من فمك على راحتك وانت تعد لين 6. عاودها 5 مرات، لو حسيت بدوخة، ارجع تنفس عادي.
 > Sit somewhere comfortable. Breathe in slowly through your nose while counting to 4, then breathe out slowly through your mouth while counting to 6. Repeat 5 times. If you feel dizzy, go back to breathing normally.
 
 ## Card 2: back to the moment (5-4-3-2-1)
@@ -20,10 +20,10 @@ Three fixed cards, saved with the plan and available offline. They are simple st
 
 ### card_ground_body
 شوف حواليك وسمّي في بالك:
-٥ حوايج تشوفهم،
-٤ حوايج تسمعهم،
-٣ حوايج تقدر تلمسهم،
-٢ ريحات تشمهم،
+5 حوايج تشوفهم،
+4 حوايج تسمعهم،
+3 حوايج تقدر تلمسهم،
+2 ريحات تشمهم،
 وحاجة وحدة تقدر تذوقها.
 على راحتك، ما فيش استعجال.
 > Look around and name in your head: 5 things you can see, 4 you can hear, 3 you can touch, 2 you can smell, and 1 you can taste. Take your time, there's no rush.
@@ -31,12 +31,12 @@ Three fixed cards, saved with the plan and available offline. They are simple st
 ## Card 3: message someone you trust
 
 ### card_message_title
-ابعث لحد تثق فيه
+ابعت لحد تثق فيه
 > Message someone you trust
 
 ### card_message_body
-مش لازم تحكي كل شي. رسالة صغيرة تكفي باش تفتح الباب. اختار الشخص اللي حطيته في خطتك، أو أي حد تحس روحك معاه في أمان.
-> You don't have to tell everything. A short message is enough to open the door. Choose the person in your plan, or anyone you feel safe with.
+مش لازم تحكي كل شي، رسالة صغيرة تكفي باش تفتح الباب، اختار الشخص اللي حطيته في بالك، أو أي حد تحس روحك معاه في أمان.
+> You don't have to tell everything. A short message is enough to open the door. Choose the person you have in mind, or anyone you feel safe with.
 
 ### card_message_button
 افتح رسالتي

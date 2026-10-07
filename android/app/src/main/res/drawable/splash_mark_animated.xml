@@ -1,59 +1,121 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The splash: the small stone drops in and lands, then the green stone grows in from a slight tilt and settles.
-     Then the green underline draws itself under the mark, right to left. About 1.2 s. -->
+<!-- The splash as a doodle: the pen traces the small stone, then the green stone; their colour fades in behind
+     the line; the green underline is drawn right to left and the sparkles are dashed in. About 1.3 s. -->
 <animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
     android:drawable="@drawable/splash_mark">
-    <target android:name="dark">
+    <target android:name="darkPen">
         <aapt:attr name="android:animation">
-            <set>
-                <objectAnimator android:propertyName="translateY" android:valueFrom="-46" android:valueTo="0"
-                    android:duration="520" android:startOffset="60" android:interpolator="@android:interpolator/overshoot"/>
-                <objectAnimator android:propertyName="rotation" android:valueFrom="-16" android:valueTo="0"
-                    android:duration="520" android:startOffset="60" android:interpolator="@android:interpolator/decelerate_cubic"/>
-            </set>
+            <objectAnimator android:propertyName="trimPathEnd" android:valueFrom="0" android:valueTo="1"
+                android:duration="460" android:startOffset="40" android:interpolator="@android:interpolator/fast_out_slow_in"/>
         </aapt:attr>
     </target>
-    <target android:name="darkPath">
+    <target android:name="greenPen">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="trimPathEnd" android:valueFrom="0" android:valueTo="1"
+                android:duration="560" android:startOffset="260" android:interpolator="@android:interpolator/fast_out_slow_in"/>
+        </aapt:attr>
+    </target>
+    <target android:name="darkFill">
         <aapt:attr name="android:animation">
             <objectAnimator android:propertyName="fillAlpha" android:valueFrom="0" android:valueTo="1"
-                android:duration="260" android:startOffset="60" android:interpolator="@android:interpolator/linear_out_slow_in"/>
-        </aapt:attr>
-    </target>
-    <target android:name="green">
-        <aapt:attr name="android:animation">
-            <set>
-                <objectAnimator android:propertyName="scaleX" android:valueFrom="0.55" android:valueTo="1"
-                    android:duration="560" android:startOffset="300" android:interpolator="@android:interpolator/overshoot"/>
-                <objectAnimator android:propertyName="scaleY" android:valueFrom="0.55" android:valueTo="1"
-                    android:duration="560" android:startOffset="300" android:interpolator="@android:interpolator/overshoot"/>
-                <objectAnimator android:propertyName="rotation" android:valueFrom="-22" android:valueTo="0"
-                    android:duration="620" android:startOffset="300" android:interpolator="@android:interpolator/decelerate_cubic"/>
-            </set>
+                android:duration="260" android:startOffset="380" android:interpolator="@android:interpolator/linear_out_slow_in"/>
         </aapt:attr>
     </target>
     <target android:name="greenFill">
         <aapt:attr name="android:animation">
             <objectAnimator android:propertyName="fillAlpha" android:valueFrom="0" android:valueTo="1"
-                android:duration="240" android:startOffset="300" android:interpolator="@android:interpolator/linear_out_slow_in"/>
+                android:duration="280" android:startOffset="640" android:interpolator="@android:interpolator/linear_out_slow_in"/>
         </aapt:attr>
     </target>
     <target android:name="greenEdge">
         <aapt:attr name="android:animation">
             <objectAnimator android:propertyName="fillAlpha" android:valueFrom="0" android:valueTo="1"
-                android:duration="240" android:startOffset="300" android:interpolator="@android:interpolator/linear_out_slow_in"/>
+                android:duration="280" android:startOffset="640" android:interpolator="@android:interpolator/linear_out_slow_in"/>
         </aapt:attr>
     </target>
     <target android:name="under0">
         <aapt:attr name="android:animation">
             <objectAnimator android:propertyName="trimPathEnd" android:valueFrom="0" android:valueTo="1"
-                android:duration="380" android:startOffset="620" android:interpolator="@android:interpolator/fast_out_slow_in"/>
+                android:duration="360" android:startOffset="820" android:interpolator="@android:interpolator/fast_out_slow_in"/>
         </aapt:attr>
     </target>
     <target android:name="under1">
         <aapt:attr name="android:animation">
             <objectAnimator android:propertyName="trimPathEnd" android:valueFrom="0" android:valueTo="1"
-                android:duration="260" android:startOffset="900" android:interpolator="@android:interpolator/fast_out_slow_in"/>
+                android:duration="240" android:startOffset="1040" android:interpolator="@android:interpolator/fast_out_slow_in"/>
+        </aapt:attr>
+    </target>
+    <target android:name="spark0">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="trimPathEnd" android:valueFrom="0" android:valueTo="1"
+                android:duration="110" android:startOffset="900" android:interpolator="@android:interpolator/fast_out_slow_in"/>
+        </aapt:attr>
+    </target>
+    <target android:name="spark1">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="trimPathEnd" android:valueFrom="0" android:valueTo="1"
+                android:duration="110" android:startOffset="935" android:interpolator="@android:interpolator/fast_out_slow_in"/>
+        </aapt:attr>
+    </target>
+    <target android:name="spark2">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="trimPathEnd" android:valueFrom="0" android:valueTo="1"
+                android:duration="110" android:startOffset="970" android:interpolator="@android:interpolator/fast_out_slow_in"/>
+        </aapt:attr>
+    </target>
+    <target android:name="spark3">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="trimPathEnd" android:valueFrom="0" android:valueTo="1"
+                android:duration="110" android:startOffset="1005" android:interpolator="@android:interpolator/fast_out_slow_in"/>
+        </aapt:attr>
+    </target>
+    <target android:name="spark4">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="trimPathEnd" android:valueFrom="0" android:valueTo="1"
+                android:duration="110" android:startOffset="1020" android:interpolator="@android:interpolator/fast_out_slow_in"/>
+        </aapt:attr>
+    </target>
+    <target android:name="spark5">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="trimPathEnd" android:valueFrom="0" android:valueTo="1"
+                android:duration="110" android:startOffset="1055" android:interpolator="@android:interpolator/fast_out_slow_in"/>
+        </aapt:attr>
+    </target>
+    <target android:name="spark6">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="trimPathEnd" android:valueFrom="0" android:valueTo="1"
+                android:duration="110" android:startOffset="1090" android:interpolator="@android:interpolator/fast_out_slow_in"/>
+        </aapt:attr>
+    </target>
+    <target android:name="spark7">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="trimPathEnd" android:valueFrom="0" android:valueTo="1"
+                android:duration="110" android:startOffset="1125" android:interpolator="@android:interpolator/fast_out_slow_in"/>
+        </aapt:attr>
+    </target>
+    <target android:name="spark8">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="trimPathEnd" android:valueFrom="0" android:valueTo="1"
+                android:duration="110" android:startOffset="1140" android:interpolator="@android:interpolator/fast_out_slow_in"/>
+        </aapt:attr>
+    </target>
+    <target android:name="spark9">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="trimPathEnd" android:valueFrom="0" android:valueTo="1"
+                android:duration="110" android:startOffset="1175" android:interpolator="@android:interpolator/fast_out_slow_in"/>
+        </aapt:attr>
+    </target>
+    <target android:name="spark10">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="trimPathEnd" android:valueFrom="0" android:valueTo="1"
+                android:duration="110" android:startOffset="1210" android:interpolator="@android:interpolator/fast_out_slow_in"/>
+        </aapt:attr>
+    </target>
+    <target android:name="spark11">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="trimPathEnd" android:valueFrom="0" android:valueTo="1"
+                android:duration="110" android:startOffset="1245" android:interpolator="@android:interpolator/fast_out_slow_in"/>
         </aapt:attr>
     </target>
 </animated-vector>

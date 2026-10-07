@@ -3,7 +3,7 @@
     <style name="Theme.Khutwa.Starting" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">#151B14</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/splash_mark_animated</item>
-        <item name="windowSplashScreenAnimationDuration">1200</item>
+        <item name="windowSplashScreenAnimationDuration">1300</item>
         <item name="postSplashScreenTheme">@style/Theme.Khutwa</item>
     </style>
     <style name="Theme.Khutwa" parent="android:Theme.Material.NoActionBar">

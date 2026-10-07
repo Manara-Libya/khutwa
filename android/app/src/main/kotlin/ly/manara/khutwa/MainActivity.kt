@@ -47,9 +47,12 @@ class MainActivity : ComponentActivity() {
         splash.setOnExitAnimationListener { provider ->
             val icon = provider.iconView
             val curve = android.view.animation.PathInterpolator(0.3f, 0f, 0.8f, 0.15f)  // Material emphasized accelerate
+            // let the pen finish drawing the mark (the app is often ready before it is), then leave
+            val wait = (provider.iconAnimationStartMillis + provider.iconAnimationDurationMillis -
+                android.os.SystemClock.uptimeMillis()).coerceIn(0L, 1300L) + 120L
             icon.animate().scaleX(1.12f).scaleY(1.12f).translationY(-icon.height * 0.06f).alpha(0f)
-                .setDuration(320L).setInterpolator(curve).start()
-            provider.view.animate().alpha(0f).setStartDelay(120L).setDuration(260L).setInterpolator(curve)
+                .setStartDelay(wait).setDuration(320L).setInterpolator(curve).start()
+            provider.view.animate().alpha(0f).setStartDelay(wait + 120L).setDuration(260L).setInterpolator(curve)
                 .withEndAction { provider.remove() }.start()
         }
         enableEdgeToEdge()

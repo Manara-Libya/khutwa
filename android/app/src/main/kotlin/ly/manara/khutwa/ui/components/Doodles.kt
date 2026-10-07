@@ -79,13 +79,16 @@ private class Prepared(val spec: DoodleSpec) {
 /** Draws a doodle at [progress] (0..1): strokes trace along their paths, then fills fade in. */
 private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawDoodle(
     prep: Prepared, color: androidx.compose.ui.graphics.Color, progress: Float, flip: Boolean, alpha: Float = 1f,
+    erased: Float = 0f,
 ) {
     val spec = prep.spec
     val s = minOf(size.width / spec.width, size.height / spec.height)
     val dx = (size.width - spec.width * s) / 2f
     val dy = (size.height - spec.height * s) / 2f
     val strokeEnd = if (prep.hasFills) 0.75f else 1f
-    var drawn = (progress / strokeEnd).coerceIn(0f, 1f) * prep.total
+    val drawnTo = (progress / strokeEnd).coerceIn(0f, 1f) * prep.total
+    val erasedTo = erased.coerceIn(0f, 1f) * prep.total
+    var at = 0f
     val fillAlpha = if (prep.hasFills) ((progress - 0.6f) / 0.4f).coerceIn(0f, 1f) else 0f
     val m = androidx.compose.ui.graphics.Matrix().apply {
         if (flip) { translate(size.width - dx, dy); scale(-s, s) } else { translate(dx, dy); scale(s, s) }
@@ -98,16 +101,19 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawDoodle(
         val part = spec.parts[i]
         if (!part.fill || fillAlpha <= 0f) return@forEachIndexed
         val path = androidx.compose.ui.graphics.Path().apply { addPath(p); transform(m) }
-        drawPath(path, part.color?.let { androidx.compose.ui.graphics.Color(it) } ?: color, alpha = fillAlpha * alpha)
+        drawPath(path, part.color?.let { androidx.compose.ui.graphics.Color(it) } ?: color, alpha = fillAlpha * alpha * (1f - erased))
     }
     prep.paths.forEachIndexed { i, p ->
         val part = spec.parts[i]
-        if (part.fill || drawn <= 0f) return@forEachIndexed
+        if (part.fill) return@forEachIndexed
         val len = prep.lengths[i]
+        val start = (erasedTo - at).coerceIn(0f, len)
+        val end = (drawnTo - at).coerceIn(0f, len)
+        at += len
+        if (end <= start) return@forEachIndexed
         val seg = androidx.compose.ui.graphics.Path()
         measure.setPath(p, false)
-        measure.getSegment(0f, minOf(drawn, len), seg, true)
-        drawn -= len
+        measure.getSegment(start, end, seg, true)
         seg.transform(m)
         drawPath(seg, part.color?.let { androidx.compose.ui.graphics.Color(it) } ?: color, style = stroke, alpha = alpha)
     }
@@ -159,5 +165,36 @@ fun DoodleLoop(spec: DoodleSpec, color: androidx.compose.ui.graphics.Color, modi
         val draw = KhMotion.EmphasizedDecelerate.transform((t / 0.6f).coerceIn(0f, 1f))
         val fade = if (t > 0.8f) 1f - (t - 0.8f) / 0.2f else 1f
         drawDoodle(prep, color, draw, flip, alpha = fade)
+    }
+}
+
+/**
+ * A doodle the pen keeps redrawing: it traces it, leaves it a while, then the pen goes back over it and lifts it
+ * off stroke by stroke (the way it was drawn), and starts again. Starts after [delayMillis].
+ */
+@androidx.compose.runtime.Composable
+fun DoodleCycle(
+    spec: DoodleSpec,
+    color: androidx.compose.ui.graphics.Color,
+    modifier: androidx.compose.ui.Modifier,
+    delayMillis: Long = 0,
+    periodMillis: Int = 4200,
+    mirrorInRtl: Boolean = true,
+) {
+    val prep = androidx.compose.runtime.remember(spec) { Prepared(spec) }
+    val t = androidx.compose.runtime.remember { androidx.compose.animation.core.Animatable(0f) }
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(delayMillis)
+        while (true) {
+            t.snapTo(0f)
+            t.animateTo(1f, androidx.compose.animation.core.tween(periodMillis, easing = androidx.compose.animation.core.LinearEasing))
+        }
+    }
+    val flip = mirrorInRtl && androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl
+    androidx.compose.foundation.Canvas(modifier) {
+        val v = t.value
+        val draw = KhMotion.EmphasizedDecelerate.transform((v / 0.28f).coerceIn(0f, 1f))
+        val erase = KhMotion.EmphasizedDecelerate.transform(((v - 0.68f) / 0.24f).coerceIn(0f, 1f))
+        drawDoodle(prep, color, draw, flip, erased = erase)
     }
 }

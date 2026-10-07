@@ -8,6 +8,11 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.absoluteOffset
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -32,8 +37,8 @@ import ly.manara.khutwa.ui.theme.Kh
 /**
  * The "listen" illustration (illustrations/listen.svg), drawn from its layers so it can move and follow the theme.
  * Entrance (once): the big bubble grows in while its outline draws, the small green bubble pops in, the dots land.
- * Then it stays alive: a hand-drawn spark turns slowly while each ray stretches and shrinks out of step,
- * the bubbles breathe, the dots "type" in a soft wave and the small bubble bobs.
+ * Then it stays hand-drawn: the pen lines "boil" (redrawn a little differently a few times a second, like
+ * frame-by-frame doodle animation), the brand sparkles are drawn, left, and lifted off again, the dots "type".
  */
 @Composable
 fun WelcomeIllustration(modifier: Modifier = Modifier) {
@@ -46,7 +51,6 @@ fun WelcomeIllustration(modifier: Modifier = Modifier) {
     val draw = remember { Animatable(if (played) 1f else 0f) }
     val small = remember { Animatable(if (played) 1f else 0f) }
     val dots = remember { Animatable(if (played) 1f else 0f) }
-    val spark = remember { Animatable(if (played) 1f else 0f) }
     LaunchedEffect(Unit) {
         if (played) return@LaunchedEffect
         kotlinx.coroutines.delay(320)  // let the screen finish sliding in first
@@ -54,25 +58,29 @@ fun WelcomeIllustration(modifier: Modifier = Modifier) {
         launch { draw.animateTo(1f, tween(1100, easing = KhMotion.EmphasizedDecelerate)) }
         launch { kotlinx.coroutines.delay(380); small.animateTo(1f, spring(dampingRatio = 0.45f, stiffness = 320f)) }
         launch { kotlinx.coroutines.delay(820); dots.animateTo(1f, tween(420, easing = KhMotion.EmphasizedDecelerate)) }
-        launch { kotlinx.coroutines.delay(1150); spark.animateTo(1f, spring(dampingRatio = 0.5f, stiffness = 180f)) }
         kotlinx.coroutines.delay(1900); played = true
     }
     val t by rememberInfiniteTransition(label = "welcome").animateFloat(0f, 1f,
         infiniteRepeatable(tween(2400, easing = LinearEasing)), label = "t")
-    val loop = rememberInfiniteTransition(label = "spark")
-    val spin by loop.animateFloat(0f, 360f, infiniteRepeatable(tween(14000, easing = LinearEasing)), label = "spin")
-    val pulse by loop.animateFloat(0f, 1f, infiniteRepeatable(tween(3200, easing = LinearEasing)), label = "pulse")
+    // three hand-redrawn versions of each outline, cycled at about 7 frames a second
+    val boiled = remember { listOf(1, 3).associateWith { i -> (0..2).map { boil(p[i], it) } } }
+    val frame by rememberInfiniteTransition(label = "boil").animateFloat(0f, 3f,
+        infiniteRepeatable(tween(420, easing = LinearEasing)), label = "frame")
     val stroke = Stroke(width = 3.6f, cap = StrokeCap.Round, join = StrokeJoin.Round)
-    Canvas(modifier) {
+    Box(modifier) {
+    Canvas(Modifier.matchParentSize()) {
         val s = minOf(size.width, size.height) / 240f
         translate((size.width - 240f * s) / 2f, (size.height - 240f * s) / 2f) {
             scale(s, s, pivot = Offset.Zero) {
                 // big bubble: grows from its tail, outline traces itself
-                val breathe = 1f + 0.018f * kotlin.math.sin(t * 2f * Math.PI).toFloat() * big.value
-                scale((0.35f + 0.65f * big.value) * breathe, pivot = Offset(60f, 150f)) {
+                scale(0.35f + 0.65f * big.value, pivot = Offset(60f, 150f)) {
                     drawPath(p[0], c.greenSoft, alpha = big.value.coerceIn(0f, 1f))
-                    val seg = Path(); PathMeasure().apply { setPath(p[1], false); getSegment(0f, outlineLen * draw.value, seg, true) }
-                    drawPath(seg, c.ink, style = stroke)
+                    val f = frame.toInt().coerceAtMost(2)
+                    if (draw.value >= 1f) drawPath(boiled.getValue(1)[f], c.ink, style = stroke)
+                    else {
+                        val seg = Path(); PathMeasure().apply { setPath(p[1], false); getSegment(0f, outlineLen * draw.value, seg, true) }
+                        drawPath(seg, c.ink, style = stroke)
+                    }
                     // dots: land, then type in a soft wave
                     for (i in 0..2) {
                         val land = ((dots.value - i * 0.18f) / 0.64f).coerceIn(0f, 1f)
@@ -87,31 +95,38 @@ fun WelcomeIllustration(modifier: Modifier = Modifier) {
                     rotate(bob * 1.6f, pivot = Offset(180f, 160f)) {
                         scale(small.value, pivot = Offset(180f, 160f)) {
                             drawPath(p[2], c.green)
-                            val seg2 = Path(); PathMeasure().apply { setPath(p[3], false); getSegment(0f, smallLen * small.value.coerceIn(0f, 1f), seg2, true) }
-                            drawPath(seg2, c.ink, style = stroke)
+                            if (small.value >= 1f && small.isRunning.not()) drawPath(boiled.getValue(3)[(frame.toInt() + 1) % 3], c.ink, style = stroke)
+                            else {
+                                val seg2 = Path(); PathMeasure().apply { setPath(p[3], false); getSegment(0f, smallLen * small.value.coerceIn(0f, 1f), seg2, true) }
+                                drawPath(seg2, c.ink, style = stroke)
+                            }
                         }
-                    }
-                }
-                // the spark: rays of uneven length, each breathing on its own phase, the whole thing turning slowly
-                if (spark.value > 0f) rotate(spin + 40f * (1f - spark.value), pivot = SPARK) {
-                    for (i in RAYS.indices) {
-                        val phase = kotlin.math.sin((pulse + i * 0.137f) * 2f * Math.PI).toFloat()
-                        val grow = ((spark.value - i * 0.04f) / 0.6f).coerceIn(0f, 1.15f)
-                        val len = 27f * RAYS[i] * (0.78f + 0.22f * phase) * grow
-                        val a = Math.toRadians(i * 360.0 / RAYS.size)
-                        val dx = kotlin.math.cos(a).toFloat(); val dy = kotlin.math.sin(a).toFloat()
-                        drawLine(c.clay, SPARK + Offset(dx * 4f, dy * 4f), SPARK + Offset(dx * (4f + len), dy * (4f + len)),
-                            strokeWidth = 6.4f, cap = StrokeCap.Round)
                     }
                 }
             }
         }
     }
+    // the brand sparkles: drawn by the pen once the bubbles have landed, left a while, lifted off, drawn again
+    DoodleCycle(Doodles.SPARKLES, c.ink, Modifier.align(androidx.compose.ui.AbsoluteAlignment.TopRight).absoluteOffset(x = 18.dp, y = (-2).dp).size(44.dp),
+        delayMillis = if (played) 0 else 1700, periodMillis = 4600, mirrorInRtl = false)
+    }
 }
 
-private val SPARK = Offset(204f, 40f)
-/** Ray lengths, deliberately uneven like a hand-drawn spark. */
-private val RAYS = floatArrayOf(1f, 0.62f, 0.88f, 0.7f, 0.96f, 0.58f, 0.84f, 0.66f, 0.92f, 0.6f)
+/** The same line redrawn by hand: resampled along its length and nudged sideways by a smooth wobble per [seed]. */
+private fun boil(path: Path, seed: Int): Path {
+    val m = PathMeasure().apply { setPath(path, false) }
+    val len = m.length
+    val out = Path()
+    var d = 0f
+    while (d <= len) {
+        val pos = m.getPosition(d); val tan = m.getTangent(d)
+        val w = 1.5f * (kotlin.math.sin(d * 0.07f + seed * 2.1f) * 0.6f + kotlin.math.sin(d * 0.19f + seed * 4.7f) * 0.4f)
+        val x = pos.x - tan.y * w; val y = pos.y + tan.x * w
+        if (d == 0f) out.moveTo(x, y) else out.lineTo(x, y)
+        d += 2.5f
+    }
+    return out
+}
 
 private val LAYERS = listOf(
     "M34 74C36.7 62.3 40.3 50.7 52 44C63.7 37.3 87 33.7 104 34C121 34.3 143 38.3 154 46C165 53.7 168.3 68.3 170 80C171.7 91.7 169 106 164 116C159 126 151.7 135 140 140C128.3 145 104.7 145 94 146C83.3 147 84.3 141 76 146C67.7 151 48 176.7 44 176C40 175.3 53.3 152.3 52 142C50.7 131.7 39 125.3 36 114C33 102.7 31.3 85.7 34 74Z",

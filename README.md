@@ -20,7 +20,7 @@ Built for the AI4LY Codathon: Mental Health in Libya. Final pitch: 8 October 202
 | Hiba Alshabani | AI lead |
 | Ahmed Alaeb | Frontend |
 | Kawtar Gdoure | Language and testing |
-| Anas Al-Thaabit | TBD |
+| Anas Al-Thaabit | Privacy shield |
 
 ## Status
 

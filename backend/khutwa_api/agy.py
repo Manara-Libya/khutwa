@@ -218,9 +218,10 @@ class AgyRouter:
                 self.pools[(task, model)] = Pool(agent, model, warm)
 
     def json_task(self, task: str, text: str, schema: type[BaseModel]) -> tuple[BaseModel | None, str | None]:
-        for model in TASKS[task][1]:
+        for attempt, model in enumerate(TASKS[task][1]):
+            timeout = config.PRIMARY_TIMEOUT_SECONDS if attempt == 0 else config.TIMEOUT_SECONDS
             try:
-                result = self.pools[(task, model)].acquire().ask_json(fence(text), schema, config.TIMEOUT_SECONDS)
+                result = self.pools[(task, model)].acquire().ask_json(fence(text), schema, timeout)
             except AgyUnavailable:
                 result = None
             if result is not None:

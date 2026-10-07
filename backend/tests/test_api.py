@@ -281,6 +281,34 @@ def test_pool_never_keeps_more_than_its_size_warm(monkeypatch):
     assert len(started) - len(workers) == 2  # exactly `size` spares, however the calls interleave
 
 
+def test_first_model_gets_the_shorter_timeout(monkeypatch):
+    """A stalled first model should hand over to the fallback after PRIMARY_TIMEOUT, not the full timeout."""
+    from khutwa_api import agy
+
+    seen = []
+
+    class FakeWorker:
+        def __init__(self, model):
+            self.model = model
+
+        def ask_json(self, content, schema, timeout):
+            seen.append((self.model, timeout))
+            return None if self.model == config.QUALITY_MODEL else schema(reflection="ok", fallback=False)
+
+    class FakePool:
+        def __init__(self, model):
+            self.model = model
+
+        def acquire(self):
+            return FakeWorker(self.model)
+
+    router = agy.AgyRouter.__new__(agy.AgyRouter)
+    router.pools = {("reflect", m): FakePool(m) for m in (config.QUALITY_MODEL, config.FAST_MODEL)}
+    from khutwa_api.schemas import ReflectOut
+    result, model = router.json_task("reflect", "x", ReflectOut)
+    assert model == config.FAST_MODEL
+    assert seen == [(config.QUALITY_MODEL, config.PRIMARY_TIMEOUT_SECONDS), (config.FAST_MODEL, config.TIMEOUT_SECONDS)]
+
 
 HISTORY = [{"role": "user", "text": "راني تعبان من الخدمة"}, {"role": "assistant", "text": "فاهمك. من قداش؟"},
            {"role": "user", "text": "من شهرين"}, {"role": "assistant", "text": "حاسس بيك. شن يصير؟"}]

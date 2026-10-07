@@ -31,7 +31,8 @@ flutter:
   uses-material-design: true
   generate: true
 
-  # Cairo (OFL, see assets/google_fonts/OFL.txt), bundled so the app renders
+  # Baloo Bhaijaan 2 and IBM Plex Sans Arabic (OFL, see
+  # assets/google_fonts/OFL.txt), the brand fonts, bundled so the app renders
   # offline from the first launch; google_fonts picks these files up by name.
   assets:
     - assets/google_fonts/

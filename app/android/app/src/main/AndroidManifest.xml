@@ -4,13 +4,14 @@
     <!-- allowBackup/fullBackupContent off: the saved plan must never be
          copied to cloud backups (#55). -->
     <application
-        android:label="khutwa_app"
+        android:label="خطوة"
         android:name="${applicationName}"
         android:allowBackup="false"
         android:fullBackupContent="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:supportsRtl="true"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round">
         <activity
             android:name=".MainActivity"
             android:exported="true"

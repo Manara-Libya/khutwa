@@ -165,6 +165,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('إرسال'));
     await tester.pump(const Duration(milliseconds: 500));
+    // Let the scroll to the end of the chat run.
+    for (var i = 0; i < 4; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
 
     expect(find.text('شن أكثر حاجة تتعبك هالأيام؟'), findsOneWidget);
 

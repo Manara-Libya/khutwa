@@ -22,7 +22,13 @@ class MessageCard extends StatelessWidget {
     final text = context.textStyles;
     return Material(
       color: context.colors.surfaceContainer,
-      borderRadius: BorderRadius.circular(20),
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.all(Radius.circular(AppRadius.lg)),
+        side: BorderSide(
+          color: context.colors.onSurface,
+          width: AppStroke.hand,
+        ),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

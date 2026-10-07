@@ -21,14 +21,25 @@ class SentBubble extends StatelessWidget {
         margin: const EdgeInsetsDirectional.only(start: 48, bottom: 20),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: colors.surfaceContainer,
-          borderRadius: BorderRadius.circular(20),
+          color: colors.primary,
+          border: Border.all(color: AppColors.onGreen, width: AppStroke.hand),
+          borderRadius: const BorderRadiusDirectional.only(
+            topStart: Radius.circular(AppRadius.lg),
+            topEnd: Radius.circular(22),
+            bottomStart: Radius.circular(AppRadius.lg),
+            bottomEnd: Radius.circular(AppRadius.sm),
+          ),
         ),
         child: Column(
           spacing: 8,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(text, style: context.textStyles.bodyLarge),
+            Text(
+              text,
+              style: context.textStyles.bodyLarge?.copyWith(
+                color: colors.onPrimary,
+              ),
+            ),
             if (sentLabel case final label?)
               Row(
                 spacing: 6,
@@ -39,14 +50,14 @@ class SentBubble extends StatelessWidget {
                     child: Icon(
                       Icons.lock_outline_rounded,
                       size: 16,
-                      color: colors.onSurfaceVariant,
+                      color: colors.onPrimary,
                     ),
                   ),
                   Flexible(
                     child: Text(
                       label,
                       style: context.textStyles.bodySmall?.copyWith(
-                        color: colors.onSurfaceVariant,
+                        color: colors.onPrimary,
                       ),
                     ),
                   ),

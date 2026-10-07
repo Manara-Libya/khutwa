@@ -17,7 +17,7 @@ class UrgentButton extends StatelessWidget {
       label: l10n.urgentTitle,
       excludeSemantics: true,
       child: Material(
-        color: AppColors.urgent,
+        color: context.brand.urgent,
         shape: const StadiumBorder(),
         child: InkWell(
           customBorder: const StadiumBorder(),
@@ -28,15 +28,15 @@ class UrgentButton extends StatelessWidget {
               spacing: 6,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
+                Icon(
                   Icons.warning_amber_rounded,
-                  color: Colors.white,
+                  color: context.brand.onUrgent,
                   size: 18,
                 ),
                 Text(
                   l10n.urgentLabel,
                   style: context.textStyles.labelLarge?.copyWith(
-                    color: Colors.white,
+                    color: context.brand.onUrgent,
                     fontSize: 15,
                   ),
                 ),

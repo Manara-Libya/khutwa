@@ -18,8 +18,16 @@ class ConsentToggleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: context.colors.surfaceContainer,
-      borderRadius: BorderRadius.circular(20),
+      color: value
+          ? context.colors.primaryContainer
+          : context.colors.surfaceContainer,
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.all(Radius.circular(AppRadius.lg)),
+        side: BorderSide(
+          color: context.colors.onSurface,
+          width: AppStroke.hand,
+        ),
+      ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () => onChanged(!value),

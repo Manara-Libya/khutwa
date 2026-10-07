@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../app/app_theme.dart';
+
 /// Themed text field. [radius] and [bordered] cover the pill (forms), rounded
 /// (multi-line) and borderless (on dark backgrounds) variants.
 class AppTextField extends StatelessWidget {
@@ -53,10 +55,10 @@ class AppTextField extends StatelessWidget {
         errorText: errorText,
         suffixIcon: suffix,
         contentPadding: maxLines == 1 ? null : const EdgeInsets.all(18),
-        enabledBorder: border(colors.outline, 1.5),
-        focusedBorder: border(colors.secondary, 2),
-        errorBorder: border(colors.error, 1.5),
-        focusedErrorBorder: border(colors.error, 2),
+        enabledBorder: border(colors.outline, AppStroke.hand),
+        focusedBorder: border(colors.onSurface, AppStroke.bold),
+        errorBorder: border(colors.onSurface, AppStroke.hand),
+        focusedErrorBorder: border(colors.onSurface, AppStroke.bold),
       ),
     );
   }

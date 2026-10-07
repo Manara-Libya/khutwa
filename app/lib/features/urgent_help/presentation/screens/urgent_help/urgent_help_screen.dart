@@ -56,12 +56,12 @@ class UrgentHelpScreen extends StatelessWidget {
             32,
           ),
           children: [
-            const Align(
+            Align(
               alignment: AlignmentDirectional.centerStart,
               child: Icon(
                 Icons.warning_amber_rounded,
                 size: 44,
-                color: AppColors.urgent,
+                color: context.brand.urgent,
               ),
             ),
             const SizedBox(height: 12),

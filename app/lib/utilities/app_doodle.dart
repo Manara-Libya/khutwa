@@ -115,9 +115,9 @@ class _DoodlePainter extends CustomPainter {
     final radius = s * 0.46;
 
     if (stem) {
-      // A short lavender stem under the flower, with a foot line.
+      // A short clay stem under the flower, with a foot line.
       final stemRect = Rect.fromLTWH(s * 0.46, s * 0.62, s * 0.09, s * 0.6);
-      canvas.drawRect(stemRect, Paint()..color = AppColors.lavender);
+      canvas.drawRect(stemRect, Paint()..color = AppColors.clay);
       canvas.drawLine(
         Offset(s * 0.38, s * 1.24),
         Offset(s * 0.56, s * 1.24),

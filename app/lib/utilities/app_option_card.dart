@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
 
-/// A plain raised (surfaceContainer) card; outlined in ink when selected.
+/// A raised card drawn with the pen outline; when selected it turns
+/// green-soft and gets the print shadow.
 class AppOptionCard extends StatelessWidget {
   const AppOptionCard({
     super.key,
@@ -17,30 +18,33 @@ class AppOptionCard extends StatelessWidget {
   final bool selected;
   final EdgeInsetsGeometry padding;
 
-  static const _radius = BorderRadius.all(Radius.circular(20));
+  static const _radius = BorderRadius.all(Radius.circular(AppRadius.lg));
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    return Material(
-      color: colors.surfaceContainer,
-      shape: RoundedRectangleBorder(
+    return DecoratedBox(
+      decoration: BoxDecoration(
         borderRadius: _radius,
-        side: BorderSide(
-          color: selected ? colors.onSurface : Colors.transparent,
-          width: 2,
-        ),
+        boxShadow: selected ? context.brand.printShadow : null,
       ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(padding: padding, child: child),
+      child: Material(
+        color: selected ? colors.primaryContainer : colors.surfaceContainer,
+        shape: RoundedRectangleBorder(
+          borderRadius: _radius,
+          side: BorderSide(color: colors.onSurface, width: AppStroke.hand),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(padding: padding, child: child),
+        ),
       ),
     );
   }
 }
 
-/// Icon in a soft circle, used inside cards.
+/// Icon in a green-soft circle with the pen outline, used inside cards.
 class AppIconBadge extends StatelessWidget {
   const AppIconBadge({super.key, required this.icon, this.size = 44});
 
@@ -53,8 +57,12 @@ class AppIconBadge extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: context.colors.onSurface.withValues(alpha: 0.06),
+        color: context.colors.primaryContainer,
         shape: BoxShape.circle,
+        border: Border.all(
+          color: context.colors.onSurface,
+          width: AppStroke.hand,
+        ),
       ),
       child: Icon(icon, size: size * 0.5, color: context.colors.onSurface),
     );

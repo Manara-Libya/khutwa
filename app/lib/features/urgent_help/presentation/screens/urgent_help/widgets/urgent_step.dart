@@ -23,8 +23,8 @@ class UrgentStep extends StatelessWidget {
       children: [
         CircleAvatar(
           radius: 16,
-          backgroundColor: AppColors.urgent,
-          foregroundColor: Colors.white,
+          backgroundColor: context.brand.urgent,
+          foregroundColor: context.brand.onUrgent,
           child: Text(
             '$number',
             style: const TextStyle(fontWeight: FontWeight.w700),

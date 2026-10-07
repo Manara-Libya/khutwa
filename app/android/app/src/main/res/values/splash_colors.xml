@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Khutwa `paper`; dark value in values-night. -->
+    <color name="splash_background">#F4F1EA</color>
+</resources>

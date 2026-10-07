@@ -52,8 +52,12 @@ class ConversationComposer extends StatelessWidget {
                 fixedSize: const Size.square(54),
                 backgroundColor: colors.primary,
                 foregroundColor: colors.onPrimary,
-                disabledBackgroundColor: colors.primary.withValues(alpha: 0.25),
-                disabledForegroundColor: colors.onPrimary,
+                disabledBackgroundColor: colors.surfaceDim,
+                disabledForegroundColor: colors.onSurfaceVariant,
+                side: BorderSide(
+                  color: canSend ? AppColors.onGreen : colors.outline,
+                  width: AppStroke.hand,
+                ),
               ),
               // matchTextDirection: points the right way in RTL.
               icon: const Icon(Icons.arrow_upward_rounded),

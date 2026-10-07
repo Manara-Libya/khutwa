@@ -31,7 +31,10 @@ class ContactCard extends StatelessWidget {
     final text = context.textStyles;
     return Material(
       color: colors.surfaceContainer,
-      borderRadius: BorderRadius.circular(20),
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.all(Radius.circular(AppRadius.lg)),
+        side: BorderSide(color: colors.onSurface, width: AppStroke.hand),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
@@ -62,14 +65,14 @@ class ContactCard extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: isDemo
-                          ? AppColors.urgent.withValues(alpha: 0.1)
-                          : AppColors.mint.withValues(alpha: 0.25),
-                      borderRadius: BorderRadius.circular(8),
+                          ? context.brand.sunSoft
+                          : colors.primaryContainer,
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
                     child: Text(
                       note,
                       style: text.bodySmall?.copyWith(
-                        color: isDemo ? AppColors.urgent : colors.onSurface,
+                        color: colors.onSurface,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -80,8 +83,9 @@ class ContactCard extends StatelessWidget {
             FilledButton.icon(
               onPressed: onCall,
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.urgent,
-                foregroundColor: Colors.white,
+                backgroundColor: context.brand.urgent,
+                foregroundColor: context.brand.onUrgent,
+                side: BorderSide.none,
                 minimumSize: const Size(0, 52),
                 padding: const EdgeInsets.symmetric(horizontal: 18),
                 shape: const StadiumBorder(),

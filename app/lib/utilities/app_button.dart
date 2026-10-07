@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
-/// Full-width primary button: ink on light screens, white on dark ones
-/// (from the theme). Disabled keeps the same shape, faded.
+import '../app/app_theme.dart';
+
+/// Full-width primary button: a green pill with the pen outline and the
+/// hard "print" shadow (from the theme). Disabled drops the shadow and sinks
+/// into the paper.
 class AppButton extends StatelessWidget {
   const AppButton({
     super.key,
@@ -24,16 +27,23 @@ class AppButton extends StatelessWidget {
       backgroundColor: backgroundColor,
       foregroundColor: foregroundColor,
     );
+    final button = icon == null
+        ? FilledButton(onPressed: onPressed, style: style, child: Text(label))
+        : FilledButton.icon(
+            onPressed: onPressed,
+            style: style,
+            icon: Icon(icon),
+            label: Text(label),
+          );
     return SizedBox(
       width: double.infinity,
-      child: icon == null
-          ? FilledButton(onPressed: onPressed, style: style, child: Text(label))
-          : FilledButton.icon(
-              onPressed: onPressed,
-              style: style,
-              icon: Icon(icon),
-              label: Text(label),
-            ),
+      child: DecoratedBox(
+        decoration: ShapeDecoration(
+          shape: const StadiumBorder(),
+          shadows: onPressed == null ? null : context.brand.printShadow,
+        ),
+        child: button,
+      ),
     );
   }
 }

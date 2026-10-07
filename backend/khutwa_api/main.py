@@ -17,7 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse, StreamingResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from . import agents, config, guardrails
+from . import a2ui, agents, config, guardrails
 from .agy import TASKS, AgyRouter, AgyUnavailable
 from .schemas import (AnalyzeIn, AnalyzeOut, ChatCompletionRequest, DevPrompt, DevTryIn, DevTryOut, ReflectModelOut, ReflectOut,
                       RiskModelOut, RiskOut, SuggestModelOut, SuggestOut, TextIn)
@@ -193,7 +193,9 @@ def analyze(body: AnalyzeIn, request: Request) -> AnalyzeOut:
                       situation=suggestions.situation if suggestions else [],
                       suggestions=suggestions.suggestions if suggestions else [],
                       fallback=reflection.fallback or (ready and suggestions is None),
-                      support_ready=ready, elapsed_ms=elapsed())
+                      support_ready=ready,
+                      a2ui=a2ui.support_surface(suggestions.suggestions, f"support-{uuid.uuid4().hex[:8]}") if suggestions else [],
+                      elapsed_ms=elapsed())
 
 
 # Phrases that ask who to turn to; then support options come straight away.

@@ -78,6 +78,9 @@ class AnalyzeOut(BaseModel):
     suggestions: list[Suggestion] = []
     fallback: bool = False
     support_ready: bool = Field(default=True, description="False while Khutwa is still listening: no support options yet, keep the conversation going. True: show the support options (`suggestions`, or the generic ones if empty).")
+    a2ui: list[dict] = Field(default=[], description="A2UI v0.8 messages (surfaceUpdate, dataModelUpdate, beginRendering) that render the "
+                             "support options inline: a card per option with its reason, the editable draft and send-it-yourself / copy "
+                             "buttons. Built by the server from validated suggestions; empty until support_ready.")
     elapsed_ms: int
 
 

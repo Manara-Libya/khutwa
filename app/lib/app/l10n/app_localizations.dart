@@ -362,11 +362,11 @@ abstract class AppLocalizations {
   /// **'If you are in danger or thinking about hurting yourself, contact emergency services or a trusted adult right away. You are not alone.'**
   String get urgentBody;
 
-  /// No description provided for @urgentCall.
+  /// No description provided for @urgentCallNow.
   ///
   /// In en, this message translates to:
-  /// **'Call emergency services ({number})'**
-  String urgentCall(String number);
+  /// **'Call'**
+  String get urgentCallNow;
 
   /// No description provided for @urgentCallFailed.
   ///
@@ -719,7 +719,7 @@ abstract class AppLocalizations {
   /// No description provided for @consentPointRedaction.
   ///
   /// In en, this message translates to:
-  /// **'Before anything leaves your phone, names, places and numbers are removed, and you see exactly what will be sent.'**
+  /// **'Before anything leaves your phone, names, places and numbers are removed automatically.'**
   String get consentPointRedaction;
 
   /// No description provided for @consentPointModel.
@@ -751,12 +751,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'What\'s on your mind?'**
   String get writeTitle;
-
-  /// No description provided for @writeSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Write however feels natural, in Arabic or Latin letters. Nothing leaves your phone before you see it and agree.'**
-  String get writeSubtitle;
 
   /// No description provided for @writeHint.
   ///
@@ -1105,6 +1099,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Call {name}'**
   String urgentCallContact(String name);
+
+  /// No description provided for @consentHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Our commitment to you.'**
+  String get consentHeading;
+
+  /// No description provided for @consentIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Your mental health is personal. Before we start, here\'s what you should know:'**
+  String get consentIntro;
+
+  /// No description provided for @consentToggle.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'m 13 or older, I understand Khutwa doesn\'t replace professionals or emergency services, and I accept the Terms of Service and Privacy Policy.'**
+  String get consentToggle;
+
+  /// No description provided for @chatTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Let\'s start simple.'**
+  String get chatTitle;
+
+  /// No description provided for @chatIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Write what\'s on your mind, however feels natural. Before anything leaves your phone, names, places and numbers are removed.'**
+  String get chatIntro;
+
+  /// No description provided for @chatSentAs.
+  ///
+  /// In en, this message translates to:
+  /// **'What left your phone: {text}'**
+  String chatSentAs(String text);
+
+  /// No description provided for @urgentSafetyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your safety matters most right now'**
+  String get urgentSafetyTitle;
+
+  /// No description provided for @urgentIntroAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Thank you for writing what\'s on your mind. What you wrote makes us want to be sure you\'re OK, and here are steps you can take right now.'**
+  String get urgentIntroAuto;
+
+  /// No description provided for @urgentStepPerson.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell someone near you now: a friend, a family member you trust, a neighbour, anyone you feel safe with. Don\'t stay alone.'**
+  String get urgentStepPerson;
+
+  /// No description provided for @urgentStepHospital.
+  ///
+  /// In en, this message translates to:
+  /// **'If you feel you might hurt yourself, go to the nearest hospital emergency department, or have someone take you.'**
+  String get urgentStepHospital;
+
+  /// No description provided for @urgentStepSafeSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'Move away from anything that could hurt you, and stay somewhere with other people.'**
+  String get urgentStepSafeSpace;
+
+  /// No description provided for @urgentContactsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Numbers you can call'**
+  String get urgentContactsTitle;
+
+  /// No description provided for @urgentContactVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'We checked that this number answers on {date}'**
+  String urgentContactVerified(String date);
+
+  /// No description provided for @urgentContactDemo.
+  ///
+  /// In en, this message translates to:
+  /// **'Demo number – not real'**
+  String get urgentContactDemo;
+
+  /// No description provided for @urgentNoContacts.
+  ///
+  /// In en, this message translates to:
+  /// **'So far we couldn\'t confirm that any number answers, so we haven\'t listed any. You can take the steps above right now.'**
+  String get urgentNoContacts;
+
+  /// No description provided for @urgentMessageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Write a message to someone you trust'**
+  String get urgentMessageTitle;
+
+  /// No description provided for @urgentMessageText.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'m not OK right now and I need you. Can you come or call me?'**
+  String get urgentMessageText;
+
+  /// No description provided for @urgentCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy the message'**
+  String get urgentCopy;
+
+  /// No description provided for @urgentFooter.
+  ///
+  /// In en, this message translates to:
+  /// **'Khutwa is not an emergency service, and nobody reads your messages. These steps were written and reviewed by the team, not by the AI.'**
+  String get urgentFooter;
 }
 
 class _AppLocalizationsDelegate

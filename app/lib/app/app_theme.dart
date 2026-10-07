@@ -1,20 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+/// Calm, editorial palette: warm cream pages, near-black ink, hand-drawn
+/// line art, and black "focus" screens for the conversation.
 abstract final class AppColors {
-  // Core palette.
-  static const primary = Color(0xFF1A365D); // Deep Navy
-  static const secondary = Color(0xFF00B4D8); // Vibrant Cyan
-  static const background = Color(0xFFF8FAFC); // Soft Off-White
-  static const card = Color(0xFFFFFFFF); // Pure White
-  static const text = Color(0xFF0F172A); // Slate Dark
+  static const cream = Color(0xFFF3F1EC); // page background
+  static const ink = Color(0xFF1F1B17); // text, primary buttons
+  static const card = Color(0xFFFFFFFF); // raised surfaces
+  static const muted = Color(0xFF6B655E); // secondary text
+  static const line = Color(0xFFE4E0D8); // hairlines
 
-  // Derived neutrals and tints.
-  static const textMuted = Color(0xFF475569);
-  static const border = Color(0xFFE2E8F0);
-  static const urgent = Color(0xFFDC2626);
-  static final secondarySoft = secondary.withValues(alpha: 0.12);
-  static final chatGradientEnd = Color.lerp(primary, secondary, 0.45)!;
+  static const night = Color(0xFF000000); // dark screens
+  static const nightCard = Color(0xFF161616);
+  static const nightMuted = Color(0xFFA8A29A);
+  static const nightLine = Color(0xFF2A2A2A);
+
+  static const lavender = Color(0xFFCFCBF2); // illustration accent
+  static const mint = Color(0xFF8ED19B); // toggles, success
+  static const urgent = Color(0xFFD93B30); // 🆘 only
 }
 
 abstract final class AppSpacing {
@@ -29,50 +32,80 @@ abstract final class AppSpacing {
 }
 
 abstract final class AppTheme {
-  /// Pass [useGoogleFonts] = false where the font can't be fetched (tests).
+  /// Pass [useGoogleFonts] = false where the font can't be loaded (tests).
   static ThemeData light({bool useGoogleFonts = true}) {
     // House rule: `surface` is the page background, `surfaceContainer` is
     // for cards and other raised surfaces.
     const colors = ColorScheme(
       brightness: Brightness.light,
-      primary: AppColors.primary,
+      primary: AppColors.ink,
       onPrimary: Colors.white,
-      secondary: AppColors.secondary,
-      onSecondary: AppColors.primary,
+      secondary: AppColors.mint,
+      onSecondary: AppColors.ink,
       error: AppColors.urgent,
       onError: Colors.white,
-      surface: AppColors.background,
+      surface: AppColors.cream,
       surfaceContainer: AppColors.card,
-      onSurface: AppColors.text,
-      onSurfaceVariant: AppColors.textMuted,
-      outline: AppColors.border,
+      onSurface: AppColors.ink,
+      onSurfaceVariant: AppColors.muted,
+      outline: AppColors.line,
     );
+    final text = _textTheme(colors, useGoogleFonts: useGoogleFonts);
+    return _build(colors, text);
+  }
 
-    const baseText = TextTheme(
+  /// The dark "focus" variant of [light], keeping its fonts.
+  static ThemeData dark(ThemeData light) {
+    const colors = ColorScheme(
+      brightness: Brightness.dark,
+      primary: Colors.white,
+      onPrimary: AppColors.night,
+      secondary: AppColors.mint,
+      onSecondary: AppColors.ink,
+      error: AppColors.urgent,
+      onError: Colors.white,
+      surface: AppColors.night,
+      surfaceContainer: AppColors.nightCard,
+      onSurface: Colors.white,
+      onSurfaceVariant: AppColors.nightMuted,
+      outline: AppColors.nightLine,
+    );
+    final text = light.textTheme.apply(
+      bodyColor: colors.onSurface,
+      displayColor: colors.onSurface,
+    );
+    return _build(colors, text);
+  }
+
+  static TextTheme _textTheme(
+    ColorScheme colors, {
+    required bool useGoogleFonts,
+  }) {
+    const base = TextTheme(
       displaySmall: TextStyle(
         fontSize: 34,
-        fontWeight: FontWeight.w800,
-        height: 1.3,
+        fontWeight: FontWeight.w700,
+        height: 1.2,
       ),
       headlineMedium: TextStyle(
-        fontSize: 26,
-        fontWeight: FontWeight.w800,
-        height: 1.35,
+        fontSize: 28,
+        fontWeight: FontWeight.w700,
+        height: 1.25,
       ),
       titleLarge: TextStyle(
         fontSize: 20,
         fontWeight: FontWeight.w700,
-        height: 1.4,
+        height: 1.35,
       ),
       titleMedium: TextStyle(
         fontSize: 17,
-        fontWeight: FontWeight.w700,
+        fontWeight: FontWeight.w600,
         height: 1.4,
       ),
       bodyLarge: TextStyle(
         fontSize: 17,
         fontWeight: FontWeight.w400,
-        height: 1.6,
+        height: 1.55,
       ),
       bodyMedium: TextStyle(
         fontSize: 15,
@@ -82,15 +115,26 @@ abstract final class AppTheme {
       bodySmall: TextStyle(
         fontSize: 13,
         fontWeight: FontWeight.w400,
-        height: 1.5,
+        height: 1.45,
       ),
-      labelLarge: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+      labelLarge: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
     );
-    final colored = baseText.apply(
+    final colored = base.apply(
       bodyColor: colors.onSurface,
       displayColor: colors.onSurface,
     );
-    final text = useGoogleFonts ? _withCairo(colored) : colored;
+    return useGoogleFonts ? _withCairo(colored) : colored;
+  }
+
+  static ThemeData _build(ColorScheme colors, TextTheme text) {
+    const radius = BorderRadius.all(Radius.circular(18));
+    final buttonShape = const RoundedRectangleBorder(borderRadius: radius);
+    OutlineInputBorder field(Color color, double width) => OutlineInputBorder(
+      borderRadius: radius,
+      borderSide: width == 0
+          ? BorderSide.none
+          : BorderSide(color: color, width: width),
+    );
 
     return ThemeData(
       useMaterial3: true,
@@ -100,9 +144,9 @@ abstract final class AppTheme {
       cardTheme: CardThemeData(
         color: colors.surfaceContainer,
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
-          side: BorderSide(color: colors.outline),
+        margin: EdgeInsets.zero,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(20)),
         ),
       ),
       bottomSheetTheme: BottomSheetThemeData(
@@ -115,51 +159,53 @@ abstract final class AppTheme {
         style: FilledButton.styleFrom(
           backgroundColor: colors.primary,
           foregroundColor: colors.onPrimary,
-          shape: const StadiumBorder(),
+          disabledBackgroundColor: colors.primary.withValues(alpha: 0.25),
+          disabledForegroundColor: colors.onPrimary.withValues(alpha: 0.7),
+          minimumSize: const Size.fromHeight(56),
+          shape: buttonShape,
           textStyle: text.labelLarge,
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          shape: const StadiumBorder(),
-          side: BorderSide(color: colors.outline, width: 1.5),
+          foregroundColor: colors.onSurface,
+          minimumSize: const Size.fromHeight(56),
+          shape: buttonShape,
+          side: BorderSide(color: colors.onSurface, width: 1.5),
           textStyle: text.labelLarge,
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: colors.onSurfaceVariant,
+          foregroundColor: colors.onSurface,
           textStyle: text.labelLarge,
         ),
+      ),
+      switchTheme: SwitchThemeData(
+        trackColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? AppColors.mint
+              : colors.outline,
+        ),
+        thumbColor: const WidgetStatePropertyAll(Colors.white),
+        trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: colors.surfaceContainer,
         hintStyle: text.bodyLarge?.copyWith(color: colors.onSurfaceVariant),
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 22,
+          horizontal: 20,
           vertical: 16,
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(28),
-          borderSide: BorderSide(color: colors.outline, width: 1.5),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(28),
-          borderSide: BorderSide(color: colors.secondary, width: 2),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(28),
-          borderSide: BorderSide(color: colors.error, width: 1.5),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(28),
-          borderSide: BorderSide(color: colors.error, width: 2),
-        ),
+        enabledBorder: field(colors.outline, 0),
+        focusedBorder: field(colors.onSurface, 1.5),
+        errorBorder: field(colors.error, 1.5),
+        focusedErrorBorder: field(colors.error, 2),
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: colors.primary,
-        contentTextStyle: text.bodyMedium?.copyWith(color: colors.onPrimary),
+        backgroundColor: colors.onSurface,
+        contentTextStyle: text.bodyMedium?.copyWith(color: colors.surface),
         behavior: SnackBarBehavior.floating,
       ),
     );

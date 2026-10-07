@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../domain/entities/verified_contact.dart';
+import '../../domain/entities/emergency_contact.dart';
 import '../../domain/repositories/emergency_repository.dart';
 import 'urgent_help_notifier.dart';
 
@@ -12,6 +12,6 @@ final emergencyRepositoryProvider = Provider<EmergencyRepository>(
 );
 
 final urgentHelpProvider =
-    NotifierProvider<UrgentHelpNotifier, List<VerifiedContact>>(
+    NotifierProvider<UrgentHelpNotifier, List<EmergencyContact>>(
       UrgentHelpNotifier.new,
     );

@@ -74,12 +74,17 @@ class AppBackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
+    // A round, softly filled button, like the rest of the design.
+    return IconButton.filled(
       onPressed: onPressed,
       tooltip: context.l10n.back,
-      color: color ?? context.colors.onSurface,
+      style: IconButton.styleFrom(
+        fixedSize: const Size.square(48),
+        backgroundColor: context.colors.onSurface.withValues(alpha: 0.08),
+        foregroundColor: color ?? context.colors.onSurface,
+      ),
       // matchTextDirection: points left in LTR and right in RTL.
-      icon: const Icon(Icons.arrow_back_ios_new_rounded),
+      icon: const Icon(Icons.arrow_back_rounded),
     );
   }
 }

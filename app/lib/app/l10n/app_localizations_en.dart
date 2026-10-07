@@ -158,9 +158,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'If you are in danger or thinking about hurting yourself, contact emergency services or a trusted adult right away. You are not alone.';
 
   @override
-  String urgentCall(String number) {
-    return 'Call emergency services ($number)';
-  }
+  String get urgentCallNow => 'Call';
 
   @override
   String urgentCallFailed(String number) {
@@ -382,7 +380,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get consentPointRedaction =>
-      'Before anything leaves your phone, names, places and numbers are removed, and you see exactly what will be sent.';
+      'Before anything leaves your phone, names, places and numbers are removed automatically.';
 
   @override
   String get consentPointModel =>
@@ -401,10 +399,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get writeTitle => 'What\'s on your mind?';
-
-  @override
-  String get writeSubtitle =>
-      'Write however feels natural, in Arabic or Latin letters. Nothing leaves your phone before you see it and agree.';
 
   @override
   String get writeHint => 'Write like you\'d talk…';
@@ -604,4 +598,75 @@ class AppLocalizationsEn extends AppLocalizations {
   String urgentCallContact(String name) {
     return 'Call $name';
   }
+
+  @override
+  String get consentHeading => 'Our commitment to you.';
+
+  @override
+  String get consentIntro =>
+      'Your mental health is personal. Before we start, here\'s what you should know:';
+
+  @override
+  String get consentToggle =>
+      'I\'m 13 or older, I understand Khutwa doesn\'t replace professionals or emergency services, and I accept the Terms of Service and Privacy Policy.';
+
+  @override
+  String get chatTitle => 'Let\'s start simple.';
+
+  @override
+  String get chatIntro =>
+      'Write what\'s on your mind, however feels natural. Before anything leaves your phone, names, places and numbers are removed.';
+
+  @override
+  String chatSentAs(String text) {
+    return 'What left your phone: $text';
+  }
+
+  @override
+  String get urgentSafetyTitle => 'Your safety matters most right now';
+
+  @override
+  String get urgentIntroAuto =>
+      'Thank you for writing what\'s on your mind. What you wrote makes us want to be sure you\'re OK, and here are steps you can take right now.';
+
+  @override
+  String get urgentStepPerson =>
+      'Tell someone near you now: a friend, a family member you trust, a neighbour, anyone you feel safe with. Don\'t stay alone.';
+
+  @override
+  String get urgentStepHospital =>
+      'If you feel you might hurt yourself, go to the nearest hospital emergency department, or have someone take you.';
+
+  @override
+  String get urgentStepSafeSpace =>
+      'Move away from anything that could hurt you, and stay somewhere with other people.';
+
+  @override
+  String get urgentContactsTitle => 'Numbers you can call';
+
+  @override
+  String urgentContactVerified(String date) {
+    return 'We checked that this number answers on $date';
+  }
+
+  @override
+  String get urgentContactDemo => 'Demo number – not real';
+
+  @override
+  String get urgentNoContacts =>
+      'So far we couldn\'t confirm that any number answers, so we haven\'t listed any. You can take the steps above right now.';
+
+  @override
+  String get urgentMessageTitle => 'Write a message to someone you trust';
+
+  @override
+  String get urgentMessageText =>
+      'I\'m not OK right now and I need you. Can you come or call me?';
+
+  @override
+  String get urgentCopy => 'Copy the message';
+
+  @override
+  String get urgentFooter =>
+      'Khutwa is not an emergency service, and nobody reads your messages. These steps were written and reviewed by the team, not by the AI.';
 }

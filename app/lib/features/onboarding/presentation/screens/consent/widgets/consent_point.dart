@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../../app/app_theme.dart';
-import '../../../../../../utilities/app_option_card.dart';
 
+/// One line of the consent text, with a small leading icon.
 class ConsentPoint extends StatelessWidget {
   const ConsentPoint({super.key, required this.icon, required this.text});
 
@@ -15,7 +15,10 @@ class ConsentPoint extends StatelessWidget {
       spacing: 12,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        AppIconBadge(icon: icon, size: 36),
+        Padding(
+          padding: const EdgeInsets.only(top: 3),
+          child: Icon(icon, size: 20, color: context.colors.onSurface),
+        ),
         Expanded(child: Text(text, style: context.textStyles.bodyMedium)),
       ],
     );

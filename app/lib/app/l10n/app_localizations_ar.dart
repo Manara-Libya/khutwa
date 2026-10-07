@@ -156,9 +156,7 @@ class AppLocalizationsAr extends AppLocalizations {
       'إذا كنت في خطر أو تفكر في إيذاء نفسك، تواصل فورًا مع الطوارئ أو مع شخص بالغ تثق به. أنت لست وحدك.';
 
   @override
-  String urgentCall(String number) {
-    return 'اتصل بالطوارئ ($number)';
-  }
+  String get urgentCallNow => 'اتصل';
 
   @override
   String urgentCallFailed(String number) {
@@ -376,7 +374,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get consentPointRedaction =>
-      'قبل ما يطلع أي كلام من تلفونك، نشيلو منه الأسماء والأماكن والأرقام، وانت تشوف بالضبط شن اللي بيطلع.';
+      'قبل ما يطلع أي كلام من تلفونك، نشيلو منه الأسماء والأماكن والأرقام بشكل تلقائي.';
 
   @override
   String get consentPointModel =>
@@ -394,10 +392,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get writeTitle => 'شن اللي في بالك؟';
-
-  @override
-  String get writeSubtitle =>
-      'اكتب بالطريقة اللي تريحك، بالعربي أو بالحروف اللاتينية. ما فيش حاجة تطلع من تلفونك قبل ما تشوفها وتوافق.';
 
   @override
   String get writeHint => 'اكتب زي ما تحكي…';
@@ -589,4 +583,75 @@ class AppLocalizationsAr extends AppLocalizations {
   String urgentCallContact(String name) {
     return 'اتصل بـ $name';
   }
+
+  @override
+  String get consentHeading => 'التزامنا معاك.';
+
+  @override
+  String get consentIntro =>
+      'صحتك النفسية حاجة تخصك. قبل ما نبدأ، هذا اللي لازم تعرفه:';
+
+  @override
+  String get consentToggle =>
+      'عمري 13 أو أكثر، وفاهم إن خطوة مش بديل عن المختصين أو الطوارئ، وموافق على شروط الخدمة وسياسة الخصوصية.';
+
+  @override
+  String get chatTitle => 'خلينا نبدأ ببساطة.';
+
+  @override
+  String get chatIntro =>
+      'اكتب اللي في بالك بالطريقة اللي تريحك. قبل ما يطلع أي كلام من تلفونك، نشيلو منه الأسماء والأماكن والأرقام.';
+
+  @override
+  String chatSentAs(String text) {
+    return 'اللي طلع من تلفونك: $text';
+  }
+
+  @override
+  String get urgentSafetyTitle => 'سلامتك أهم حاجة توا';
+
+  @override
+  String get urgentIntroAuto =>
+      'شكراً إنك كتبت اللي في قلبك. اللي كتبته يخلينا نبو نتأكد إنك بخير، وهذي خطوات تقدر تديرها توا.';
+
+  @override
+  String get urgentStepPerson =>
+      'قول لحد قريب منك توا: صاحبك، حد من العيلة تثق فيه، جارك، أي حد تحس روحك معاه في أمان. ما تقعدش وحدك.';
+
+  @override
+  String get urgentStepHospital =>
+      'لو حاسس إنك ممكن تأذي روحك، امشي لأقرب مستشفى، قسم الطوارئ، أو خلي حد يوصلك.';
+
+  @override
+  String get urgentStepSafeSpace =>
+      'بعّد على روحك أي حاجة ممكن تأذيك، وخليك في مكان فيه ناس.';
+
+  @override
+  String get urgentContactsTitle => 'أرقام تقدر تتصل بيها';
+
+  @override
+  String urgentContactVerified(String date) {
+    return 'تأكدنا إن الرقم هذا يرد يوم $date';
+  }
+
+  @override
+  String get urgentContactDemo => 'رقم تجريبي – مش حقيقي';
+
+  @override
+  String get urgentNoContacts =>
+      'لين توا ما قدرناش نتأكد من أي رقم يرد، عشان هكي ما حطيناش أرقام. الخطوات اللي فوق تقدر تديرها توا.';
+
+  @override
+  String get urgentMessageTitle => 'اكتب رسالة لحد تثق فيه';
+
+  @override
+  String get urgentMessageText =>
+      'أنا مش كويس توا ومحتاجك. تقدر تجيني أو تكلمني؟';
+
+  @override
+  String get urgentCopy => 'انسخ الرسالة';
+
+  @override
+  String get urgentFooter =>
+      'خطوة مش خدمة طوارئ، وما فيش حد يقرا كلامك. الخطوات هذي مكتوبة ومراجعة من الفريق، مش من الذكاء الاصطناعي.';
 }

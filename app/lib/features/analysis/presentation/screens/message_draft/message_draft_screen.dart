@@ -14,14 +14,12 @@ class MessageDraftScreen extends StatelessWidget {
     required this.supportLabel,
     required this.textController,
     required this.onCopy,
-    required this.onSaveToPlan,
     required this.onBack,
   });
 
   final String supportLabel;
   final TextEditingController textController;
   final VoidCallback onCopy;
-  final VoidCallback onSaveToPlan;
   final VoidCallback onBack;
 
   @override
@@ -36,32 +34,34 @@ class MessageDraftScreen extends StatelessWidget {
             horizontal: AppSpacing.screenHorizontal,
           ),
           child: Column(
-            spacing: 12,
+            spacing: 16,
             children: [
               Expanded(
                 child: ListView(
                   children: [
                     AppHeader(title: l10n.draftTitle, subtitle: supportLabel),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 24),
                     AppTextField(
                       controller: textController,
-                      minLines: 6,
+                      minLines: 7,
                       maxLines: null,
-                      radius: 18,
+                      radius: 20,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                     Row(
                       spacing: 8,
                       children: [
                         Icon(
-                          Icons.front_hand_rounded,
+                          Icons.front_hand_outlined,
                           size: 20,
-                          color: colors.primary,
+                          color: colors.onSurfaceVariant,
                         ),
-                        Text(
-                          l10n.draftSendYourself,
-                          style: context.textStyles.titleMedium?.copyWith(
-                            color: colors.primary,
+                        Expanded(
+                          child: Text(
+                            l10n.draftSendYourself,
+                            style: context.textStyles.bodyMedium?.copyWith(
+                              color: colors.onSurfaceVariant,
+                            ),
                           ),
                         ),
                       ],
@@ -74,16 +74,7 @@ class MessageDraftScreen extends StatelessWidget {
                 icon: Icons.copy_rounded,
                 onPressed: onCopy,
               ),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: OutlinedButton.icon(
-                  onPressed: onSaveToPlan,
-                  icon: const Icon(Icons.bookmark_add_outlined),
-                  label: Text(l10n.draftSaveToPlan),
-                ),
-              ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
             ],
           ),
         ),

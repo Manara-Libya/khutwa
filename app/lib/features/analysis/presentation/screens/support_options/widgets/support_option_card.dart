@@ -24,9 +24,8 @@ class SupportOptionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = context.textStyles;
     return AppOptionCard(
-      elevated: true,
       onTap: onTap,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(20),
       child: Row(
         spacing: 14,
         crossAxisAlignment: CrossAxisAlignment.start,

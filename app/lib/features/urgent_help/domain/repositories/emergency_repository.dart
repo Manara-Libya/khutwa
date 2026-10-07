@@ -1,7 +1,8 @@
-import '../entities/verified_contact.dart';
+import '../entities/emergency_contact.dart';
 
 abstract interface class EmergencyRepository {
-  /// Only contacts verified by phone, each with its verified-on date (#62).
-  /// Empty means the urgent screen shows the generic steps only.
-  List<VerifiedContact> get verifiedContacts;
+  /// Numbers for the urgent-help screen: verified ones (#62), plus clearly
+  /// labelled demo numbers in demo builds. Empty means the screen says
+  /// honestly that no number is verified yet.
+  List<EmergencyContact> get contacts;
 }

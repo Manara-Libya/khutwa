@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// Full-width pill button: outlined while disabled, filled when enabled.
-/// Pass [icon] for a leading icon.
+/// Full-width primary button: ink on light screens, white on dark ones
+/// (from the theme). Disabled keeps the same shape, faded.
 class AppButton extends StatelessWidget {
   const AppButton({
     super.key,
@@ -26,30 +26,14 @@ class AppButton extends StatelessWidget {
     );
     return SizedBox(
       width: double.infinity,
-      height: 54,
-      child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 200),
-        child: onPressed == null
-            ? OutlinedButton(
-                key: const ValueKey('disabled'),
-                onPressed: null,
-                child: Text(label),
-              )
-            : icon == null
-            ? FilledButton(
-                key: const ValueKey('enabled'),
-                onPressed: onPressed,
-                style: style,
-                child: Text(label),
-              )
-            : FilledButton.icon(
-                key: const ValueKey('enabled'),
-                onPressed: onPressed,
-                style: style,
-                icon: Icon(icon),
-                label: Text(label),
-              ),
-      ),
+      child: icon == null
+          ? FilledButton(onPressed: onPressed, style: style, child: Text(label))
+          : FilledButton.icon(
+              onPressed: onPressed,
+              style: style,
+              icon: Icon(icon),
+              label: Text(label),
+            ),
     );
   }
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../app/app_theme.dart';
 
-/// Centered screen title with an optional subtitle.
+/// Big start-aligned title with an optional paragraph under it.
 class AppHeader extends StatelessWidget {
   const AppHeader({super.key, required this.title, this.subtitle});
 
@@ -14,12 +14,12 @@ class AppHeader extends StatelessWidget {
     final text = context.textStyles;
     return Column(
       spacing: 14,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, textAlign: TextAlign.center, style: text.headlineMedium),
+        Text(title, style: text.displaySmall),
         if (subtitle case final subtitle?)
           Text(
             subtitle,
-            textAlign: TextAlign.center,
             style: text.bodyLarge?.copyWith(
               color: context.colors.onSurfaceVariant,
             ),

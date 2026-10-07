@@ -58,14 +58,7 @@
   "urgentLabel": "Urgent",
   "urgentTitle": "Do you need help right now?",
   "urgentBody": "If you are in danger or thinking about hurting yourself, contact emergency services or a trusted adult right away. You are not alone.",
-  "urgentCall": "Call emergency services ({number})",
-  "@urgentCall": {
-    "placeholders": {
-      "number": {
-        "type": "String"
-      }
-    }
-  },
+  "urgentCallNow": "Call",
   "urgentCallFailed": "Couldn't open the dialer. Please call {number}.",
   "@urgentCallFailed": {
     "placeholders": {
@@ -245,13 +238,12 @@
     }
   },
   "consentPointAi": "I'm an AI, not a person.",
-  "consentPointRedaction": "Before anything leaves your phone, names, places and numbers are removed, and you see exactly what will be sent.",
+  "consentPointRedaction": "Before anything leaves your phone, names, places and numbers are removed automatically.",
   "consentPointModel": "The redacted text goes to a Google AI model through Khutwa's server.",
   "consentPointNoStorage": "Our server doesn't store or log what you write.",
   "consentPointPlan": "Your plan is saved on your phone only.",
   "consentPointNotEmergency": "Khutwa isn't an emergency service. If you're in danger, tap the urgent button at the top.",
   "writeTitle": "What's on your mind?",
-  "writeSubtitle": "Write however feels natural, in Arabic or Latin letters. Nothing leaves your phone before you see it and agree.",
   "writeHint": "Write like you'd talk…",
   "writeNext": "See what will be sent",
   "myPlan": "My plan",
@@ -330,5 +322,38 @@
         "type": "String"
       }
     }
-  }
+  },
+  "consentHeading": "Our commitment to you.",
+  "consentIntro": "Your mental health is personal. Before we start, here's what you should know:",
+  "consentToggle": "I'm 13 or older, I understand Khutwa doesn't replace professionals or emergency services, and I accept the Terms of Service and Privacy Policy.",
+  "chatTitle": "Let's start simple.",
+  "chatIntro": "Write what's on your mind, however feels natural. Before anything leaves your phone, names, places and numbers are removed.",
+  "chatSentAs": "What left your phone: {text}",
+  "@chatSentAs": {
+    "placeholders": {
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "urgentSafetyTitle": "Your safety matters most right now",
+  "urgentIntroAuto": "Thank you for writing what's on your mind. What you wrote makes us want to be sure you're OK, and here are steps you can take right now.",
+  "urgentStepPerson": "Tell someone near you now: a friend, a family member you trust, a neighbour, anyone you feel safe with. Don't stay alone.",
+  "urgentStepHospital": "If you feel you might hurt yourself, go to the nearest hospital emergency department, or have someone take you.",
+  "urgentStepSafeSpace": "Move away from anything that could hurt you, and stay somewhere with other people.",
+  "urgentContactsTitle": "Numbers you can call",
+  "urgentContactVerified": "We checked that this number answers on {date}",
+  "@urgentContactVerified": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "urgentContactDemo": "Demo number – not real",
+  "urgentNoContacts": "So far we couldn't confirm that any number answers, so we haven't listed any. You can take the steps above right now.",
+  "urgentMessageTitle": "Write a message to someone you trust",
+  "urgentMessageText": "I'm not OK right now and I need you. Can you come or call me?",
+  "urgentCopy": "Copy the message",
+  "urgentFooter": "Khutwa is not an emergency service, and nobody reads your messages. These steps were written and reviewed by the team, not by the AI."
 }

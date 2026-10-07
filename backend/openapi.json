@@ -18,7 +18,7 @@
           "200": {
             "description": "Successful Response",
             "content": {
-              "application/json": {
+              "application/json; charset=utf-8": {
                 "schema": {
                   "additionalProperties": true,
                   "type": "object",
@@ -75,7 +75,7 @@
           "200": {
             "description": "Successful Response",
             "content": {
-              "application/json": {
+              "application/json; charset=utf-8": {
                 "schema": {
                   "$ref": "#/components/schemas/AnalyzeOut"
                 }
@@ -139,7 +139,7 @@
           "200": {
             "description": "Successful Response",
             "content": {
-              "application/json": {
+              "application/json; charset=utf-8": {
                 "schema": {
                   "$ref": "#/components/schemas/RiskOut"
                 }
@@ -203,7 +203,7 @@
           "200": {
             "description": "Successful Response",
             "content": {
-              "application/json": {
+              "application/json; charset=utf-8": {
                 "schema": {
                   "$ref": "#/components/schemas/ReflectOut"
                 }
@@ -267,7 +267,7 @@
           "200": {
             "description": "Successful Response",
             "content": {
-              "application/json": {
+              "application/json; charset=utf-8": {
                 "schema": {
                   "$ref": "#/components/schemas/SuggestOut"
                 }
@@ -321,7 +321,7 @@
           "200": {
             "description": "Successful Response",
             "content": {
-              "application/json": {
+              "application/json; charset=utf-8": {
                 "schema": {
                   "type": "object",
                   "additionalProperties": true,
@@ -388,8 +388,251 @@
           "200": {
             "description": "Successful Response",
             "content": {
-              "application/json": {
+              "application/json; charset=utf-8": {
                 "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/dev/prompts": {
+      "get": {
+        "tags": [
+          "developer"
+        ],
+        "summary": "Live prompt bodies and models",
+        "operationId": "dev_prompts_v1_dev_prompts_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          },
+          {
+            "name": "X-Dev-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Dev-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Dev Prompts V1 Dev Prompts Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/dev/try": {
+      "post": {
+        "tags": [
+          "developer"
+        ],
+        "summary": "Run one message with a draft (or the live) prompt and show the raw output",
+        "operationId": "dev_try_v1_dev_try_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          },
+          {
+            "name": "X-Dev-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Dev-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DevTryIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/DevTryOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/dev/prompts/{task}": {
+      "put": {
+        "tags": [
+          "developer"
+        ],
+        "summary": "Save a prompt as live (previous version is backed up) and refresh its workers",
+        "operationId": "dev_save_prompt_v1_dev_prompts__task__put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "task",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Task"
+            }
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          },
+          {
+            "name": "X-Dev-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Dev-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DevPrompt"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Dev Save Prompt V1 Dev Prompts  Task  Put"
+                }
               }
             }
           },
@@ -557,6 +800,119 @@
           "content"
         ],
         "title": "ChatMessage"
+      },
+      "DevPrompt": {
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "maxLength": 8000,
+            "minLength": 20,
+            "title": "Prompt"
+          }
+        },
+        "type": "object",
+        "required": [
+          "prompt"
+        ],
+        "title": "DevPrompt"
+      },
+      "DevTryIn": {
+        "properties": {
+          "task": {
+            "type": "string",
+            "enum": [
+              "risk",
+              "reflect",
+              "suggest"
+            ],
+            "title": "Task"
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Text"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model",
+            "description": "Defaults to the task's preferred model."
+          },
+          "prompt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 8000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prompt",
+            "description": "Draft prompt body to try. Omit to use the live prompt."
+          }
+        },
+        "type": "object",
+        "required": [
+          "task",
+          "text"
+        ],
+        "title": "DevTryIn"
+      },
+      "DevTryOut": {
+        "properties": {
+          "raw": {
+            "type": "string",
+            "title": "Raw"
+          },
+          "parsed": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parsed"
+          },
+          "valid": {
+            "type": "boolean",
+            "title": "Valid",
+            "description": "Parsed and matched the task's JSON schema."
+          },
+          "guardrail": {
+            "type": "boolean",
+            "title": "Guardrail",
+            "description": "True if the output contains a blocked term (diagnosis, medication...)."
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "elapsed_ms": {
+            "type": "integer",
+            "title": "Elapsed Ms"
+          }
+        },
+        "type": "object",
+        "required": [
+          "raw",
+          "parsed",
+          "valid",
+          "guardrail",
+          "model",
+          "elapsed_ms"
+        ],
+        "title": "DevTryOut"
       },
       "HTTPValidationError": {
         "properties": {

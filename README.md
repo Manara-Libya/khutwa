@@ -22,15 +22,6 @@ Built for the AI4LY Codathon: Mental Health in Libya. Final pitch: 8 October 202
 | Kawtar Gdoure | TBD |
 | Anas Al-Thaabit | TBD |
 
-## Working with Claude Code
-
-This repo ships a shared Claude Code setup:
-
-- `CLAUDE.md`: project context and the non-negotiable safety and privacy rules
-- `.claude/settings.json`: shared plugins and permissions. Claude Code asks to install the plugins the first time you open the repo.
-
-Personal overrides go in `.claude/settings.local.json`, which is git-ignored.
-
 ## Status
 
 The stack hasn't been chosen yet (PWA or Android app); see the "Decisions needed" issue.

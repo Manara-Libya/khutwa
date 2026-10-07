@@ -2,7 +2,7 @@
 
 Closes #
 
-## Safety & privacy check (CLAUDE.md rules)
+## Safety & privacy check (proposal §5)
 
 - [ ] No diagnosis, label, score or medication advice anywhere
 - [ ] No identifier leaves the device unredacted; no conversation text in logs

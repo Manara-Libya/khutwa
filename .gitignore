@@ -18,3 +18,11 @@ Thumbs.db
 
 # Office lock files
 ~$*
+
+# Python
+.venv/
+__pycache__/
+.pytest_cache/
+
+# Khutwa backend runtime state
+backend/runtime/agent-history/

@@ -265,7 +265,9 @@ class ConversationScreen(Screen):
     CSS = """
     #conv-mode { height: 1; padding: 0 1; background: $primary 25%; }
     #conv-log { height: 1fr; padding: 1 2; background: $surface; }
-    #conv-input { dock: bottom; height: 1; margin: 1 0 0 0; }
+    #conv-row { height: 1; margin: 1 0; }
+    #conv-label { width: auto; padding: 0 1; background: $accent 40%; text-style: bold; }
+    #conv-input { width: 1fr; height: 1; }
     .turn-user { margin-bottom: 1; color: $text; }
     .turn-bot { margin-bottom: 1; color: $success; }
     .turn-note { margin-bottom: 1; color: $text-muted; }
@@ -278,8 +280,13 @@ class ConversationScreen(Screen):
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True, icon="K")
         yield Static("", id="conv-mode")
-        yield VerticalScroll(id="conv-log")
-        yield Input(placeholder="Write as the user would (fictional), then Enter", id="conv-input")
+        with VerticalScroll(id="conv-log"):
+            yield Static("Type a message in the box below as the user would (fictional), then press Enter.\n"
+                         "Khutwa's reply appears here, and your next message is sent with everything said before.",
+                         classes="turn-note")
+        with Horizontal(id="conv-row"):
+            yield Static("Your message >", id="conv-label")
+            yield Input(placeholder="type here, then Enter", id="conv-input")
         yield Footer()
 
     def on_mount(self) -> None:
@@ -295,10 +302,13 @@ class ConversationScreen(Screen):
     def action_toggle_mode(self) -> None:
         self.app_mode = not self.app_mode
         self.show_mode()
+        self.query_one("#conv-input", Input).focus()
 
     def action_restart(self) -> None:
         self.history = []
         self.query_one("#conv-log", VerticalScroll).remove_children()
+        self.add("New conversation. Type a message below.", "turn-note")
+        self.query_one("#conv-input", Input).focus()
 
     def add(self, text: str, cls: str) -> None:
         log = self.query_one("#conv-log", VerticalScroll)

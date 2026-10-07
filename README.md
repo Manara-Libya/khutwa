@@ -24,4 +24,4 @@ Built for the AI4LY Codathon: Mental Health in Libya. Final pitch: 8 October 202
 
 ## Status
 
-The stack hasn't been chosen yet (PWA or Android app); see the "Decisions needed" issue.
+The stack hasn't been chosen yet (PWA or Android app); see the kickoff issue (#53).

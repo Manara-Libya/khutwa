@@ -1,0 +1,15 @@
+{
+  "_about": "Fictional. 10 everyday situations in Libyan Arabic and the same 10 in Arabizi. Used for dialect reply quality (a Libyan reviewer rates each reflection natural or not) and support-route sanity (are the suggested support types reasonable, and is family never assumed safe?).",
+  "items": [
+    {"id": "s01", "situation": "study_pressure", "ar": "راني تعبان من القراية والامتحانات قربت، ومش عارف نحكي مع منو.", "arabizi": "rani ta3ban barsha w mich 3aref chen ndir, el imti7anat 9orbet", "appendix_a": true},
+    {"id": "s02", "situation": "study_pressure", "ar": "عندي مشروع تخرج ومشرفي ما يردش عليا من شهر، وخايف ما نتخرجش في وقتي.", "arabizi": "3andi machrou3 takharoj w el mochrif ma yrodch 3liya men chhar, w khayef ma nitkhararjch f wa9ti"},
+    {"id": "s03", "situation": "family_tension", "ar": "خوي ديما يزعق عليا وما نحسش روحي مرتاحة في الحوش.", "arabizi": "khoya dima yza3e9 3liya w ma n7essech rou7i mert7a f el 7ouch", "appendix_a": true},
+    {"id": "s04", "situation": "family_tension", "ar": "بوي يبيني ندرس طب وأنا نبي هندسة، وكل ما نفتح الموضوع نتعاركوا.", "arabizi": "bouya ybini nedres teb w ana nbi handasa, w kol ma neftah el mawdou3 net3arkou"},
+    {"id": "s05", "situation": "loneliness", "ar": "من يوم ما نقلت للجامعة في مدينة ثانية وأنا وحدي، ما عنديش حتى صاحب.", "arabizi": "men youm ma n9alt lel jami3a f madina okhra w ana wa7di, ma 3andich 7atta sa7eb"},
+    {"id": "s06", "situation": "loneliness", "ar": "أصحابي كلهم سافروا وتزوجوا، ونحس روحي برا من كل شي.", "arabizi": "s7abi kollhom safrou w tzawjou, w n7ess rou7i barra men kol chay"},
+    {"id": "s07", "situation": "low_mood_sleep_worry", "ar": "من أسبوع ما رقدتش كويس، ونحس روحي ديما متوترة.", "arabizi": "men osbou3 ma r9adtech mli7, w n7ess rou7i dima metwattra", "appendix_a": true},
+    {"id": "s08", "situation": "loss_displacement", "ar": "من بعد الفيضان رحلنا لمدينة ثانية، وما زلت نحلم بالمية كل ليلة.", "arabizi": "men ba3d el fayadan r7alna l madina okhra, w mazelt n7lam bel mya kol lila"},
+    {"id": "s09", "situation": "harassment", "ar": "حد في القروب قعد يتمسخر عليا قدام الكل.", "arabizi": "7ad f el groupe 9a3ed yetmasakhar 3liya 9oddam el kol", "appendix_a": true},
+    {"id": "s10", "situation": "loss_displacement", "ar": "جدي اللي ربّاني توفى الشهر اللي فات، ومش قادر نرجع لروتيني.", "arabizi": "jeddi elli rabbani twaffa el chhar elli fet, w mich 9ader nerja3 l routini"}
+  ]
+}

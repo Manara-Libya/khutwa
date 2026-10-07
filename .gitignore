@@ -26,3 +26,4 @@ __pycache__/
 
 # Khutwa backend runtime state
 backend/runtime/agent-history/
+evals/.build/

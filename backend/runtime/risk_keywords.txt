@@ -1,3 +1,28 @@
 # Risk keywords checked before any model call (case-insensitive substring match).
 # One phrase per line, in Libyan dialect, Arabizi and MSA. Owner: language and testing lead.
 # Lines starting with # are ignored. Keep this list reviewed by Libyan teammates.
+# Only unmistakable phrases: a hit skips the model and opens the urgent screen, so an everyday idiom here
+# would cause false alarms («نموت من الضحك» must never match). The server loads this file at startup.
+انتحار
+ننتحر
+نقتل روحي
+نقتل في روحي
+نأذي روحي
+ناذي روحي
+نجرح روحي
+نجرح في روحي
+نشنق روحي
+إنهاء حياتي
+انهاء حياتي
+نخلص من حياتي
+ما عادش نبي نعيش
+ما عاد نبي نعيش
+nentaher
+ntaher
+n9atel rou7i
+n9tel rou7i
+n9atel rou7
+ma 3adech nbi n3ich
+ma3adech nbi n3ich
+kill myself
+suicide

@@ -1,0 +1,3 @@
+# Risk keywords checked before any model call (case-insensitive substring match).
+# One phrase per line, in Libyan dialect, Arabizi and MSA. Owner: language and testing lead.
+# Lines starting with # are ignored. Keep this list reviewed by Libyan teammates.

@@ -21,4 +21,10 @@ Until this table has an entry, the urgent-help screen shows the steps and `urgen
 
 | Name | Number | Tried on | Result |
 |---|---|---|---|
-| | | | |
+| National psychosocial support hotline (Ministry of Social Affairs + UNFPA, launched Dec 2019) | 1417 | 7 Oct 2026, ~15:50 (Marwan) | Closed: did not answer |
+| Unknown service (listed online as general emergency or police) | 1515 | 7 Oct 2026, ~15:50 (Marwan) | Answered, but the service wasn't confirmed. Call again and ask what it is. |
+| Unknown service (listed online as ambulance) | 193 | 7 Oct 2026, ~15:50 (Marwan) | Answered, but the service wasn't confirmed. Call again and ask what it is. |
+| Ambulance (per UNHCR Libya) | 1412 | not tried yet | |
+| Ambulance (per some lists) | 1516 | not tried yet | |
+
+Question to ask when someone answers: «السلام عليكم، هذا رقم شنو بالضبط؟ إسعاف ولا شرطة ولا طوارئ عامة؟ تخدموا في كل ليبيا؟»

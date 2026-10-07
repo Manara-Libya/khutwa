@@ -15,8 +15,8 @@ Shown on first launch. The user can't continue without tapping `consent_accept`.
 > You're talking to an AI, not a person.
 
 ### consent_point_redaction
-قبل ما يطلع أي كلام من تلفونك، الأسماء والأماكن والأرقام والإيميلات تنشال على التلفون نفسه. تشوف بعينك شن اللي بيطلع، وتقدر تخفي أي كلمة بلمسة.
-> Before anything leaves your phone, names, places, numbers and emails are removed on the phone itself. You see exactly what will be sent, and you can hide any word with a tap.
+قبل ما يطلع أي كلام من تلفونك، الأسماء والأماكن والأرقام والإيميلات تنشال تلقائياً على التلفون نفسه، والذكاء الاصطناعي ما يشوفهاش.
+> Before anything leaves your phone, names, places, numbers and emails are removed automatically on the phone itself, so the AI never sees them.
 
 ### consent_point_google
 الكلام بعد ما ينشال منه اللي يعرّف بيك يمشي لنموذج ذكاء اصطناعي تابع لشركة Google باش يرد عليك، وGoogle تتعامل معاه حسب سياستها.

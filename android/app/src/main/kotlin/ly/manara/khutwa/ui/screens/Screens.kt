@@ -55,6 +55,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -113,6 +114,31 @@ private val Gutter = 20.dp
 @Composable
 fun ConsentScreen(onAccept: () -> Unit, onDecline: () -> Unit, onUrgent: () -> Unit) {
     val c = Kh.colors
+    var declined by rememberSaveable { mutableStateOf(false) }
+    if (declined) {
+        // Not now: no pressure. The urgent help stays one tap away, and nothing was sent or stored.
+        Column(Modifier.fillMaxSize()) {
+            TopBar(onUrgent)
+            Column(Modifier.weight(1f).padding(horizontal = Gutter), verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally) {
+                Appear("declined-ill") { Image(painterResource(R.drawable.ill_on_your_phone), contentDescription = null, modifier = Modifier.size(170.dp)) }
+                Spacer(Modifier.height(16.dp))
+                Appear("declined-text", 80) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        ScreenTitle("على راحتك")
+                        Spacer(Modifier.height(8.dp))
+                        Text("ما بعتنا شي وما خزنا شي. ترجع وقت ما تبي، وإذا احتجت مساعدة توا اضغط «نحتاج مساعدة توا» فوق.",
+                            style = KhType.body, color = c.inkMuted, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                    }
+                }
+            }
+            Column(Modifier.padding(horizontal = Gutter, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                KhButton("نرجع للموافقة", { declined = false }, Modifier.fillMaxWidth(), kind = ButtonKind.Quiet)
+                KhButton("نسكر التطبيق", onDecline, Modifier.fillMaxWidth(), kind = ButtonKind.Quiet)
+            }
+        }
+        return
+    }
     Column(Modifier.fillMaxSize()) {
         TopBar(onUrgent)
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = Gutter)) {
@@ -147,7 +173,7 @@ fun ConsentScreen(onAccept: () -> Unit, onDecline: () -> Unit, onUrgent: () -> U
         }
         Column(Modifier.padding(horizontal = Gutter, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             KhButton(Texts.CONSENT_ACCEPT, onAccept, Modifier.fillMaxWidth())
-            KhButton(Texts.CONSENT_DECLINE, onDecline, Modifier.fillMaxWidth(), kind = ButtonKind.Quiet)
+            KhButton(Texts.CONSENT_DECLINE, { declined = true }, Modifier.fillMaxWidth(), kind = ButtonKind.Quiet)
         }
     }
 }
@@ -421,6 +447,7 @@ private fun Chip(text: String, onClick: () -> Unit, enabled: Boolean) {
         style = KhType.label,
         color = if (enabled) c.ink else c.inkMuted,
         modifier = Modifier
+            .minimumInteractiveComponentSize()
             .graphicsLayer { scaleX = scale; scaleY = scale }
             .background(c.paperRaised, KhShapes.chip)
             .border(1.5.dp, c.border, KhShapes.chip)

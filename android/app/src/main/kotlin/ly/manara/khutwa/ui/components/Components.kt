@@ -125,10 +125,14 @@ fun KhButton(
 @Composable
 fun UrgentPill(onClick: () -> Unit) {
     val c = Kh.colors
+    val haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
     Row(
         Modifier
             .background(c.urgent, KhShapes.chip)
-            .clickable(role = Role.Button, onClick = onClick)
+            .clickable(role = Role.Button) {
+                haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                onClick()
+            }
             .semantics { contentDescription = "نحتاج مساعدة توا" }
             .padding(horizontal = 14.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,

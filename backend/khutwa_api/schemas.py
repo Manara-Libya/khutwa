@@ -17,6 +17,21 @@ class TextIn(BaseModel):
                       examples=["rani ta3bana barsha min el imti7anat w el 7osh kollah mashakel"])
 
 
+class Turn(BaseModel):
+    role: Literal["user", "assistant"]
+    text: str = Field(min_length=1, max_length=config.MAX_TEXT_CHARS)
+
+
+class AnalyzeIn(TextIn):
+    history: list[Turn] | None = Field(
+        default=None, max_length=12,
+        description="Earlier turns of this conversation, oldest first, **redacted on the phone** like `text`. "
+                    "The phone keeps them in memory and sends them with each message; the server stores nothing. "
+                    "When `history` is sent (even empty), suggestions are held back until the user's "
+                    f"{config.SUGGEST_AFTER}th message or until they ask who to talk to (`support_ready`). "
+                    "Omit it for the old behaviour (suggestions on every message).")
+
+
 # --- what the models must return (validated before use) ---
 class RiskModelOut(BaseModel):
     risk: RiskLevel
@@ -62,6 +77,7 @@ class AnalyzeOut(BaseModel):
     situation: list[Situation] = []
     suggestions: list[Suggestion] = []
     fallback: bool = False
+    support_ready: bool = Field(default=True, description="False while Khutwa is still listening: no support options yet, keep the conversation going. True: show the support options (`suggestions`, or the generic ones if empty).")
     elapsed_ms: int
 
 

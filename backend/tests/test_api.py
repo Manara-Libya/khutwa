@@ -17,8 +17,10 @@ TEXT = {"text": "rani ta3bana barsha min el imti7anat"}
 class FakeRouter:
     def __init__(self, risk="none", reflection="واضح إن الضغط كبير عليك. شن اللي يفيدك توا؟", draft="فاضي نحكوا شوية؟"):
         self.risk, self.reflection, self.draft = risk, reflection, draft
+        self.calls = []
 
     def json_task(self, task, text, schema):
+        self.calls.append((task, text))
         if task == "risk":
             return (RiskModelOut(risk=self.risk) if self.risk else None), "fake"
         if task == "reflect":
@@ -277,3 +279,45 @@ def test_pool_never_keeps_more_than_its_size_warm(monkeypatch):
     assert len(workers) == 8
     assert pool.ready.qsize() == 2
     assert len(started) - len(workers) == 2  # exactly `size` spares, however the calls interleave
+
+
+
+HISTORY = [{"role": "user", "text": "راني تعبان من الخدمة"}, {"role": "assistant", "text": "فاهمك. من قداش؟"},
+           {"role": "user", "text": "من شهرين"}, {"role": "assistant", "text": "حاسس بيك. شن يصير؟"}]
+
+
+def test_listen_first_holds_back_support_options(client):
+    with client() as c:
+        first = c.post("/v1/analyze", headers=AUTH, json={"text": "راني تعبان من الخدمة", "history": []}).json()
+        assert first["support_ready"] is False and first["suggestions"] == [] and first["reflection"]
+        assert not first["fallback"]
+        assert sorted(task for task, _ in main.app.state.agy.calls) == ["reflect", "risk"]  # no suggest call yet
+        third = c.post("/v1/analyze", headers=AUTH, json={"text": "ومديري ديما يعيط", "history": HISTORY}).json()
+        assert third["support_ready"] is True and third["suggestions"]
+
+
+def test_asking_who_to_talk_to_gives_options_straight_away(client):
+    with client() as c:
+        r = c.post("/v1/analyze", headers=AUTH, json={"text": "مش عارف نحكي مع منو", "history": []}).json()
+        assert r["support_ready"] is True and r["suggestions"]
+
+
+def test_without_history_old_clients_get_options_every_time(client):
+    with client() as c:
+        r = c.post("/v1/analyze", headers=AUTH, json={"text": "راني تعبان من الخدمة"}).json()
+        assert r["support_ready"] is True and r["suggestions"]
+
+
+def test_reflection_sees_the_conversation_but_risk_checks_only_the_new_message(client):
+    with client() as c:
+        c.post("/v1/analyze", headers=AUTH, json={"text": "ومديري ديما يعيط", "history": HISTORY})
+        calls = dict(main.app.state.agy.calls)
+        assert calls["risk"] == "ومديري ديما يعيط"
+        assert calls["reflect"].startswith("earlier user: راني تعبان من الخدمة")
+        assert calls["reflect"].endswith("new: ومديري ديما يعيط") and calls["suggest"] == calls["reflect"]
+
+
+def test_history_is_limited(client):
+    with client() as c:
+        r = c.post("/v1/analyze", headers=AUTH, json={"text": "x", "history": [{"role": "user", "text": "y"}] * 13})
+        assert r.status_code == 422

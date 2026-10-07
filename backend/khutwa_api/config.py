@@ -34,6 +34,8 @@ AGY_BIN = os.environ.get("KHUTWA_AGY_BIN", "agy")
 RUNTIME_DIR = ROOT / "runtime"
 
 TIMEOUT_SECONDS = float(os.environ.get("KHUTWA_TIMEOUT", "15"))
+# Listen first: support suggestions start with the user's Nth message (or when they ask who to talk to).
+SUGGEST_AFTER = _int("KHUTWA_SUGGEST_AFTER", 3)
 POOL_SIZE = _int("KHUTWA_POOL_SIZE", 2)  # warm workers per primary (task, model)
 MAX_PROCESSES = _int("KHUTWA_MAX_PROCESSES", 10)  # each agy process uses ~300 MB
 

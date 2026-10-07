@@ -50,6 +50,7 @@ object Texts {
     const val OFFLINE = "ما فيش نت توا. كلامك يقعد هنا لين يرجع النت، والتنفس وصفحة المساعدة يخدموا من غير نت."
     const val CALM = "نهدّي شوية"
     const val CALM_TITLE = "خذ نفس على راحتك"
+    const val SETTINGS = "الإعدادات"
     const val QUICK_EXIT = "خروج سريع"
     val STARTERS = listOf("مضغوط من القراية", "حاس روحي وحدي", "مش عارف من وين نبدا")
     const val BREATH_START = "نتنفسوا مع بعض"

@@ -1,5 +1,10 @@
 package ly.manara.khutwa.ui.screens
 
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.semantics.heading
+import ly.manara.khutwa.ui.components.Prefs
+import ly.manara.khutwa.ui.components.Addressing
 import androidx.compose.ui.semantics.selected
 import ly.manara.khutwa.ui.components.t
 import ly.manara.khutwa.ui.components.UrgentPill
@@ -149,7 +154,7 @@ private val Gutter = 20.dp
 // ---------------------------------------------------------------- consent
 
 @Composable
-fun ConsentScreen(onAccept: () -> Unit, onDecline: () -> Unit, onUrgent: () -> Unit) {
+fun ConsentScreen(onAccept: () -> Unit, onDecline: () -> Unit, onUrgent: () -> Unit, onSettings: () -> Unit = {}) {
     val c = Kh.colors
     var declined by rememberSaveable { mutableStateOf(false) }
     if (declined) {
@@ -181,7 +186,7 @@ fun ConsentScreen(onAccept: () -> Unit, onDecline: () -> Unit, onUrgent: () -> U
         return
     }
     Column(Modifier.fillMaxSize()) {
-        TopBar(onUrgent)
+        TopBar(onUrgent, onSettings = onSettings)
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = Gutter)) {
             // A staged entrance: illustration, title, then each point a beat after the previous one.
             Appear("consent-ill") {
@@ -246,6 +251,7 @@ fun ChatScreen(
     onUrgent: () -> Unit,
     onRevealed: (Long) -> Unit = {},
     onQuickExit: () -> Unit = {},
+    onSettings: () -> Unit = {},
 ) {
     val c = Kh.colors
     val list = rememberLazyListState()
@@ -266,7 +272,7 @@ fun ChatScreen(
     val density = LocalDensity.current
     var composerHeight by remember { mutableIntStateOf(0) }
     Column(Modifier.fillMaxSize().imePadding()) {
-        TopBar(onUrgent, onQuickExit = onQuickExit)
+        TopBar(onUrgent, onQuickExit = onQuickExit, onSettings = onSettings)
         // The composer floats over the conversation; the list scrolls underneath it, padded so nothing hides.
         Box(Modifier.weight(1f).fillMaxWidth()) {
         LazyColumn(
@@ -527,7 +533,7 @@ private fun PrivacyLine(hidden: Int, modifier: Modifier = Modifier) {
         // the shield ticks once each time a new word gets marked
         Box(Modifier.size(16.dp), contentAlignment = Alignment.Center) {
             KhIcon(R.drawable.ic_kh_shield, c.greenDeep, size = 16.dp)
-            Doodle(Doodles.TICK, c.greenDeep, Modifier.size(9.dp), key = "privacy-tick-$hidden", durationMillis = 380)
+            Doodle(Doodles.TICK, c.greenDeep, Modifier.size(9.dp), key = "privacy-tick-$hidden", durationMillis = 380, mirrorInRtl = false)
         }
         Spacer(Modifier.width(6.dp))
         AnimatedContent(
@@ -748,7 +754,7 @@ private fun SentReceipt(sent: String?, id: Long, onOpen: () -> Unit) {
         ) {
             Box(Modifier.size(15.dp), contentAlignment = Alignment.Center) {
                 KhIcon(if (sent == null) R.drawable.ic_kh_lock else R.drawable.ic_kh_shield, c.greenDeep, size = 15.dp)
-                if (hidden) Doodle(Doodles.TICK, c.greenDeep, Modifier.size(8.dp), key = "receipt-tick-$id", delayMillis = 250, durationMillis = 380)
+                if (hidden) Doodle(Doodles.TICK, c.greenDeep, Modifier.size(8.dp), key = "receipt-tick-$id", delayMillis = 250, durationMillis = 380, mirrorInRtl = false)
             }
             Spacer(Modifier.width(5.dp))
             val label = when { sent == null -> Texts.RECEIPT_LOCAL; hidden -> t(Texts.RECEIPT_HIDDEN); else -> t(Texts.RECEIPT_CLEAN) }
@@ -947,11 +953,179 @@ private fun AddressChoice() {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (selected) {
-                    Doodle(Doodles.TICK, c.onGreen, Modifier.size(14.dp), key = "addr-tick-$fem", durationMillis = 320)
+                    Doodle(Doodles.TICK, c.onGreen, Modifier.size(14.dp), key = "addr-tick-$fem", durationMillis = 320, mirrorInRtl = false)
                     Spacer(Modifier.width(6.dp))
                 }
                 Text(label, style = KhType.label, color = if (selected) c.onGreen else c.ink)
             }
+        }
+    }
+}
+
+// ---------------------------------------------------------------- settings
+
+/**
+ * Settings: how Khutwa speaks to the user, how it looks and moves, and plain answers about privacy.
+ * Only the display choices are kept on the phone; the conversation and the form of address never are.
+ */
+@Composable
+fun SettingsScreen(onBack: () -> Unit, onUrgent: () -> Unit, onErase: () -> Unit, canErase: Boolean) {
+    val c = Kh.colors
+    var confirmErase by remember { mutableStateOf(false) }
+    Column(Modifier.fillMaxSize()) {
+        TopBar(onUrgent, leading = { BackButton(onBack) })
+        Column(
+            Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = Gutter),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Appear("settings-title") {
+                Column {
+                    ScreenTitle(Texts.SETTINGS)
+                    Doodle(Doodles.UNDERLINE, c.green, Modifier.width(140.dp).height(12.dp), key = "settings-underline",
+                        delayMillis = 300, durationMillis = 650)
+                }
+            }
+            Appear("settings-address", 60) {
+                SettingsSection(R.drawable.ic_kh_user, "كيف نكلموك") {
+                    ChoiceRow(listOf(false to Texts.ADDRESS_M, true to Texts.ADDRESS_F), Addressing.feminine) { Addressing.feminine = it }
+                    SettingsNote("الكلام كله يتبدّل على طول. ما ينحفظش وما يطلعش من تلفونك.")
+                }
+            }
+            Appear("settings-look", 120) {
+                SettingsSection(R.drawable.ic_kh_sparkle, "الشكل") {
+                    SettingsLabel("الألوان")
+                    ChoiceRow(listOf(Prefs.Theme.System to "تلقائي", Prefs.Theme.Light to "فاتح", Prefs.Theme.Dark to "غامق"),
+                        Prefs.theme) { Prefs.theme = it }
+                    Spacer(Modifier.height(6.dp))
+                    SettingsLabel("حجم الكلام")
+                    ChoiceRow(listOf(0.9f to "أصغر", 1f to "عادي", 1.15f to "أكبر", 1.3f to "كبير برشا"), Prefs.textScale) { Prefs.textScale = it }
+                    Spacer(Modifier.height(8.dp))
+                    // a live preview, so the choice is made by looking, not guessing
+                    Column(Modifier.fillMaxWidth().background(c.paper, KhShapes.card).padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Bubble("هكي يبان كلام خطوة.", mine = false)
+                        Bubble("وهكي يبان كلامك.", mine = true)
+                    }
+                }
+            }
+            Appear("settings-comfort", 180) {
+                SettingsSection(R.drawable.ic_kh_heart, "الراحة") {
+                    SettingsToggle("حركة هادية", "الرسومات تطلع مرسومة من غير حركة، وما فيش حاجة تعاود تتحرك.", Prefs.calmMotion) { Prefs.calmMotion = it }
+                    SettingsToggle("الرد يطلع مرة وحدة", "بدل ما يطلع كلمة كلمة.", Prefs.instantReplies) { Prefs.instantReplies = it }
+                    SettingsToggle("الاهتزاز", "اهتزاز خفيف لما تبعت ولما تتنفس مع خطوة.", Prefs.haptics) { Prefs.haptics = it }
+                }
+            }
+            Appear("settings-privacy", 240) {
+                SettingsSection(R.drawable.ic_kh_shield_check, "الخصوصية") {
+                    SettingsInfo(R.drawable.ic_kh_close, "خروج سريع", "زر ✕ فوق يمسح المحادثة ويسكر التطبيق في لحظة، لو حد قرّب.")
+                    SettingsInfo(R.drawable.ic_kh_lock, "شن ينحفظ على تلفونك؟",
+                        "بس إعدادات الشكل هذي (الألوان والخط والحركة). كلامك وصيغتك ما ينحفظوش، ويمشوا لما تسكر التطبيق.")
+                    SettingsInfo(R.drawable.ic_kh_shield, "قائمة التطبيقات المفتوحة", "على أندرويد 13 وأحدث، خطوة يبان فيها فاضي من غير كلامك.")
+                    Spacer(Modifier.height(4.dp))
+                    KhButton("امسح المحادثة توا", { confirmErase = true }, Modifier.fillMaxWidth(), kind = ButtonKind.Quiet,
+                        icon = R.drawable.ic_kh_trash, enabled = canErase)
+                }
+            }
+            Appear("settings-about", 300) {
+                SettingsSection(R.drawable.ic_kh_info, "على خطوة") {
+                    Text(t(Texts.CONSENT_INTRO), style = KhType.body, color = c.ink)
+                    Text(Texts.CONSENT_AI, style = KhType.body, color = c.inkMuted)
+                    Text(t(Texts.CONSENT_EMERGENCY), style = KhType.body, color = c.inkMuted)
+                    Text("الإصدار ${ly.manara.khutwa.BuildConfig.VERSION_NAME} · نسخة تجريبية", style = KhType.small, color = c.inkMuted)
+                }
+            }
+            Spacer(Modifier.height(16.dp))
+        }
+    }
+    if (confirmErase) ConfirmNewChat(onConfirm = { confirmErase = false; onErase() }, onDismiss = { confirmErase = false })
+}
+
+@Composable
+private fun SettingsSection(icon: Int, title: String, content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit) {
+    val c = Kh.colors
+    Column(
+        Modifier.fillMaxWidth().background(c.paperRaised, KhShapes.card).border(PenWidth, c.ink, KhShapes.card).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.semantics { heading() }) {
+            Box(Modifier.size(32.dp).background(c.greenSoft, KhShapes.chip), contentAlignment = Alignment.Center) {
+                KhIcon(icon, c.greenDeep, size = 18.dp)
+            }
+            Spacer(Modifier.width(10.dp))
+            Text(title, style = KhType.heading, color = c.ink)
+        }
+        content()
+    }
+}
+
+@Composable private fun SettingsLabel(text: String) = Text(text, style = KhType.label, color = Kh.colors.inkMuted)
+
+@Composable private fun SettingsNote(text: String) = Text(text, style = KhType.small, color = Kh.colors.inkMuted)
+
+@Composable
+private fun SettingsInfo(icon: Int, title: String, body: String) {
+    val c = Kh.colors
+    Row(Modifier.fillMaxWidth().padding(vertical = 4.dp).semantics(mergeDescendants = true) {}, verticalAlignment = Alignment.Top) {
+        KhIcon(icon, c.inkMuted, size = 18.dp, modifier = Modifier.padding(top = 3.dp))
+        Spacer(Modifier.width(10.dp))
+        Column(Modifier.weight(1f)) {
+            Text(title, style = KhType.label, color = c.ink)
+            Text(body, style = KhType.small, color = c.inkMuted)
+        }
+    }
+}
+
+/** A row of choices drawn as pebbles; the chosen one fills green and gets a pen tick. */
+@Composable
+private fun <T> ChoiceRow(options: List<Pair<T, String>>, selected: T, onSelect: (T) -> Unit) {
+    val c = Kh.colors
+    val haptics = LocalHapticFeedback.current
+    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        options.forEach { (value, label) ->
+            val on = value == selected
+            val bg by animateColorAsState(if (on) c.green else c.paper, tween(200), label = "choiceBg")
+            val edge by animateColorAsState(if (on) c.ink else c.border, tween(200), label = "choiceEdge")
+            Row(
+                Modifier.minimumInteractiveComponentSize()
+                    .background(bg, KhShapes.chip).border(1.5.dp, edge, KhShapes.chip)
+                    .clickable(role = Role.RadioButton) {
+                        if (!on) { haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove); onSelect(value) }
+                    }
+                    .semantics { this.selected = on }
+                    .padding(horizontal = 14.dp, vertical = 7.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (on) {
+                    Doodle(Doodles.TICK, c.onGreen, Modifier.size(14.dp), key = "choice-$label", durationMillis = 320, mirrorInRtl = false)
+                    Spacer(Modifier.width(6.dp))
+                }
+                Text(label, style = KhType.label, color = if (on) c.onGreen else c.ink)
+            }
+        }
+    }
+}
+
+/** A switch in the brand style: a pebble that rolls along an outlined track. */
+@Composable
+private fun SettingsToggle(title: String, body: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+    val c = Kh.colors
+    val haptics = LocalHapticFeedback.current
+    val x by animateFloatAsState(if (checked) 1f else 0f, KhMotion.snappy(), label = "toggle")
+    val track by animateColorAsState(if (checked) c.green else c.paperSunk, tween(200), label = "track")
+    Row(
+        Modifier.fillMaxWidth().clip(KhShapes.card)
+            .toggleable(value = checked, role = Role.Switch) { haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove); onChange(it) }
+            .padding(horizontal = 8.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(title, style = KhType.label, color = c.ink)
+            Text(body, style = KhType.small, color = c.inkMuted)
+        }
+        Spacer(Modifier.width(12.dp))
+        Box(Modifier.size(width = 54.dp, height = 32.dp).background(track, KhShapes.chip).border(PenWidth, c.ink, KhShapes.chip)) {
+            // in right-to-left, "on" sits at the left end
+            Box(Modifier.align(Alignment.CenterStart).offset(x = (4 + 22 * x).dp).size(22.dp)
+                .background(if (checked) c.paperRaised else c.paper, KhShapes.chip).border(PenWidth, c.ink, KhShapes.chip))
         }
     }
 }

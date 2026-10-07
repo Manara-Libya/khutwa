@@ -35,6 +35,7 @@ import ly.manara.khutwa.data.KhutwaApi
 import ly.manara.khutwa.ui.screens.ChatScreen
 import ly.manara.khutwa.ui.screens.ConsentScreen
 import ly.manara.khutwa.ui.screens.UrgentScreen
+import ly.manara.khutwa.ui.screens.SettingsScreen
 import ly.manara.khutwa.ui.components.KhMotion
 import ly.manara.khutwa.ui.theme.Kh
 import ly.manara.khutwa.ui.theme.KhutwaTheme
@@ -63,10 +64,29 @@ class MainActivity : ComponentActivity() {
             override fun <T : ViewModel> create(modelClass: Class<T>): T =
                 AppViewModel(KhutwaApi(BuildConfig.API_KEY, BuildConfig.API_URL, BuildConfig.URL_GIST_RAW)) as T
         }
+        ly.manara.khutwa.ui.components.Prefs.load(this)
         setContent {
-            KhutwaTheme {
-                // Arabic everywhere: right-to-left regardless of the phone's language.
-                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+            val prefs = ly.manara.khutwa.ui.components.Prefs
+            val dark = when (prefs.theme) {
+                ly.manara.khutwa.ui.components.Prefs.Theme.System -> androidx.compose.foundation.isSystemInDarkTheme()
+                ly.manara.khutwa.ui.components.Prefs.Theme.Light -> false
+                ly.manara.khutwa.ui.components.Prefs.Theme.Dark -> true
+            }
+            // status and navigation bar icons follow the app's theme, not only the phone's
+            androidx.compose.runtime.LaunchedEffect(dark) {
+                val style = if (dark) androidx.activity.SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
+                    else androidx.activity.SystemBarStyle.light(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT)
+                enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
+            }
+            KhutwaTheme(dark = dark) {
+                val d = androidx.compose.ui.platform.LocalDensity.current
+                val haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
+                // Arabic everywhere: right-to-left regardless of the phone's language. Text size and vibration follow settings.
+                CompositionLocalProvider(
+                    LocalLayoutDirection provides LayoutDirection.Rtl,
+                    androidx.compose.ui.platform.LocalDensity provides androidx.compose.ui.unit.Density(d.density, d.fontScale * prefs.textScale),
+                    androidx.compose.ui.platform.LocalHapticFeedback provides if (prefs.haptics) haptics else NoHaptics,
+                ) {
                     KhutwaApp(viewModel(factory = factory), onExit = ::finish, onQuickExit = ::finishAndRemoveTask)
                 }
             }
@@ -83,6 +103,7 @@ fun KhutwaApp(vm: AppViewModel, onExit: () -> Unit, onQuickExit: () -> Unit = on
             targetState = state.screen,
             transitionSpec = {
                 when {
+                    ly.manara.khutwa.ui.components.Prefs.calmMotion -> fadeIn(tween(160)) togetherWith fadeOut(tween(120))
                     // The urgent screen rises from below, and settles back down when closed.
                     targetState is Screen.Urgent ->
                         (slideInVertically(tween(380, easing = KhMotion.EmphasizedDecelerate)) { it / 6 } + fadeIn(tween(240))) togetherWith
@@ -98,11 +119,19 @@ fun KhutwaApp(vm: AppViewModel, onExit: () -> Unit, onQuickExit: () -> Unit = on
             contentKey = { it::class }, label = "screen",
         ) { screen ->
             when (screen) {
-                Screen.Consent -> ConsentScreen(onAccept = vm::acceptConsent, onDecline = onExit, onUrgent = vm::openUrgent)
+                Screen.Consent -> ConsentScreen(onAccept = vm::acceptConsent, onDecline = onExit, onUrgent = vm::openUrgent,
+                    onSettings = vm::openSettings)
                 Screen.Chat -> ChatScreen(state, vm::send, vm::retry, vm::askWhoToTalkTo, vm::newChat, vm::openUrgent, vm::revealed,
-                    onQuickExit = { vm.newChat(); onQuickExit() })
+                    onQuickExit = { vm.newChat(); onQuickExit() }, onSettings = vm::openSettings)
+                is Screen.Settings -> SettingsScreen(onBack = { vm.back() }, onUrgent = vm::openUrgent,
+                    onErase = vm::newChat, canErase = state.lines.size > 1)
                 is Screen.Urgent -> UrgentScreen(screen.auto, onBack = { vm.back() })
             }
         }
     }
+}
+
+/** Used when the user turns vibration off in settings. */
+private object NoHaptics : androidx.compose.ui.hapticfeedback.HapticFeedback {
+    override fun performHapticFeedback(hapticFeedbackType: androidx.compose.ui.hapticfeedback.HapticFeedbackType) {}
 }

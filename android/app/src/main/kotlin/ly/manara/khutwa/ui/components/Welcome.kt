@@ -46,7 +46,8 @@ fun WelcomeIllustration(modifier: Modifier = Modifier) {
     val p = remember { LAYERS.map { PathParser().parsePathString(it).toPath() } }
     val outlineLen = remember { PathMeasure().apply { setPath(p[1], false) }.length }
     val smallLen = remember { PathMeasure().apply { setPath(p[3], false) }.length }
-    var played by rememberSaveable { mutableStateOf(false) }
+    val calm = ly.manara.khutwa.ui.components.Prefs.calmMotion
+    var played by rememberSaveable { mutableStateOf(calm) }
     val big = remember { Animatable(if (played) 1f else 0f) }
     val draw = remember { Animatable(if (played) 1f else 0f) }
     val small = remember { Animatable(if (played) 1f else 0f) }
@@ -66,6 +67,9 @@ fun WelcomeIllustration(modifier: Modifier = Modifier) {
     val boiled = remember { listOf(1, 3).associateWith { i -> (0..2).map { boil(p[i], it) } } }
     val frame by rememberInfiniteTransition(label = "boil").animateFloat(0f, 3f,
         infiniteRepeatable(tween(420, easing = LinearEasing)), label = "frame")
+    // calm motion: the drawing stays still (no boil, no typing dots, no bob)
+    val tt = if (calm) 0f else t
+    val ff = if (calm) 0f else frame
     val stroke = Stroke(width = 3.6f, cap = StrokeCap.Round, join = StrokeJoin.Round)
     Box(modifier) {
     Canvas(Modifier.matchParentSize()) {
@@ -75,7 +79,7 @@ fun WelcomeIllustration(modifier: Modifier = Modifier) {
                 // big bubble: grows from its tail, outline traces itself
                 scale(0.35f + 0.65f * big.value, pivot = Offset(60f, 150f)) {
                     drawPath(p[0], c.greenSoft, alpha = big.value.coerceIn(0f, 1f))
-                    val f = frame.toInt().coerceAtMost(2)
+                    val f = ff.toInt().coerceAtMost(2)
                     if (draw.value >= 1f) drawPath(boiled.getValue(1)[f], c.ink, style = stroke)
                     else {
                         val seg = Path(); PathMeasure().apply { setPath(p[1], false); getSegment(0f, outlineLen * draw.value, seg, true) }
@@ -84,18 +88,18 @@ fun WelcomeIllustration(modifier: Modifier = Modifier) {
                     // dots: land, then type in a soft wave
                     for (i in 0..2) {
                         val land = ((dots.value - i * 0.18f) / 0.64f).coerceIn(0f, 1f)
-                        val wave = ((t * 3f - i * 0.45f) % 3f + 3f) % 3f
-                        val lift = if (dots.value >= 1f && wave < 1f) kotlin.math.sin(wave * Math.PI).toFloat() * 5f else 0f
+                        val wave = ((tt * 3f - i * 0.45f) % 3f + 3f) % 3f
+                        val lift = if (!calm && dots.value >= 1f && wave < 1f) kotlin.math.sin(wave * Math.PI).toFloat() * 5f else 0f
                         translate(0f, (1f - land) * 10f - lift) { drawPath(p[4 + i], c.ink, alpha = land) }
                     }
                 }
                 // small bubble: pops in with a bounce, then bobs
-                val bob = kotlin.math.sin(t * 2f * Math.PI).toFloat()
+                val bob = kotlin.math.sin(tt * 2f * Math.PI).toFloat()
                 translate(0f, bob * 2.6f * small.value) {
                     rotate(bob * 1.6f, pivot = Offset(180f, 160f)) {
                         scale(small.value, pivot = Offset(180f, 160f)) {
                             drawPath(p[2], c.green)
-                            if (small.value >= 1f && small.isRunning.not()) drawPath(boiled.getValue(3)[(frame.toInt() + 1) % 3], c.ink, style = stroke)
+                            if (small.value >= 1f && small.isRunning.not()) drawPath(boiled.getValue(3)[(ff.toInt() + 1) % 3], c.ink, style = stroke)
                             else {
                                 val seg2 = Path(); PathMeasure().apply { setPath(p[3], false); getSegment(0f, smallLen * small.value.coerceIn(0f, 1f), seg2, true) }
                                 drawPath(seg2, c.ink, style = stroke)

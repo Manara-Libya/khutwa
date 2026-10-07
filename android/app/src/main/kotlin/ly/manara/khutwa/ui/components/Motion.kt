@@ -32,6 +32,7 @@ object KhMotion {
  */
 @Composable
 fun Appear(key: Any, delayMillis: Long = 0, content: @Composable () -> Unit) {
+    if (Prefs.calmMotion) { content(); return }
     var shown by rememberSaveable(key) { mutableStateOf(false) }
     LaunchedEffect(key) {
         if (!shown) {

@@ -23,6 +23,7 @@ sealed interface Screen {
     data object Chat : Screen
     /** [auto]: opened because of what the user wrote (shows the extra intro line). */
     data class Urgent(val auto: Boolean, val returnTo: Screen) : Screen
+    data class Settings(val returnTo: Screen) : Screen
 }
 
 /**
@@ -160,11 +161,14 @@ class AppViewModel(
         val s = _state.value.screen
         val target = when (s) {
             is Screen.Urgent -> s.returnTo
+            is Screen.Settings -> s.returnTo
             else -> return false
         }
         _state.update { it.copy(screen = target) }
         return true
     }
+
+    fun openSettings() = _state.update { if (it.screen is Screen.Settings) it else it.copy(screen = Screen.Settings(returnTo = it.screen)) }
 
     fun newChat() {
         history.clear()

@@ -179,7 +179,7 @@ private fun ActionButton(surface: A2ui.Surface, b: A2ui.Button, data: Map<String
                 .semantics { contentDescription = if (done) "تنسخت" else label },
             contentAlignment = Alignment.Center,
         ) {
-            if (done && b.action == "khutwa.copy") Doodle(Doodles.TICK, c.greenDeep, Modifier.size(30.dp), key = "${surface.id}/${b.child}/$taps", durationMillis = 420)
+            if (done && b.action == "khutwa.copy") Doodle(Doodles.TICK, c.greenDeep, Modifier.size(30.dp), key = "${surface.id}/${b.child}/$taps", durationMillis = 420, mirrorInRtl = false)
             else KhIcon(icon, c.ink, size = 22.dp)
         }
         return

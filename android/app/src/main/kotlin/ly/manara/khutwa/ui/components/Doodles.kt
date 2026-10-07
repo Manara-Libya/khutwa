@@ -135,7 +135,7 @@ fun Doodle(
     mirrorInRtl: Boolean = true,
 ) {
     val prep = androidx.compose.runtime.remember(spec) { Prepared(spec) }
-    var done by androidx.compose.runtime.saveable.rememberSaveable(key) { androidx.compose.runtime.mutableStateOf(false) }
+    var done by androidx.compose.runtime.saveable.rememberSaveable(key) { androidx.compose.runtime.mutableStateOf(Prefs.calmMotion) }
     val progress = androidx.compose.runtime.remember(key) { androidx.compose.animation.core.Animatable(if (done) 1f else 0f) }
     androidx.compose.runtime.LaunchedEffect(key) {
         if (!done) {
@@ -161,7 +161,9 @@ fun DoodleLoop(spec: DoodleSpec, color: androidx.compose.ui.graphics.Color, modi
         label = "t",
     )
     val flip = androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl
+    val calm = Prefs.calmMotion
     androidx.compose.foundation.Canvas(modifier) {
+        if (calm) { drawDoodle(prep, color, 1f, flip); return@Canvas }
         val draw = KhMotion.EmphasizedDecelerate.transform((t / 0.6f).coerceIn(0f, 1f))
         val fade = if (t > 0.8f) 1f - (t - 0.8f) / 0.2f else 1f
         drawDoodle(prep, color, draw, flip, alpha = fade)
@@ -183,7 +185,9 @@ fun DoodleCycle(
 ) {
     val prep = androidx.compose.runtime.remember(spec) { Prepared(spec) }
     val t = androidx.compose.runtime.remember { androidx.compose.animation.core.Animatable(0f) }
-    androidx.compose.runtime.LaunchedEffect(Unit) {
+    val calm = Prefs.calmMotion
+    androidx.compose.runtime.LaunchedEffect(calm) {
+        if (calm) { t.snapTo(0.5f); return@LaunchedEffect }
         kotlinx.coroutines.delay(delayMillis)
         while (true) {
             t.snapTo(0f)

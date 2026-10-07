@@ -1,5 +1,6 @@
 package ly.manara.khutwa.ui.components
 
+import androidx.compose.ui.draw.clip
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -144,7 +145,7 @@ fun UrgentPill(onClick: () -> Unit) {
 }
 
 @Composable
-fun TopBar(onUrgent: () -> Unit, modifier: Modifier = Modifier, onQuickExit: (() -> Unit)? = null,
+fun TopBar(onUrgent: () -> Unit, modifier: Modifier = Modifier, onQuickExit: (() -> Unit)? = null, onSettings: (() -> Unit)? = null,
            leading: @Composable RowScope.() -> Unit = {}) {
     val c = Kh.colors
     Row(
@@ -156,10 +157,17 @@ fun TopBar(onUrgent: () -> Unit, modifier: Modifier = Modifier, onQuickExit: (()
             modifier = Modifier.size(34.dp))
         Spacer(Modifier.width(8.dp))
         Text("خطوة", style = KhType.heading, color = c.ink, modifier = Modifier.weight(1f))
+        if (onSettings != null) {
+            Box(
+                Modifier.size(44.dp).clip(KhShapes.chip).clickable(role = Role.Button, onClick = onSettings)
+                    .semantics { contentDescription = ly.manara.khutwa.data.Texts.SETTINGS },
+                contentAlignment = Alignment.Center,
+            ) { KhIcon(R.drawable.ic_kh_sliders, c.inkMuted, size = 21.dp) }
+        }
         // Quick exit: erases the conversation and closes the app at once, for when someone walks in.
         if (onQuickExit != null) {
             Box(
-                Modifier.size(44.dp).clickable(role = Role.Button, onClick = onQuickExit)
+                Modifier.size(44.dp).clip(KhShapes.chip).clickable(role = Role.Button, onClick = onQuickExit)
                     .semantics { contentDescription = ly.manara.khutwa.data.Texts.QUICK_EXIT },
                 contentAlignment = Alignment.Center,
             ) { KhIcon(R.drawable.ic_kh_close, c.inkMuted, size = 20.dp) }
@@ -188,9 +196,10 @@ fun Bubble(text: String, mine: Boolean, modifier: Modifier = Modifier, reveal: B
     val c = Kh.colors
     // Word-by-word reveal of a reply the server has already checked; the full text is never different.
     val words = remember(text) { text.split(" ") }
-    var shown by remember(text) { mutableIntStateOf(if (reveal) 1 else words.size) }
+    val wordByWord = reveal && !Prefs.instantReplies && !Prefs.calmMotion
+    var shown by remember(text) { mutableIntStateOf(if (wordByWord) 1 else words.size) }
     LaunchedEffect(text, reveal) {
-        if (!reveal) { shown = words.size; return@LaunchedEffect }
+        if (!wordByWord) { shown = words.size; if (reveal) { onGrow(); onRevealed() }; return@LaunchedEffect }
         while (shown < words.size) { delay(55); shown++; if (shown % 4 == 0) onGrow() }
         onGrow(); onRevealed()
     }

@@ -391,3 +391,18 @@ def test_no_a2ui_while_still_listening(client):
     with client() as c:
         r = c.post("/v1/analyze", headers=AUTH, json={"text": "راني تعبان من الخدمة", "history": []}).json()
     assert r["support_ready"] is False and r["a2ui"] == []
+
+
+def test_deferred_support_returns_the_reply_without_waiting_for_options(client):
+    with client() as c:
+        r = c.post("/v1/analyze", headers=AUTH, json={"text": "مش عارف نحكي مع مني", "history": [], "defer_support": True}).json()
+        assert r["support_ready"] is True and r["suggestions"] == [] and r["a2ui"] == [] and r["reflection"]
+        assert "suggest" not in [task for task, _ in main.app.state.agy.calls]
+        s = c.post("/v1/support", headers=AUTH, json={"text": "مش عارف نحكي مع مني", "history": HISTORY}).json()
+        assert s["suggestions"] and not s["fallback"]
+        assert [next(iter(m)) for m in s["a2ui"]] == ["surfaceUpdate", "dataModelUpdate", "beginRendering"]
+
+
+def test_support_needs_the_api_key(client):
+    with client() as c:
+        assert c.post("/v1/support", json={"text": "x"}).status_code == 401

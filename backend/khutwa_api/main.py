@@ -19,7 +19,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from . import a2ui, agents, config, guardrails
 from .agy import TASKS, AgyRouter, AgyUnavailable
-from .schemas import (AnalyzeIn, AnalyzeOut, ChatCompletionRequest, DevPrompt, DevTryIn, DevTryOut, ReflectModelOut, ReflectOut,
+from .schemas import (AnalyzeIn, AnalyzeOut, SupportOut, ChatCompletionRequest, DevPrompt, DevTryIn, DevTryOut, ReflectModelOut, ReflectOut,
                       RiskModelOut, RiskOut, SuggestModelOut, SuggestOut, TextIn)
 
 
@@ -182,7 +182,7 @@ def analyze(body: AnalyzeIn, request: Request) -> AnalyzeOut:
     ready = support_ready(body.text, body.history)
     risk_f = _executor.submit(_risk, agy, body.text)  # every message is checked on its own
     reflect_f = _executor.submit(_reflect, agy, convo)
-    suggest_f = _executor.submit(_suggest, agy, convo) if ready else None
+    suggest_f = _executor.submit(_suggest, agy, convo) if ready and not body.defer_support else None
     risk = risk_f.result()
     elapsed = lambda: int((time.perf_counter() - start) * 1000)  # noqa: E731
     if risk != "none":
@@ -196,6 +196,17 @@ def analyze(body: AnalyzeIn, request: Request) -> AnalyzeOut:
                       support_ready=ready,
                       a2ui=a2ui.support_surface(suggestions.suggestions, f"support-{uuid.uuid4().hex[:8]}") if suggestions else [],
                       elapsed_ms=elapsed())
+
+
+@app.post("/v1/support", response_model=SupportOut, dependencies=Auth, tags=["khutwa"],
+          summary="Support options for the conversation so far, with their A2UI surface",
+          description="Used after /v1/analyze with defer_support=true, so the reply is not held back by the options.")
+def support(body: AnalyzeIn, request: Request) -> SupportOut:
+    suggestions = _suggest(router(request), conversation_text(body.text, body.history or []))
+    if suggestions is None:
+        return SupportOut(fallback=True)
+    return SupportOut(situation=suggestions.situation, suggestions=suggestions.suggestions, fallback=False,
+                      a2ui=a2ui.support_surface(suggestions.suggestions, f"support-{uuid.uuid4().hex[:8]}"))
 
 
 # Phrases that ask who to turn to; then support options come straight away.

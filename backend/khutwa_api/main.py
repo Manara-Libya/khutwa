@@ -315,7 +315,8 @@ def dev_try(body: DevTryIn, request: Request) -> DevTryOut:
         raise HTTPException(status_code=400, detail=f"Model must be one of {TASKS[body.task][1]}")
     start = time.perf_counter()
     try:
-        raw = router(request).try_once(body.task, body.text, model, body.prompt)
+        text = conversation_text(body.text, body.history or []) if body.task != "risk" else body.text
+        raw = router(request).try_once(body.task, text, model, body.prompt)
     except AgyUnavailable as e:
         raise HTTPException(status_code=504, detail=f"Model unavailable: {e}") from None
     parsed, valid = None, False

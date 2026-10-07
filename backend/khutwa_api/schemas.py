@@ -105,6 +105,8 @@ class DevTryIn(BaseModel):
     model: str | None = Field(default=None, description="Defaults to the task's preferred model.")
     prompt: str | None = Field(default=None, max_length=8000,
                                description="Draft prompt body to try. Omit to use the live prompt.")
+    history: list[Turn] | None = Field(default=None, max_length=12,
+                                       description="Earlier turns, to try a prompt in the middle of a conversation.")
 
 
 class DevTryOut(BaseModel):

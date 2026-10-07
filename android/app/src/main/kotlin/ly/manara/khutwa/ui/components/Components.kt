@@ -202,27 +202,16 @@ fun Bubble(text: String, mine: Boolean, modifier: Modifier = Modifier, reveal: B
     }
 }
 
-/** Three dots while Khutwa is thinking. */
+/** "Khutwa is writing": the brand squiggle keeps drawing itself, like a pen, inside a reply bubble. */
 @Composable
 fun Typing(modifier: Modifier = Modifier) {
     val c = Kh.colors
-    val t = rememberInfiniteTransition(label = "typing")
-    val phase by t.animateFloat(0f, 1f, infiniteRepeatable(tween(1100, easing = LinearEasing), RepeatMode.Restart), label = "phase")
     Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-        Row(
+        Box(
             Modifier.background(c.paperRaised, KhShapes.bubbleBot).border(PenWidth, c.ink, KhShapes.bubbleBot)
-                .padding(horizontal = 18.dp, vertical = 14.dp)
+                .padding(horizontal = 16.dp, vertical = 14.dp)
                 .semantics { contentDescription = "خطوة قاعد يكتب" },
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            repeat(3) { i ->
-                // each dot rises and settles a third of a cycle after the previous one
-                val local = ((phase - i * 0.18f) % 1f + 1f) % 1f
-                val lift = if (local < 0.4f) kotlin.math.sin(local / 0.4f * Math.PI).toFloat() else 0f
-                Box(Modifier.size(8.dp).graphicsLayer { translationY = -lift * 6.dp.toPx() }
-                    .alpha(0.35f + 0.65f * lift).background(c.ink, KhShapes.chip))
-            }
-        }
+        ) { DoodleLoop(Doodles.SQUIGGLE, c.ink, Modifier.size(width = 64.dp, height = 12.dp)) }
     }
 }
 

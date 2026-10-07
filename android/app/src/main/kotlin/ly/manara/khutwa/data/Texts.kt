@@ -37,6 +37,7 @@ object Texts {
     const val GREETING = "أهلاً بيك. احكيلي شن اللي في بالك، على راحتك وبالكلام اللي يجيك."
     const val COMPOSER_HINT = "اكتب هنا…"
     const val PRIVACY_LINE = "الأسماء والأرقام تنشال على تلفونك قبل ما يطلع أي كلام."
+    const val PRIVACY_MARKED = "المعلّم بالأصفر ينشال على تلفونك قبل ما يطلع."
     const val WHO_TO_TALK = "مع مني نحكي؟"
     const val WHO_TO_TALK_MESSAGE = "مش عارف مع مني نحكي"
     const val SEE_OPTIONS = "نشوفوا مع مني تقدر تحكي"

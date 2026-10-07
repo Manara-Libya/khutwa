@@ -22,6 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -60,12 +61,17 @@ private fun Node(surface: A2ui.Surface, id: String, data: MutableMap<String, Str
     val c = Kh.colors
     when (val comp = surface.components[id]) {
         is A2ui.Text -> when (comp.hint) {
-            "h1", "h2", "h3" -> Column {
-                Text(comp.text, style = KhType.heading.copy(fontSize = KhType.title.fontSize.times(0.8f)),
-                    color = c.ink, modifier = Modifier.semantics { heading() })
-                // the brand's hand-drawn underline draws itself under the surface title
-                Doodle(Doodles.UNDERLINE, c.green, Modifier.width(150.dp).height(12.dp), key = "${surface.id}/$id/underline",
-                    delayMillis = 250, durationMillis = 650)
+            "h1", "h2", "h3" -> Row(verticalAlignment = Alignment.Bottom) {
+                Column(Modifier.weight(1f, fill = false)) {
+                    Text(comp.text, style = KhType.heading.copy(fontSize = KhType.title.fontSize.times(0.8f)),
+                        color = c.ink, modifier = Modifier.semantics { heading() })
+                    // the brand's hand-drawn underline draws itself under the surface title
+                    Doodle(Doodles.UNDERLINE, c.green, Modifier.width(150.dp).height(12.dp), key = "${surface.id}/$id/underline",
+                        delayMillis = 250, durationMillis = 650)
+                }
+                Spacer(Modifier.width(10.dp))
+                Doodle(Doodles.ARROW_DOWN, c.inkMuted, Modifier.size(width = 22.dp, height = 40.dp), key = "${surface.id}/$id/arrow",
+                    delayMillis = 700, durationMillis = 600, mirrorInRtl = false)
             }
             "h4", "h5" -> Text(comp.text, style = KhType.heading, color = c.ink)
             "caption" -> Text(comp.text, style = KhType.small, color = c.inkMuted)
@@ -128,6 +134,7 @@ private fun ActionButton(surface: A2ui.Surface, b: A2ui.Button, data: Map<String
     val context = LocalContext.current
     val label = (surface.components[b.child] as? A2ui.Text)?.text.orEmpty()
     var done by remember { mutableStateOf(false) }
+    var taps by remember { mutableIntStateOf(0) }
     LaunchedEffect(done) { if (done) { delay(1600); done = false } }
     val text = b.textPath?.let { data[it] }.orEmpty()
     if (compact) {
@@ -140,11 +147,14 @@ private fun ActionButton(surface: A2ui.Surface, b: A2ui.Button, data: Map<String
                 .background(if (done) c.greenSoft else c.paperRaised, KhShapes.chip)
                 .border(PenWidth, c.ink, KhShapes.chip)
                 .clickable(enabled = text.isNotBlank(), role = Role.Button) {
-                    if (b.action == "khutwa.copy") { copyText(context, text); done = true } else if (b.action == "khutwa.share") shareText(context, text)
+                    if (b.action == "khutwa.copy") { copyText(context, text); taps++; done = true } else if (b.action == "khutwa.share") shareText(context, text)
                 }
                 .semantics { contentDescription = if (done) "تنسخت" else label },
             contentAlignment = Alignment.Center,
-        ) { KhIcon(icon, c.ink, size = 22.dp) }
+        ) {
+            if (done && b.action == "khutwa.copy") Doodle(Doodles.TICK, c.greenDeep, Modifier.size(30.dp), key = "${surface.id}/${b.child}/$taps", durationMillis = 420)
+            else KhIcon(icon, c.ink, size = 22.dp)
+        }
         return
     }
     when (b.action) {

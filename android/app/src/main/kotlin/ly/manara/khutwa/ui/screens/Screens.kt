@@ -1,5 +1,27 @@
 package ly.manara.khutwa.ui.screens
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextDecoration
+import ly.manara.khutwa.privacy.LibyanRedactor
+import ly.manara.khutwa.ui.components.WelcomeIllustration
+import ly.manara.khutwa.ui.components.DoodleLoop
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -125,7 +147,11 @@ fun ConsentScreen(onAccept: () -> Unit, onDecline: () -> Unit, onUrgent: () -> U
                 Spacer(Modifier.height(16.dp))
                 Appear("declined-text", 80) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        ScreenTitle("على راحتك")
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            ScreenTitle("على راحتك")
+                            Spacer(Modifier.width(8.dp))
+                            Doodle(Doodles.HEART_OUTLINE, c.clay, Modifier.size(34.dp), key = "declined-heart", delayMillis = 450, durationMillis = 800)
+                        }
                         Spacer(Modifier.height(8.dp))
                         Text("ما بعتنا شي وما خزنا شي. ترجع وقت ما تبي، وإذا احتجت مساعدة توا اضغط «نحتاج مساعدة توا» فوق.",
                             style = KhType.body, color = c.inkMuted, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
@@ -234,9 +260,7 @@ fun ChatScreen(
         ) {
             item(key = "welcome") {
                 Box(Modifier.fillMaxWidth().padding(bottom = 4.dp), contentAlignment = Alignment.Center) {
-                    Image(painterResource(R.drawable.ill_listen), contentDescription = null, modifier = Modifier.height(150.dp))
-                    Doodle(Doodles.SPARKLES, c.ink, Modifier.size(48.dp).align(Alignment.TopStart).padding(start = 40.dp),
-                        key = "welcome-sparkles", delayMillis = 350, durationMillis = 900)
+                    WelcomeIllustration(Modifier.size(150.dp))
                 }
             }
             itemsIndexed(state.lines, key = { _, l -> l.id }) { index, line: Line ->
@@ -260,7 +284,12 @@ fun ChatScreen(
                     Modifier.fillMaxWidth().background(c.sunSoft, KhShapes.card).border(PenWidth, c.ink, KhShapes.card).padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
-                    Text(Texts.ERROR_NETWORK, style = KhType.body, color = c.ink)
+                    Row(verticalAlignment = Alignment.Top) {
+                        Doodle(Doodles.EXCLAIM, c.ink, Modifier.size(width = 16.dp, height = 32.dp), key = "error-${state.lines.size}",
+                            durationMillis = 500, mirrorInRtl = false)
+                        Spacer(Modifier.width(10.dp))
+                        Text(Texts.ERROR_NETWORK, style = KhType.body, color = c.ink, modifier = Modifier.weight(1f))
+                    }
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         KhButton(Texts.RETRY, onRetry, Modifier.weight(1f), kind = ButtonKind.Quiet, icon = R.drawable.ic_kh_refresh)
                         KhButton("نحتاج مساعدة", onUrgent, Modifier.weight(1f), kind = ButtonKind.Urgent)
@@ -277,8 +306,8 @@ fun ChatScreen(
                 .padding(end = 18.dp, bottom = with(density) { composerHeight.toDp() } + 10.dp),
         )
         var confirmNew by remember { mutableStateOf(false) }
-        Composer(state, onSend, onWhoToTalk, { confirmNew = true },
-            Modifier.align(Alignment.BottomCenter).onSizeChanged { composerHeight = it.height })
+        Composer(state, onSend, onWhoToTalk, { confirmNew = true }, showChips = atEnd || state.lines.size <= 2,
+            modifier = Modifier.align(Alignment.BottomCenter).onSizeChanged { composerHeight = it.height })
         if (confirmNew) ConfirmNewChat(onConfirm = { confirmNew = false; onNewChat() }, onDismiss = { confirmNew = false })
         }
     }
@@ -290,72 +319,175 @@ private fun Composer(
     onSend: (String) -> Unit,
     onWhoToTalk: () -> Unit,
     onNewChat: () -> Unit,
+    showChips: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val c = Kh.colors
     val haptics = LocalHapticFeedback.current
+    val scope = rememberCoroutineScope()
     var text by rememberSaveable { mutableStateOf("") }
+    // The same on-device rules that run before sending, applied while typing: what will be removed is marked
+    // in the field itself, so the user sees it before anything leaves the phone.
+    val redactor = remember { LibyanRedactor() }
+    val spans = remember(text) { if (text.isBlank()) emptyList() else redactor.redact(text).spans }
+    val mark = c.sunSoft
+    val highlight = remember(spans, mark) { HiddenWords(spans.map { it.start until it.end }, mark) }
+    val focus = remember { MutableInteractionSource() }
+    val focused by focus.collectIsFocusedAsState()
+    val lift by animateFloatAsState(if (focused) 1f else 0f, KhMotion.gentle(), label = "lift")
+    val canSend = text.isNotBlank() && !state.waiting
+    val flight = remember { Animatable(0f) }
+
+    fun send() {
+        if (!canSend) return
+        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+        onSend(text); text = ""
+        scope.launch { flight.snapTo(0f); flight.animateTo(1f, tween(380, easing = KhMotion.EmphasizedAccelerate)); flight.snapTo(0f) }
+    }
+
     // No bar behind it: each control carries its own outlined shape, so the composer floats.
     Column(modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 8.dp)) {
-            if (!state.supportReady) Chip(Texts.WHO_TO_TALK, onWhoToTalk, enabled = !state.waiting)
-            if (state.lines.size > 1) Chip(Texts.NEW_CHAT, onNewChat, enabled = !state.waiting)
+        // Shortcuts only at the end of the conversation, so they never sit on top of what the user is reading.
+        AnimatedVisibility(
+            visible = showChips && (!state.supportReady || state.lines.size > 1),
+            enter = fadeIn(tween(180)) + expandVertically(KhMotion.gentle(), expandFrom = Alignment.Bottom) +
+                slideInVertically(KhMotion.gentleOffset) { it / 2 },
+            exit = fadeOut(tween(120)) + shrinkVertically(tween(200, easing = KhMotion.EmphasizedAccelerate), shrinkTowards = Alignment.Bottom),
+        ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 10.dp)) {
+                if (!state.supportReady) Chip(Texts.WHO_TO_TALK, R.drawable.ic_kh_users, onWhoToTalk, enabled = !state.waiting)
+                if (state.lines.size > 1) Chip(Texts.NEW_CHAT, R.drawable.ic_kh_edit, onNewChat, enabled = !state.waiting)
+            }
         }
         Row(verticalAlignment = Alignment.Bottom) {
-            Box(Modifier.weight(1f).padding(end = 3.dp, bottom = 4.dp)) {
-            // the brand's hard print shadow lifts the field off the conversation
-            Box(Modifier.matchParentSize().absoluteOffset(3.dp, 4.dp).background(c.shadow.copy(alpha = if (c.isDark) 1f else 0.9f), KhShapes.field))
-            BasicTextField(
-                value = text,
-                onValueChange = { text = it },
-                textStyle = KhType.bubble.copy(color = c.ink),
-                cursorBrush = SolidColor(c.ink),
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Default),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 52.dp, max = 140.dp)
-                    .background(c.paperRaised, KhShapes.field)
-                    .border(PenWidth, c.ink, KhShapes.field)
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                    .semantics { contentDescription = "اكتب رسالتك" },
-                decorationBox = { inner ->
-                    Box {
-                        if (text.isEmpty()) Text(Texts.COMPOSER_HINT, style = KhType.bubble, color = c.inkMuted)
-                        inner()
-                    }
-                },
-            )
+            Box(Modifier.weight(1f).padding(end = 4.dp, bottom = 5.dp)) {
+                // the brand's hard print shadow; the field lifts off it a little while the user writes
+                Box(Modifier.matchParentSize()
+                    .absoluteOffset((3 + 1.5f * lift).dp, (4 + 1.5f * lift).dp)
+                    .background(c.shadow.copy(alpha = if (c.isDark) 1f else 0.9f), KhShapes.field))
+                BasicTextField(
+                    value = text,
+                    onValueChange = { text = it },
+                    textStyle = KhType.bubble.copy(color = c.ink),
+                    cursorBrush = SolidColor(c.greenDeep),
+                    interactionSource = focus,
+                    visualTransformation = highlight,
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Default),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .graphicsLayer { translationX = -1.5f * lift * density; translationY = -1.5f * lift * density }
+                        .heightIn(min = 54.dp, max = 148.dp)
+                        .background(c.paperRaised, KhShapes.field)
+                        .border(PenWidth, c.ink, KhShapes.field)
+                        .padding(horizontal = 16.dp, vertical = 13.dp)
+                        .semantics { contentDescription = "اكتب رسالتك" },
+                    decorationBox = { inner ->
+                        Box {
+                            // the hint drifts away as the first letter lands, instead of blinking out
+                            androidx.compose.animation.AnimatedVisibility(
+                                visible = text.isEmpty(),
+                                enter = fadeIn(tween(200)) + slideInHorizontally(KhMotion.gentleOffset) { -it / 6 },
+                                exit = fadeOut(tween(90)) + slideOutHorizontally(tween(160)) { it / 8 },
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(Texts.COMPOSER_HINT, style = KhType.bubble, color = c.inkMuted)
+                                    if (!focused) {
+                                        Spacer(Modifier.width(6.dp))
+                                        Doodle(Doodles.SQUIGGLE, c.inkMuted.copy(alpha = 0.55f), Modifier.size(34.dp, 8.dp),
+                                            key = "composer-hint-squiggle", delayMillis = 900, durationMillis = 700)
+                                    }
+                                }
+                            }
+                            inner()
+                        }
+                    },
+                )
             }
             Spacer(Modifier.width(10.dp))
-            val canSend = text.isNotBlank() && !state.waiting
-            val sendBg by animateColorAsState(if (canSend) c.green else c.paperSunk, tween(220), label = "sendBg")
-            val sendEdge by animateColorAsState(if (canSend) c.onGreen else c.border, tween(220), label = "sendEdge")
-            val sendScale by animateFloatAsState(if (canSend) 1f else 0.92f, KhMotion.snappy(), label = "sendScale")
-            Box(
-                Modifier.size(52.dp)
-                    .graphicsLayer { scaleX = sendScale; scaleY = sendScale }
-                    .background(sendBg, KhShapes.chip)
-                    .border(PenWidth, sendEdge, KhShapes.chip)
-                    .clickable(enabled = canSend, role = Role.Button) {
-                        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        onSend(text); text = ""
-                    }
-                    .semantics { contentDescription = "ابعت" },
-                contentAlignment = Alignment.Center,
-            ) {
-                // send points left in a right-to-left layout
-                KhIcon(R.drawable.ic_kh_send, if (canSend) c.onGreen else c.inkMuted,
-                    Modifier.graphicsMirror(), size = 22.dp)
+            SendButton(canSend = canSend, waiting = state.waiting, flight = flight.value, onClick = ::send)
+        }
+        PrivacyLine(hidden = spans.size, modifier = Modifier.padding(top = 8.dp))
+    }
+}
+
+/** Marks the words the on-device rules will remove, like a highlighter, without changing the text. */
+private class HiddenWords(private val ranges: List<IntRange>, private val mark: Color) : VisualTransformation {
+    override fun filter(text: AnnotatedString): TransformedText {
+        if (ranges.isEmpty()) return TransformedText(text, OffsetMapping.Identity)
+        val out = buildAnnotatedString {
+            append(text)
+            ranges.forEach { r ->
+                if (r.last < text.length) addStyle(SpanStyle(background = mark, textDecoration = TextDecoration.Underline), r.first, r.last + 1)
             }
         }
-        Row(
-            Modifier.padding(top = 8.dp).background(c.paperRaised.copy(alpha = 0.92f), KhShapes.chip)
-                .padding(horizontal = 10.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
+        return TransformedText(out, OffsetMapping.Identity)
+    }
+    override fun equals(other: Any?) = other is HiddenWords && other.ranges == ranges && other.mark == mark
+    override fun hashCode() = ranges.hashCode() * 31 + mark.hashCode()
+}
+
+@Composable
+private fun SendButton(canSend: Boolean, waiting: Boolean, flight: Float, onClick: () -> Unit) {
+    val c = Kh.colors
+    val source = remember { MutableInteractionSource() }
+    val pressed by source.collectIsPressedAsState()
+    val bg by animateColorAsState(if (canSend) c.green else c.paperSunk, tween(220), label = "sendBg")
+    val edge by animateColorAsState(if (canSend) c.ink else c.border, tween(220), label = "sendEdge")
+    val ready by animateFloatAsState(if (canSend) 1f else 0f, KhMotion.snappy(), label = "sendReady")
+    val press by animateFloatAsState(if (pressed) 0.9f else 1f, KhMotion.snappy(), label = "sendPress")
+    Box(Modifier.padding(end = 4.dp, bottom = 5.dp)) {
+        // the print shadow only appears once there is something to send
+        Box(Modifier.matchParentSize().absoluteOffset((3 * ready).dp, (4 * ready).dp)
+            .background(c.shadow.copy(alpha = ready * (if (c.isDark) 1f else 0.9f)), KhShapes.chip))
+        Box(
+            Modifier.size(54.dp)
+                .graphicsLayer { val s = (0.92f + 0.08f * ready) * press; scaleX = s; scaleY = s }
+                .background(bg, KhShapes.chip)
+                .border(PenWidth, edge, KhShapes.chip)
+                .clickable(interactionSource = source, indication = null, enabled = canSend, role = Role.Button, onClick = onClick)
+                .semantics { contentDescription = "ابعت" },
+            contentAlignment = Alignment.Center,
         ) {
-            KhIcon(R.drawable.ic_kh_shield_check, c.greenDeep, size = 16.dp)
-            Spacer(Modifier.width(6.dp))
-            Text(Texts.PRIVACY_LINE, style = KhType.small, color = c.inkMuted)
+            if (waiting) {
+                DoodleLoop(Doodles.SQUIGGLE, c.inkMuted, Modifier.size(30.dp, 8.dp), periodMillis = 1300)
+            } else {
+                // send points left in a right-to-left layout; on send it flies off and a fresh one settles in
+                KhIcon(R.drawable.ic_kh_send, if (canSend) c.onGreen else c.inkMuted,
+                    Modifier.graphicsLayer {
+                        scaleX = -1f
+                        rotationZ = -12f * (1f - ready)
+                        translationX = -flight * 46.dp.toPx()
+                        translationY = -flight * 18.dp.toPx()
+                        alpha = 1f - flight
+                    }, size = 22.dp)
+            }
+        }
+    }
+}
+
+@Composable
+private fun PrivacyLine(hidden: Int, modifier: Modifier = Modifier) {
+    val c = Kh.colors
+    val bg by animateColorAsState(if (hidden > 0) c.sunSoft else c.paperRaised.copy(alpha = 0.92f), tween(260), label = "privacyBg")
+    Row(
+        modifier.background(bg, KhShapes.chip).animateContentSize(KhMotion.gentle()).padding(horizontal = 10.dp, vertical = 5.dp)
+            .semantics(mergeDescendants = true) {},
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        // the shield ticks once each time a new word gets marked
+        Box(Modifier.size(16.dp), contentAlignment = Alignment.Center) {
+            KhIcon(R.drawable.ic_kh_shield, c.greenDeep, size = 16.dp)
+            Doodle(Doodles.TICK, c.greenDeep, Modifier.size(9.dp), key = "privacy-tick-$hidden", durationMillis = 380)
+        }
+        Spacer(Modifier.width(6.dp))
+        AnimatedContent(
+            targetState = hidden > 0,
+            transitionSpec = { (fadeIn(tween(200, 60)) + slideInVertically(KhMotion.gentleOffset) { it / 2 }) togetherWith
+                (fadeOut(tween(100)) + slideOutVertically(tween(160)) { -it / 2 }) },
+            label = "privacyText",
+        ) { marked ->
+            Text(if (marked) Texts.PRIVACY_MARKED else Texts.PRIVACY_LINE, style = KhType.small,
+                color = if (marked) c.ink else c.inkMuted)
         }
     }
 }
@@ -437,23 +569,25 @@ private fun OptionsPlaceholder() {
 }
 
 @Composable
-private fun Chip(text: String, onClick: () -> Unit, enabled: Boolean) {
+private fun Chip(text: String, icon: Int, onClick: () -> Unit, enabled: Boolean) {
     val c = Kh.colors
     val source = remember { MutableInteractionSource() }
     val pressed by source.collectIsPressedAsState()
     val scale by animateFloatAsState(if (pressed) 0.95f else 1f, KhMotion.snappy(), label = "chip")
-    Text(
-        text,
-        style = KhType.label,
-        color = if (enabled) c.ink else c.inkMuted,
-        modifier = Modifier
+    Row(
+        Modifier
             .minimumInteractiveComponentSize()
-            .graphicsLayer { scaleX = scale; scaleY = scale }
+            .graphicsLayer { scaleX = scale; scaleY = scale; alpha = if (enabled) 1f else 0.6f }
             .background(c.paperRaised, KhShapes.chip)
             .border(1.5.dp, c.border, KhShapes.chip)
             .clickable(interactionSource = source, indication = null, enabled = enabled, role = Role.Button, onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 7.dp),
-    )
+            .padding(start = 12.dp, end = 14.dp, top = 7.dp, bottom = 7.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        KhIcon(icon, c.greenDeep, size = 16.dp)
+        Spacer(Modifier.width(6.dp))
+        Text(text, style = KhType.label, color = c.ink)
+    }
 }
 
 // ---------------------------------------------------------------- urgent help
@@ -483,7 +617,7 @@ fun UrgentScreen(auto: Boolean, onBack: () -> Unit) {
                 if (auto) Text(Texts.URGENT_INTRO_AUTO, style = KhType.body, color = c.ink)
             }
             listOf(Texts.URGENT_STEP_PERSON, Texts.URGENT_STEP_HOSPITAL, Texts.URGENT_STEP_SAFE).forEachIndexed { i, step ->
-                Appear("urgent-step-$i-$auto", 120L + 80L * i) { Step(i + 1, step) }
+                Appear("urgent-step-$i-$auto", 120L + 80L * i) { Step(i + 1, step, "urgent-$auto") }
             }
             Note(Texts.URGENT_NO_CONTACTS, R.drawable.ic_kh_info, c.sunSoft)
             Column(
@@ -508,15 +642,17 @@ fun UrgentScreen(auto: Boolean, onBack: () -> Unit) {
 }
 
 @Composable
-private fun Step(n: Int, text: String) {
+private fun Step(n: Int, text: String, scope: String) {
     val c = Kh.colors
     Row(
-        Modifier.fillMaxWidth().background(c.paperRaised, KhShapes.card).border(PenWidth, c.ink, KhShapes.card).padding(16.dp),
+        Modifier.fillMaxWidth().background(c.paperRaised, KhShapes.card).border(PenWidth, c.ink, KhShapes.card).padding(16.dp)
+            .semantics(mergeDescendants = true) {},
         verticalAlignment = Alignment.Top,
     ) {
-        Box(Modifier.size(34.dp).background(c.urgent, KhShapes.chip), contentAlignment = Alignment.Center) {
-            Text(n.toString(), style = KhType.button, color = c.onUrgent)
-        }
+        // the brand's hand-drawn step numeral (decoration: the step is written out beside it)
+        val numeral = when (n) { 1 -> Doodles.STEP_1; 2 -> Doodles.STEP_2; else -> Doodles.STEP_3 }
+        Doodle(numeral, c.onGreen, Modifier.size(42.dp), key = "$scope-numeral-$n", delayMillis = 200L + 90L * n,
+            durationMillis = 700, mirrorInRtl = false)
         Spacer(Modifier.width(12.dp))
         Text(text, style = KhType.body, color = c.ink, modifier = Modifier.weight(1f))
     }

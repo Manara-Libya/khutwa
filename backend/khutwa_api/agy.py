@@ -155,29 +155,39 @@ class Pool:
         self.agent, self.model, self.size = agent, model, size
         self.ready: queue.Queue[Worker] = queue.Queue()
         self.closed = False
-        for _ in range(size):
-            self._refill()
+        self._starting = 0  # spawns in flight
+        self._lock = threading.Lock()
+        self._top_up()
 
-    def _refill(self) -> None:
-        def spawn() -> None:
-            try:
-                worker = Worker(self.agent, self.model)
-            except AgyUnavailable:
-                return
-            if self.closed:
-                worker.close()
-            else:
+    def _top_up(self) -> None:
+        """Start workers until ready + starting reaches `size`, never more. Extra warm workers would sit
+        idle holding process slots, and requests would then time out waiting for a slot."""
+        with self._lock:
+            missing = 0 if self.closed else self.size - self.ready.qsize() - self._starting
+            self._starting += max(missing, 0)
+        for _ in range(missing):
+            threading.Thread(target=self._spawn, daemon=True).start()
+
+    def _spawn(self) -> None:
+        try:
+            worker = Worker(self.agent, self.model)
+        except AgyUnavailable:
+            worker = None
+        with self._lock:
+            self._starting -= 1
+            keep = worker is not None and not self.closed
+            if keep:
                 self.ready.put(worker)
-        threading.Thread(target=spawn, daemon=True).start()
+        if worker is not None and not keep:
+            worker.close()
 
     def acquire(self) -> Worker:
         try:
             worker = self.ready.get_nowait()
         except queue.Empty:
-            worker = Worker(self.agent, self.model)
-        if self.size and not self.closed:
-            self._refill()
-        return worker
+            worker = None
+        self._top_up()
+        return worker or Worker(self.agent, self.model)
 
     def close(self) -> None:
         self.closed = True

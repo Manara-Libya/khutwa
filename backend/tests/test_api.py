@@ -246,3 +246,34 @@ def test_installers_are_public_and_point_at_this_server(client):
         assert '$Base = "https://khutwa.example"' in ps1.text and 'BASE="https://khutwa.example"' in sh.text
         assert "class Tuner(App)" in script.text and "{BASE_URL}" not in ps1.text
         assert config.API_KEY not in ps1.text + sh.text + script.text
+
+
+def test_pool_never_keeps_more_than_its_size_warm(monkeypatch):
+    """Regression: acquire() used to start a replacement even after a cold start, so pools grew past
+    their size, filled every process slot, and the risk check then timed out (failing to urgent)."""
+    import threading
+    import time
+    from khutwa_api import agy
+
+    started = []
+
+    class FakeWorker:
+        def __init__(self, agent, model):
+            time.sleep(0.05)  # starting takes time, so a burst of requests finds the pool empty
+            started.append(self)
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(agy, "Worker", FakeWorker)
+    pool = agy.Pool("khutwa-risk", "m", 2)
+    workers = []
+    threads = [threading.Thread(target=lambda: workers.append(pool.acquire())) for _ in range(8)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    time.sleep(0.5)  # let background spawns finish
+    assert len(workers) == 8
+    assert pool.ready.qsize() == 2
+    assert len(started) - len(workers) == 2  # exactly `size` spares, however the calls interleave

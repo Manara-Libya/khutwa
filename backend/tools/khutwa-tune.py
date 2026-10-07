@@ -99,12 +99,29 @@ class ServerDown(Exception):
 
 
 def discover(discovery_url: str) -> str | None:
-    """Read the current public URL from the secret gist that serve-public.sh updates."""
+    """Read the current public URL from the secret gist that serve-public.sh updates.
+
+    GitHub allows only 60 anonymous API reads an hour, so the first successful API read stores the gist's raw
+    link (no such limit) in the config, and later reads use it, with a cache-buster to skip the 5-minute cache."""
     if not discovery_url:
         return None
+    cfg = load_config()
+    raw = cfg.get("discovery_raw")
+    if raw:
+        try:
+            url = httpx.get(raw, params={"t": int(time.time())}, timeout=10).json().get("url")
+            if url:
+                return url
+        except (httpx.HTTPError, ValueError, AttributeError):
+            pass
     try:
-        files = httpx.get(discovery_url, timeout=10, headers={"Accept": "application/vnd.github+json"}).json()["files"]
-        return json.loads(files["khutwa-url.json"]["content"]).get("url") or None
+        gist = httpx.get(discovery_url, timeout=10, headers={"Accept": "application/vnd.github+json"}).json()
+        url = json.loads(gist["files"]["khutwa-url.json"]["content"]).get("url") or None
+        owner, gist_id = gist["owner"]["login"], gist["id"]
+        cfg = load_config()
+        cfg["discovery_raw"] = f"https://gist.githubusercontent.com/{owner}/{gist_id}/raw/khutwa-url.json"
+        save_config(cfg)
+        return url
     except (httpx.HTTPError, KeyError, ValueError, TypeError):
         return None
 
@@ -390,8 +407,13 @@ class Tuner(App):
                 return True  # another thread already reconnected
             cfg = load_config()
             deadline = time.monotonic() + RECONNECT_SECONDS
+            next_lookup = 0.0
+            published = None
             while time.monotonic() < deadline:
-                for url in dict.fromkeys(filter(None, [discover(cfg.get("discovery", "")), cfg.get("url")])):
+                if time.monotonic() >= next_lookup:  # the published URL is re-read every 20 s, not every try
+                    published = discover(cfg.get("discovery", "")) or published
+                    next_lookup = time.monotonic() + 20
+                for url in dict.fromkeys(filter(None, [published, cfg.get("url")])):
                     api = Api(url, cfg["key"], cfg["dev"])
                     if api.healthy():
                         if url != cfg.get("url"):

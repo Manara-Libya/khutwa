@@ -4,6 +4,10 @@
 
 Until this table has an entry, the urgent-help screen shows the steps and `urgent_no_contacts` only. That's an honest screen, and we say so on stage.
 
+## Decision for the 8 October pitch (Marwan, 7 Oct 2026)
+
+**No numbers are shown.** 1417 (the national psychosocial hotline) did not answer; 1515 and 193 answered but the service could not be confirmed. The urgent-help screen shows the general steps and `urgent_no_contacts` only. On stage we say so plainly, and that Libya's only national psychosocial hotline didn't answer when we called it.
+
 ## How to verify (one call per number)
 
 1. Call the number from a Libyan phone.

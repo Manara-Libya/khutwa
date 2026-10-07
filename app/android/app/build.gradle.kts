@@ -47,3 +47,8 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // Plain JVM tests for the redactor: cd app/android && ./gradlew :app:testDebugUnitTest
+    testImplementation("junit:junit:4.13.2")
+}

@@ -144,7 +144,8 @@ fun UrgentPill(onClick: () -> Unit) {
 }
 
 @Composable
-fun TopBar(onUrgent: () -> Unit, modifier: Modifier = Modifier, leading: @Composable RowScope.() -> Unit = {}) {
+fun TopBar(onUrgent: () -> Unit, modifier: Modifier = Modifier, onQuickExit: (() -> Unit)? = null,
+           leading: @Composable RowScope.() -> Unit = {}) {
     val c = Kh.colors
     Row(
         modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
@@ -155,6 +156,15 @@ fun TopBar(onUrgent: () -> Unit, modifier: Modifier = Modifier, leading: @Compos
             modifier = Modifier.size(34.dp))
         Spacer(Modifier.width(8.dp))
         Text("خطوة", style = KhType.heading, color = c.ink, modifier = Modifier.weight(1f))
+        // Quick exit: erases the conversation and closes the app at once, for when someone walks in.
+        if (onQuickExit != null) {
+            Box(
+                Modifier.size(44.dp).clickable(role = Role.Button, onClick = onQuickExit)
+                    .semantics { contentDescription = ly.manara.khutwa.data.Texts.QUICK_EXIT },
+                contentAlignment = Alignment.Center,
+            ) { KhIcon(R.drawable.ic_kh_close, c.inkMuted, size = 20.dp) }
+            Spacer(Modifier.width(4.dp))
+        }
         UrgentPill(onUrgent)
     }
 }

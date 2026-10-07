@@ -1,5 +1,16 @@
 package ly.manara.khutwa.ui.screens
 
+import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.withStyle
+import androidx.compose.foundation.Canvas
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
@@ -228,6 +239,7 @@ fun ChatScreen(
     onNewChat: () -> Unit,
     onUrgent: () -> Unit,
     onRevealed: (Long) -> Unit = {},
+    onQuickExit: () -> Unit = {},
 ) {
     val c = Kh.colors
     val list = rememberLazyListState()
@@ -248,7 +260,7 @@ fun ChatScreen(
     val density = LocalDensity.current
     var composerHeight by remember { mutableIntStateOf(0) }
     Column(Modifier.fillMaxSize().imePadding()) {
-        TopBar(onUrgent)
+        TopBar(onUrgent, onQuickExit = onQuickExit)
         // The composer floats over the conversation; the list scrolls underneath it, padded so nothing hides.
         Box(Modifier.weight(1f).fillMaxWidth()) {
         LazyColumn(
@@ -270,15 +282,19 @@ fun ChatScreen(
                         when {
                             surface != null -> A2uiView(surface)
                             line.loadingSurface -> OptionsPlaceholder()
-                            else -> Bubble(line.text, line.mine, reveal = line.reveal,
-                                onRevealed = { onRevealed(line.id); scope.launch { keepInView(list, index + 1) } },
-                                onGrow = { scope.launch { keepInView(list, index + 1) } },
-                                showWho = state.lines.getOrNull(index - 1)?.let { it.mine } ?: true)
+                            else -> Column {
+                                Bubble(line.text, line.mine, reveal = line.reveal,
+                                    onRevealed = { onRevealed(line.id); scope.launch { keepInView(list, index + 1) } },
+                                    onGrow = { scope.launch { keepInView(list, index + 1) } },
+                                    showWho = state.lines.getOrNull(index - 1)?.let { it.mine } ?: true)
+                                if (line.mine && (line.sent != null || line.stayedOnPhone))
+                                    SentReceipt(line.sent, line.id, onOpen = { scope.launch { keepInView(list, index + 1) } })
+                            }
                         }
                     }
                 }
             }
-            if (state.waiting) item(key = "typing") { Box(Modifier.animateItem()) { Appear("typing-${state.lines.size}") { Typing() } } }
+            if (state.waiting) item(key = "typing") { Box(Modifier.animateItem(fadeOutSpec = null)) { Appear("typing-${state.lines.size}") { Typing() } } }
             if (state.failed) item {
                 Column(
                     Modifier.fillMaxWidth().background(c.sunSoft, KhShapes.card).border(PenWidth, c.ink, KhShapes.card).padding(16.dp),
@@ -330,13 +346,14 @@ private fun Composer(
     // in the field itself, so the user sees it before anything leaves the phone.
     val redactor = remember { LibyanRedactor() }
     val spans = remember(text) { if (text.isBlank()) emptyList() else redactor.redact(text).spans }
-    val mark = c.sunSoft
+    val mark = if (c.isDark) c.sun.copy(alpha = 0.38f) else c.sunSoft
     val highlight = remember(spans, mark) { HiddenWords(spans.map { it.start until it.end }, mark) }
     val focus = remember { MutableInteractionSource() }
     val focused by focus.collectIsFocusedAsState()
     val lift by animateFloatAsState(if (focused) 1f else 0f, KhMotion.gentle(), label = "lift")
     val canSend = text.isNotBlank() && !state.waiting
     val flight = remember { Animatable(0f) }
+    val fieldFocus = remember { FocusRequester() }
 
     fun send() {
         if (!canSend) return
@@ -349,12 +366,17 @@ private fun Composer(
     Column(modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
         // Shortcuts only at the end of the conversation, so they never sit on top of what the user is reading.
         AnimatedVisibility(
-            visible = showChips && (!state.supportReady || state.lines.size > 1),
+            visible = showChips && (!state.supportReady || state.lines.size > 1) && !(state.lines.size == 1 && text.isNotEmpty()),
             enter = fadeIn(tween(180)) + expandVertically(KhMotion.gentle(), expandFrom = Alignment.Bottom) +
                 slideInVertically(KhMotion.gentleOffset) { it / 2 },
             exit = fadeOut(tween(120)) + shrinkVertically(tween(200, easing = KhMotion.EmphasizedAccelerate), shrinkTowards = Alignment.Bottom),
         ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 10.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(bottom = 10.dp).horizontalScroll(rememberScrollState())) {
+                // A way in for when the first words are the hardest: it only fills the field, the user edits and sends.
+                if (state.lines.size == 1) Texts.STARTERS.forEach { s ->
+                    Chip(s, R.drawable.ic_kh_edit, { text = "$s، "; fieldFocus.requestFocus() }, enabled = true)
+                }
                 if (!state.supportReady) Chip(Texts.WHO_TO_TALK, R.drawable.ic_kh_users, onWhoToTalk, enabled = !state.waiting)
                 if (state.lines.size > 1) Chip(Texts.NEW_CHAT, R.drawable.ic_kh_edit, onNewChat, enabled = !state.waiting)
             }
@@ -375,6 +397,7 @@ private fun Composer(
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Default),
                     modifier = Modifier
                         .fillMaxWidth()
+                        .focusRequester(fieldFocus)
                         .graphicsLayer { translationX = -1.5f * lift * density; translationY = -1.5f * lift * density }
                         .heightIn(min = 54.dp, max = 148.dp)
                         .background(c.paperRaised, KhShapes.field)
@@ -634,7 +657,7 @@ fun UrgentScreen(auto: Boolean, onBack: () -> Unit) {
                 }
             }
             Text("حاجات تقدر تديرها توا", style = KhType.heading, color = c.ink, modifier = Modifier.padding(top = 6.dp))
-            CopingCard(R.drawable.ill_breathe, Texts.CARD_BREATH_TITLE, Texts.CARD_BREATH_BODY)
+            CopingCard(R.drawable.ill_breathe, Texts.CARD_BREATH_TITLE, Texts.CARD_BREATH_BODY) { BreathingGuide() }
             CopingCard(R.drawable.ill_stones_three, Texts.CARD_GROUND_TITLE, Texts.CARD_GROUND_BODY)
             Text(Texts.URGENT_FOOTER, style = KhType.small, color = c.inkMuted, modifier = Modifier.padding(vertical = 12.dp))
         }
@@ -659,7 +682,7 @@ private fun Step(n: Int, text: String, scope: String) {
 }
 
 @Composable
-private fun CopingCard(image: Int, title: String, body: String) {
+private fun CopingCard(image: Int, title: String, body: String, extra: @Composable () -> Unit = {}) {
     val c = Kh.colors
     Row(
         Modifier.fillMaxWidth().background(c.greenSoft, KhShapes.card).padding(16.dp),
@@ -670,7 +693,146 @@ private fun CopingCard(image: Int, title: String, body: String) {
         Column(Modifier.weight(1f)) {
             Text(title, style = KhType.heading, color = c.ink)
             Text(body, style = KhType.body, color = c.ink)
+            extra()
         }
     }
 }
 
+
+// ---------------------------------------------------------------- what left the phone
+
+private val PLACEHOLDER = Regex("""\[(اسم|مكان|رقم|بريد|مخفي)\d*]""")
+
+/**
+ * Under each of the user's messages: whether anything identifying was removed, and on tap, the exact text
+ * that reached the AI, with the placeholders marked. Kept in memory only, like the rest of the conversation.
+ */
+@Composable
+private fun SentReceipt(sent: String?, id: Long, onOpen: () -> Unit) {
+    val c = Kh.colors
+    var open by rememberSaveable(id) { mutableStateOf(false) }
+    val hidden = sent != null && PLACEHOLDER.containsMatchIn(sent)
+    Column(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalAlignment = Alignment.Start) {
+        Row(
+            Modifier.clip(KhShapes.chip)
+                .clickable(enabled = sent != null, role = Role.Button) { open = !open; if (open) onOpen() }
+                .padding(horizontal = 6.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(Modifier.size(15.dp), contentAlignment = Alignment.Center) {
+                KhIcon(if (sent == null) R.drawable.ic_kh_lock else R.drawable.ic_kh_shield, c.greenDeep, size = 15.dp)
+                if (hidden) Doodle(Doodles.TICK, c.greenDeep, Modifier.size(8.dp), key = "receipt-tick-$id", delayMillis = 250, durationMillis = 380)
+            }
+            Spacer(Modifier.width(5.dp))
+            val label = when { sent == null -> Texts.RECEIPT_LOCAL; hidden -> Texts.RECEIPT_HIDDEN; else -> Texts.RECEIPT_CLEAN }
+            Text(label, style = KhType.small, color = c.inkMuted)
+            if (sent != null) {
+                Text("  ·  ", style = KhType.small, color = c.inkMuted)
+                Text(if (open) Texts.RECEIPT_HIDE else Texts.RECEIPT_SHOW, style = KhType.small.copy(textDecoration = TextDecoration.Underline),
+                    color = c.greenDeep)
+            }
+        }
+        AnimatedVisibility(
+            visible = open && sent != null,
+            enter = fadeIn(tween(200, 60)) + expandVertically(KhMotion.gentle(), expandFrom = Alignment.Top),
+            exit = fadeOut(tween(120)) + shrinkVertically(tween(220, easing = KhMotion.EmphasizedAccelerate), shrinkTowards = Alignment.Top),
+        ) {
+            val marked = remember(sent) {
+                buildAnnotatedString {
+                    val s = sent.orEmpty(); var at = 0
+                    PLACEHOLDER.findAll(s).forEach { m ->
+                        append(s.substring(at, m.range.first))
+                        withStyle(SpanStyle(background = if (c.isDark) c.sun.copy(alpha = 0.38f) else c.sunSoft, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold)) { append(m.value) }
+                        at = m.range.last + 1
+                    }
+                    append(s.substring(at))
+                }
+            }
+            Column(
+                Modifier.padding(top = 4.dp).widthIn(max = 300.dp)
+                    .background(c.paperRaised, KhShapes.card)
+                    .dashedBorder(c.inkMuted, KhShapes.card)
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Text(Texts.RECEIPT_TITLE, style = KhType.label, color = c.inkMuted)
+                Text(marked, style = KhType.bubble, color = c.ink)
+                Text(Texts.RECEIPT_NOTE, style = KhType.small, color = c.inkMuted)
+            }
+        }
+    }
+}
+
+/** A hand-drawn dashed edge: "this is a copy of what was sent", not a message. */
+private fun Modifier.dashedBorder(color: Color, shape: androidx.compose.ui.graphics.Shape): Modifier = drawWithContent {
+    drawContent()
+    val outline = shape.createOutline(size, layoutDirection, this)
+    drawOutline(outline, color, style = Stroke(width = 1.6.dp.toPx(), cap = StrokeCap.Round,
+        pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(7.dp.toPx(), 5.dp.toPx()))))
+}
+
+// ---------------------------------------------------------------- breathing together
+
+/**
+ * Follows the fixed breathing card (in for 4, out for 6, five times): a pebble fills as the breath comes in and
+ * empties as it goes out, with the count beside it. A soft tick marks each change. It stops whenever the user wants.
+ */
+@Composable
+private fun BreathingGuide() {
+    val c = Kh.colors
+    val haptics = LocalHapticFeedback.current
+    var running by remember { mutableStateOf(false) }
+    var done by remember { mutableStateOf(false) }
+    var inhale by remember { mutableStateOf(true) }
+    var count by remember { mutableIntStateOf(1) }
+    var round by remember { mutableIntStateOf(1) }
+    val fill = remember { Animatable(0.35f) }
+    LaunchedEffect(running) {
+        if (!running) { fill.animateTo(0.35f, tween(500)); return@LaunchedEffect }
+        done = false
+        for (r in 1..5) {
+            round = r
+            inhale = true; haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+            launch { fill.animateTo(1f, tween(4000, easing = androidx.compose.animation.core.FastOutSlowInEasing)) }
+            for (i in 1..4) { count = i; kotlinx.coroutines.delay(1000) }
+            inhale = false; haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+            launch { fill.animateTo(0.35f, tween(6000, easing = androidx.compose.animation.core.FastOutSlowInEasing)) }
+            for (i in 1..6) { count = i; kotlinx.coroutines.delay(1000) }
+        }
+        running = false; done = true
+    }
+    Column(Modifier.fillMaxWidth().padding(top = 12.dp).animateContentSize(KhMotion.gentle())) {
+        if (!running) {
+            if (done) Text(Texts.BREATH_DONE, style = KhType.body, color = c.ink, modifier = Modifier.padding(bottom = 8.dp))
+            KhButton(if (done) Texts.BREATH_AGAIN else Texts.BREATH_START, { running = true }, Modifier.fillMaxWidth(),
+                kind = ButtonKind.Quiet)
+        } else {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Canvas(Modifier.size(88.dp).semantics { contentDescription = if (inhale) Texts.BREATH_IN else Texts.BREATH_OUT }) {
+                    val r = size.minDimension / 2f
+                    // the full pebble, drawn in pen
+                    drawOval(c.ink, topLeft = Offset(size.width / 2 - r * 0.92f, size.height / 2 - r),
+                        size = androidx.compose.ui.geometry.Size(r * 1.84f, r * 2f), style = Stroke(PenWidth.toPx()))
+                    // the breath, filling it
+                    val f = fill.value
+                    drawOval(c.green, topLeft = Offset(size.width / 2 - r * 0.92f * f, size.height / 2 - r * f),
+                        size = androidx.compose.ui.geometry.Size(r * 1.84f * f, r * 2f * f))
+                }
+                Spacer(Modifier.width(14.dp))
+                Column(Modifier.weight(1f)) {
+                    AnimatedContent(inhale, transitionSpec = { fadeIn(tween(300)) togetherWith fadeOut(tween(200)) }, label = "phase") { inh ->
+                        Text(if (inh) Texts.BREATH_IN else Texts.BREATH_OUT, style = KhType.heading, color = c.ink)
+                    }
+                    AnimatedContent(count, transitionSpec = {
+                        (fadeIn(tween(220)) + slideInVertically(KhMotion.gentleOffset) { it / 2 }) togetherWith fadeOut(tween(150))
+                    }, label = "count") { n ->
+                        Text("$n", style = KhType.title, color = c.greenDeep)
+                    }
+                    Text("المرة $round من 5", style = KhType.small, color = c.inkMuted)
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            KhButton(Texts.BREATH_STOP, { running = false }, Modifier.fillMaxWidth(), kind = ButtonKind.Quiet)
+        }
+    }
+}

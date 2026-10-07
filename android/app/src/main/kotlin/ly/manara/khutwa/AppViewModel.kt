@@ -36,6 +36,10 @@ data class Line(
     val surface: A2ui.Surface? = null,
     /** A placeholder while the support options load. */
     val loadingSurface: Boolean = false,
+    /** For the user's lines: exactly what left the phone (redacted), or null when nothing was sent. */
+    val sent: String? = null,
+    /** The user's line stayed on the phone (the offline risk check opened the urgent screen instead). */
+    val stayedOnPhone: Boolean = false,
 )
 
 private var nextLineId = 0L
@@ -70,14 +74,15 @@ class AppViewModel(
     fun send(text: String) {
         val message = text.trim()
         if (message.isEmpty() || _state.value.waiting) return
-        _state.update { it.copy(lines = it.lines + Line(true, message), failed = false) }
         // Unmistakable risk wording: straight to the fixed urgent screen, nothing is sent (works offline).
         if (RiskKeywords.matches(message)) {
-            _state.update { it.copy(screen = Screen.Urgent(auto = true, returnTo = Screen.Chat)) }
+            _state.update { it.copy(lines = it.lines + Line(true, message, stayedOnPhone = true), failed = false,
+                screen = Screen.Urgent(auto = true, returnTo = Screen.Chat)) }
             return
         }
         askedForHelp = message == Texts.WHO_TO_TALK_MESSAGE
         val redacted = privacy.redact(message)
+        _state.update { it.copy(lines = it.lines + Line(true, message, sent = redacted), failed = false) }
         pending = redacted
         ask(redacted)
     }

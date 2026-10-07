@@ -53,6 +53,8 @@ class MainActivity : ComponentActivity() {
                 .withEndAction { provider.remove() }.start()
         }
         enableEdgeToEdge()
+        // The recent-apps switcher shows a blank card instead of the conversation.
+        if (android.os.Build.VERSION.SDK_INT >= 33) setRecentsScreenshotEnabled(false)
         val factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T =
@@ -62,7 +64,7 @@ class MainActivity : ComponentActivity() {
             KhutwaTheme {
                 // Arabic everywhere: right-to-left regardless of the phone's language.
                 CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-                    KhutwaApp(viewModel(factory = factory), onExit = ::finish)
+                    KhutwaApp(viewModel(factory = factory), onExit = ::finish, onQuickExit = ::finishAndRemoveTask)
                 }
             }
         }
@@ -70,7 +72,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun KhutwaApp(vm: AppViewModel, onExit: () -> Unit) {
+fun KhutwaApp(vm: AppViewModel, onExit: () -> Unit, onQuickExit: () -> Unit = onExit) {
     val state by vm.state.collectAsStateWithLifecycle()
     BackHandler(enabled = state.screen !is Screen.Consent && state.screen !is Screen.Chat) { vm.back() }
     Box(Modifier.fillMaxSize().background(Kh.colors.paper).windowInsetsPadding(WindowInsets.safeDrawing)) {
@@ -94,7 +96,8 @@ fun KhutwaApp(vm: AppViewModel, onExit: () -> Unit) {
         ) { screen ->
             when (screen) {
                 Screen.Consent -> ConsentScreen(onAccept = vm::acceptConsent, onDecline = onExit, onUrgent = vm::openUrgent)
-                Screen.Chat -> ChatScreen(state, vm::send, vm::retry, vm::askWhoToTalkTo, vm::newChat, vm::openUrgent, vm::revealed)
+                Screen.Chat -> ChatScreen(state, vm::send, vm::retry, vm::askWhoToTalkTo, vm::newChat, vm::openUrgent, vm::revealed,
+                    onQuickExit = { vm.newChat(); onQuickExit() })
                 is Screen.Urgent -> UrgentScreen(screen.auto, onBack = { vm.back() })
             }
         }

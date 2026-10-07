@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import ly.manara.khutwa.R
 import ly.manara.khutwa.data.A2ui
+import ly.manara.khutwa.data.Texts
 import ly.manara.khutwa.ui.theme.Kh
 import ly.manara.khutwa.ui.theme.KhShapes
 import ly.manara.khutwa.ui.theme.KhType
@@ -70,7 +71,7 @@ private fun Node(surface: A2ui.Surface, id: String, data: MutableMap<String, Str
         is A2ui.Text -> when (comp.hint) {
             "h1", "h2", "h3" -> Row(verticalAlignment = Alignment.Bottom) {
                 Column(Modifier.weight(1f, fill = false)) {
-                    Text(comp.text, style = KhType.heading.copy(fontSize = KhType.title.fontSize.times(0.8f)),
+                    Text(t(comp.text), style = KhType.heading.copy(fontSize = KhType.title.fontSize.times(0.8f)),
                         color = c.ink, modifier = Modifier.semantics { heading() })
                     // the brand's hand-drawn underline draws itself under the surface title
                     Doodle(Doodles.UNDERLINE, c.green, Modifier.width(150.dp).height(12.dp), key = "${surface.id}/$id/underline",
@@ -80,9 +81,9 @@ private fun Node(surface: A2ui.Surface, id: String, data: MutableMap<String, Str
                 Doodle(Doodles.ARROW_DOWN, c.inkMuted, Modifier.size(width = 22.dp, height = 40.dp), key = "${surface.id}/$id/arrow",
                     delayMillis = 700, durationMillis = 600, mirrorInRtl = false)
             }
-            "h4", "h5" -> Text(comp.text, style = KhType.heading, color = c.ink)
-            "caption" -> Text(comp.text, style = KhType.small, color = c.inkMuted)
-            else -> Text(comp.text, style = KhType.body, color = c.inkMuted)
+            "h4", "h5" -> Text(t(comp.text), style = KhType.heading, color = c.ink)
+            "caption" -> Text(t(comp.text), style = KhType.small, color = c.inkMuted)
+            else -> Text(t(comp.text), style = KhType.body, color = c.inkMuted)
         }
         is A2ui.Column -> {
             var cards = 0
@@ -129,7 +130,7 @@ private fun Node(surface: A2ui.Surface, id: String, data: MutableMap<String, Str
                 Row(Modifier.padding(start = 14.dp, end = 14.dp, top = 8.dp), verticalAlignment = Alignment.Top) {
                     KhIcon(R.drawable.ic_kh_heart, c.clay, size = 16.dp, modifier = Modifier.padding(top = 2.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text(ly.manara.khutwa.data.Texts.AFTER_SEND_NOTE, style = KhType.small, color = c.inkMuted)
+                    Text(t(ly.manara.khutwa.data.Texts.AFTER_SEND_NOTE), style = KhType.small, color = c.inkMuted)
                 }
             }
             }
@@ -156,7 +157,7 @@ private fun Node(surface: A2ui.Surface, id: String, data: MutableMap<String, Str
 @Composable
 private fun ActionButton(surface: A2ui.Surface, b: A2ui.Button, data: Map<String, String>, compact: Boolean = false) {
     val context = LocalContext.current
-    val label = (surface.components[b.child] as? A2ui.Text)?.text.orEmpty()
+    val label = t((surface.components[b.child] as? A2ui.Text)?.text.orEmpty())
     var done by remember { mutableStateOf(false) }
     var taps by remember { mutableIntStateOf(0) }
     LaunchedEffect(done) { if (done) { delay(1600); done = false } }

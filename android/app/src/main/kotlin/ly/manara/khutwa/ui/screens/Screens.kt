@@ -1,5 +1,7 @@
 package ly.manara.khutwa.ui.screens
 
+import androidx.compose.ui.semantics.selected
+import ly.manara.khutwa.ui.components.t
 import ly.manara.khutwa.ui.components.UrgentPill
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.ui.graphics.drawOutline
@@ -166,7 +168,7 @@ fun ConsentScreen(onAccept: () -> Unit, onDecline: () -> Unit, onUrgent: () -> U
                             Doodle(Doodles.HEART_OUTLINE, c.clay, Modifier.size(34.dp), key = "declined-heart", delayMillis = 450, durationMillis = 800)
                         }
                         Spacer(Modifier.height(8.dp))
-                        Text("ما بعتنا شي وما خزنا شي. ترجع وقت ما تبي، وإذا احتجت مساعدة توا اضغط «نحتاج مساعدة توا» فوق.",
+                        Text(t(Texts.DECLINED_BODY),
                             style = KhType.body, color = c.inkMuted, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                     }
                 }
@@ -195,23 +197,25 @@ fun ConsentScreen(onAccept: () -> Unit, onDecline: () -> Unit, onUrgent: () -> U
                     Doodle(Doodles.UNDERLINE, c.green, Modifier.width(190.dp).height(14.dp),
                         key = "consent-underline", delayMillis = 520, durationMillis = 700)
                     Spacer(Modifier.height(8.dp))
-                    Text(Texts.CONSENT_INTRO, style = KhType.body, color = c.inkMuted)
+                    Text(t(Texts.CONSENT_INTRO), style = KhType.body, color = c.inkMuted)
                 }
             }
+            Spacer(Modifier.height(14.dp))
+            Appear("consent-address", 130) { AddressChoice() }
             Spacer(Modifier.height(20.dp))
             listOf(
                 Triple(R.drawable.ic_kh_sparkle, Texts.CONSENT_AI, false),
                 Triple(R.drawable.ic_kh_shield_check, Texts.CONSENT_REDACTION, false),
                 Triple(R.drawable.ic_kh_info, Texts.CONSENT_GOOGLE, false),
                 Triple(R.drawable.ic_kh_lock, Texts.CONSENT_SERVER, false),
-                Triple(R.drawable.ic_kh_urgent, Texts.CONSENT_EMERGENCY, true),
+                Triple(R.drawable.ic_kh_urgent, t(Texts.CONSENT_EMERGENCY), true),
             ).forEachIndexed { i, (icon, text, urgent) ->
                 Appear("consent-point-$i", 160L + 70L * i) { ConsentPoint(icon, text, urgent) }
             }
             Spacer(Modifier.height(12.dp))
         }
         Column(Modifier.padding(horizontal = Gutter, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            KhButton(Texts.CONSENT_ACCEPT, onAccept, Modifier.fillMaxWidth())
+            KhButton(t(Texts.CONSENT_ACCEPT), onAccept, Modifier.fillMaxWidth())
             KhButton(Texts.CONSENT_DECLINE, { declined = true }, Modifier.fillMaxWidth(), kind = ButtonKind.Quiet)
         }
     }
@@ -285,7 +289,7 @@ fun ChatScreen(
                             surface != null -> A2uiView(surface)
                             line.loadingSurface -> OptionsPlaceholder()
                             else -> Column {
-                                Bubble(line.text, line.mine, reveal = line.reveal,
+                                Bubble(if (line.mine) line.text else t(line.text), line.mine, reveal = line.reveal,
                                     onRevealed = { onRevealed(line.id); scope.launch { keepInView(list, index + 1) } },
                                     onGrow = { scope.launch { keepInView(list, index + 1) } },
                                     showWho = state.lines.getOrNull(index - 1)?.let { it.mine } ?: true)
@@ -306,10 +310,10 @@ fun ChatScreen(
                         Doodle(Doodles.EXCLAIM, c.ink, Modifier.size(width = 16.dp, height = 32.dp), key = "error-${state.lines.size}",
                             durationMillis = 500, mirrorInRtl = false)
                         Spacer(Modifier.width(10.dp))
-                        Text(Texts.ERROR_NETWORK, style = KhType.body, color = c.ink, modifier = Modifier.weight(1f))
+                        Text(t(Texts.ERROR_NETWORK), style = KhType.body, color = c.ink, modifier = Modifier.weight(1f))
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        KhButton(Texts.RETRY, onRetry, Modifier.weight(1f), kind = ButtonKind.Quiet, icon = R.drawable.ic_kh_refresh)
+                        KhButton(t(Texts.RETRY), onRetry, Modifier.weight(1f), kind = ButtonKind.Quiet, icon = R.drawable.ic_kh_refresh)
                         KhButton("نحتاج مساعدة", onUrgent, Modifier.weight(1f), kind = ButtonKind.Urgent)
                     }
                 }
@@ -396,7 +400,7 @@ private fun Composer(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.padding(bottom = 10.dp).horizontalScroll(rememberScrollState())) {
                 // A way in for when the first words are the hardest: it only fills the field, the user edits and sends.
-                if (state.lines.size == 1) Texts.STARTERS.forEach { s ->
+                if (state.lines.size == 1) Texts.STARTERS.map(::t).forEach { s ->
                     Chip(s, R.drawable.ic_kh_edit, { text = "$s، "; fieldFocus.requestFocus() }, enabled = true)
                 }
                 if (!state.supportReady) Chip(Texts.WHO_TO_TALK, R.drawable.ic_kh_users, onWhoToTalk, enabled = !state.waiting)
@@ -436,7 +440,7 @@ private fun Composer(
                                 exit = fadeOut(tween(90)) + slideOutHorizontally(tween(160)) { it / 8 },
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(Texts.COMPOSER_HINT, style = KhType.bubble, color = c.inkMuted)
+                                    Text(t(Texts.COMPOSER_HINT), style = KhType.bubble, color = c.inkMuted)
                                     if (!focused) {
                                         Spacer(Modifier.width(6.dp))
                                         Doodle(Doodles.SQUIGGLE, c.inkMuted.copy(alpha = 0.55f), Modifier.size(34.dp, 8.dp),
@@ -573,7 +577,7 @@ private fun ConfirmNewChat(onConfirm: () -> Unit, onDismiss: () -> Unit) {
                     Spacer(Modifier.width(10.dp))
                     Text("نبداو محادثة جديدة؟", style = KhType.heading, color = c.ink)
                 }
-                Text("المحادثة هذي بتنمسح من تلفونك، وما تقدرش ترجعلها.", style = KhType.body, color = c.inkMuted)
+                Text(t(Texts.NEW_CHAT_BODY), style = KhType.body, color = c.inkMuted)
                 Spacer(Modifier.height(4.dp))
                 KhButton("إيه، محادثة جديدة", onConfirm, Modifier.fillMaxWidth())
                 KhButton("لا، نكمل", onDismiss, Modifier.fillMaxWidth(), kind = ButtonKind.Quiet)
@@ -660,28 +664,28 @@ fun UrgentScreen(auto: Boolean, onBack: () -> Unit) {
                     Spacer(Modifier.width(12.dp))
                     ScreenTitle(Texts.URGENT_TITLE, Modifier.weight(1f))
                 }
-                if (auto) Text(Texts.URGENT_INTRO_AUTO, style = KhType.body, color = c.ink)
+                if (auto) Text(t(Texts.URGENT_INTRO_AUTO), style = KhType.body, color = c.ink)
             }
-            listOf(Texts.URGENT_STEP_PERSON, Texts.URGENT_STEP_HOSPITAL, Texts.URGENT_STEP_SAFE).forEachIndexed { i, step ->
+            listOf(t(Texts.URGENT_STEP_PERSON), t(Texts.URGENT_STEP_HOSPITAL), t(Texts.URGENT_STEP_SAFE)).forEachIndexed { i, step ->
                 Appear("urgent-step-$i-$auto", 120L + 80L * i) { Step(i + 1, step, "urgent-$auto") }
             }
-            Note(Texts.URGENT_NO_CONTACTS, R.drawable.ic_kh_info, c.sunSoft)
+            Note(t(Texts.URGENT_NO_CONTACTS), R.drawable.ic_kh_info, c.sunSoft)
             Column(
                 Modifier.fillMaxWidth().background(c.claySoft, KhShapes.card).border(PenWidth, c.ink, KhShapes.card).padding(18.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Text(Texts.URGENT_MESSAGE_TITLE, style = KhType.heading, color = c.ink)
-                Text(Texts.URGENT_MESSAGE_TEXT, style = KhType.bubble, color = c.onGreen,
+                Text(t(Texts.URGENT_MESSAGE_TITLE), style = KhType.heading, color = c.ink)
+                Text(t(Texts.URGENT_MESSAGE_TEXT), style = KhType.bubble, color = c.onGreen,
                     modifier = Modifier.fillMaxWidth().background(c.green, KhShapes.bubbleMe).border(PenWidth, c.onGreen, KhShapes.bubbleMe).padding(14.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    KhButton(Texts.URGENT_SHARE, { shareText(context, Texts.URGENT_MESSAGE_TEXT) }, Modifier.weight(1f), icon = R.drawable.ic_kh_share)
-                    KhButton(if (copied) Texts.DRAFT_COPIED else Texts.URGENT_COPY, { copyText(context, Texts.URGENT_MESSAGE_TEXT); copied = true },
+                    KhButton(t(Texts.URGENT_SHARE), { shareText(context, t(Texts.URGENT_MESSAGE_TEXT)) }, Modifier.weight(1f), icon = R.drawable.ic_kh_share)
+                    KhButton(if (copied) Texts.DRAFT_COPIED else t(Texts.URGENT_COPY), { copyText(context, t(Texts.URGENT_MESSAGE_TEXT)); copied = true },
                         Modifier.weight(1f), kind = ButtonKind.Quiet, icon = if (copied) R.drawable.ic_kh_check else R.drawable.ic_kh_copy)
                 }
             }
             Text("حاجات تقدر تديرها توا", style = KhType.heading, color = c.ink, modifier = Modifier.padding(top = 6.dp))
-            CopingCard(R.drawable.ill_breathe, Texts.CARD_BREATH_TITLE, Texts.CARD_BREATH_BODY) { BreathingGuide() }
-            CopingCard(R.drawable.ill_stones_three, Texts.CARD_GROUND_TITLE, Texts.CARD_GROUND_BODY)
+            CopingCard(R.drawable.ill_breathe, Texts.CARD_BREATH_TITLE, t(Texts.CARD_BREATH_BODY)) { BreathingGuide() }
+            CopingCard(R.drawable.ill_stones_three, Texts.CARD_GROUND_TITLE, t(Texts.CARD_GROUND_BODY))
             Text(Texts.URGENT_FOOTER, style = KhType.small, color = c.inkMuted, modifier = Modifier.padding(vertical = 12.dp))
         }
     }
@@ -747,11 +751,11 @@ private fun SentReceipt(sent: String?, id: Long, onOpen: () -> Unit) {
                 if (hidden) Doodle(Doodles.TICK, c.greenDeep, Modifier.size(8.dp), key = "receipt-tick-$id", delayMillis = 250, durationMillis = 380)
             }
             Spacer(Modifier.width(5.dp))
-            val label = when { sent == null -> Texts.RECEIPT_LOCAL; hidden -> Texts.RECEIPT_HIDDEN; else -> Texts.RECEIPT_CLEAN }
+            val label = when { sent == null -> Texts.RECEIPT_LOCAL; hidden -> t(Texts.RECEIPT_HIDDEN); else -> t(Texts.RECEIPT_CLEAN) }
             Text(label, style = KhType.small, color = c.inkMuted)
             if (sent != null) {
                 Text("  ·  ", style = KhType.small, color = c.inkMuted)
-                Text(if (open) Texts.RECEIPT_HIDE else Texts.RECEIPT_SHOW, style = KhType.small.copy(textDecoration = TextDecoration.Underline),
+                Text(if (open) t(Texts.RECEIPT_HIDE) else t(Texts.RECEIPT_SHOW), style = KhType.small.copy(textDecoration = TextDecoration.Underline),
                     color = c.greenDeep)
             }
         }
@@ -781,7 +785,7 @@ private fun SentReceipt(sent: String?, id: Long, onOpen: () -> Unit) {
                 Text(Texts.RECEIPT_TITLE, style = KhType.label, color = c.inkMuted)
                 Text(marked, style = KhType.bubble, color = c.ink)
                 Text(Texts.RECEIPT_NOTE, style = KhType.small, color = c.inkMuted)
-                Text(Texts.RECEIPT_LIMIT, style = KhType.small, color = c.inkMuted)
+                Text(t(Texts.RECEIPT_LIMIT), style = KhType.small, color = c.inkMuted)
             }
         }
     }
@@ -828,11 +832,11 @@ private fun BreathingGuide() {
     Column(Modifier.fillMaxWidth().padding(top = 12.dp).animateContentSize(KhMotion.gentle())) {
         if (!running) {
             if (done) Text(Texts.BREATH_DONE, style = KhType.body, color = c.ink, modifier = Modifier.padding(bottom = 8.dp))
-            KhButton(if (done) Texts.BREATH_AGAIN else Texts.BREATH_START, { running = true }, Modifier.fillMaxWidth(),
+            KhButton(if (done) t(Texts.BREATH_AGAIN) else Texts.BREATH_START, { running = true }, Modifier.fillMaxWidth(),
                 kind = ButtonKind.Quiet)
         } else {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Canvas(Modifier.size(88.dp).semantics { contentDescription = if (inhale) Texts.BREATH_IN else Texts.BREATH_OUT }) {
+                Canvas(Modifier.size(88.dp).semantics { contentDescription = if (inhale) t(Texts.BREATH_IN) else t(Texts.BREATH_OUT) }) {
                     val r = size.minDimension / 2f
                     // the full pebble, drawn in pen
                     drawOval(c.ink, topLeft = Offset(size.width / 2 - r * 0.92f, size.height / 2 - r),
@@ -845,7 +849,7 @@ private fun BreathingGuide() {
                 Spacer(Modifier.width(14.dp))
                 Column(Modifier.weight(1f)) {
                     AnimatedContent(inhale, transitionSpec = { fadeIn(tween(300)) togetherWith fadeOut(tween(200)) }, label = "phase") { inh ->
-                        Text(if (inh) Texts.BREATH_IN else Texts.BREATH_OUT, style = KhType.heading, color = c.ink)
+                        Text(if (inh) t(Texts.BREATH_IN) else t(Texts.BREATH_OUT), style = KhType.heading, color = c.ink)
                     }
                     AnimatedContent(count, transitionSpec = {
                         (fadeIn(tween(220)) + slideInVertically(KhMotion.gentleOffset) { it / 2 }) togetherWith fadeOut(tween(150))
@@ -856,7 +860,7 @@ private fun BreathingGuide() {
                 }
             }
             Spacer(Modifier.height(8.dp))
-            KhButton(Texts.BREATH_STOP, { running = false }, Modifier.fillMaxWidth(), kind = ButtonKind.Quiet)
+            KhButton(t(Texts.BREATH_STOP), { running = false }, Modifier.fillMaxWidth(), kind = ButtonKind.Quiet)
         }
     }
 }
@@ -905,16 +909,48 @@ private fun CalmSheet(onDismiss: () -> Unit, onUrgent: () -> Unit) {
             ) {
                 Row(verticalAlignment = Alignment.Bottom) {
                     Column(Modifier.weight(1f)) {
-                        Text(Texts.CALM_TITLE, style = KhType.heading, color = c.ink)
+                        Text(t(Texts.CALM_TITLE), style = KhType.heading, color = c.ink)
                         Doodle(Doodles.UNDERLINE, c.green, Modifier.width(130.dp).height(10.dp), key = "calm-underline",
                             delayMillis = 200, durationMillis = 600)
                     }
                     // the sheet covers the top bar's scrim, so urgent help stays one tap away here too
                     UrgentPill { onDismiss(); onUrgent() }
                 }
-                CopingCard(R.drawable.ill_breathe, Texts.CARD_BREATH_TITLE, Texts.CARD_BREATH_BODY) { BreathingGuide() }
-                CopingCard(R.drawable.ill_stones_three, Texts.CARD_GROUND_TITLE, Texts.CARD_GROUND_BODY)
+                CopingCard(R.drawable.ill_breathe, Texts.CARD_BREATH_TITLE, t(Texts.CARD_BREATH_BODY)) { BreathingGuide() }
+                CopingCard(R.drawable.ill_stones_three, Texts.CARD_GROUND_TITLE, t(Texts.CARD_GROUND_BODY))
                 Spacer(Modifier.height(8.dp))
+            }
+        }
+    }
+}
+
+/**
+ * Arabic has no neutral "you", so the user picks how Khutwa speaks to them. Every text on screen switches at once.
+ * In memory only; never sent and never stored.
+ */
+@Composable
+private fun AddressChoice() {
+    val c = Kh.colors
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(Texts.ADDRESS_LABEL, style = KhType.label, color = c.inkMuted)
+        Spacer(Modifier.width(10.dp))
+        listOf(false to Texts.ADDRESS_M, true to Texts.ADDRESS_F).forEach { (fem, label) ->
+            val selected = ly.manara.khutwa.ui.components.Addressing.feminine == fem
+            val bg by animateColorAsState(if (selected) c.green else c.paperRaised, tween(200), label = "addr")
+            val edge by animateColorAsState(if (selected) c.ink else c.border, tween(200), label = "addrEdge")
+            Row(
+                Modifier.padding(end = 8.dp).minimumInteractiveComponentSize()
+                    .background(bg, KhShapes.chip).border(1.5.dp, edge, KhShapes.chip)
+                    .clickable(role = Role.RadioButton) { ly.manara.khutwa.ui.components.Addressing.feminine = fem }
+                    .semantics { this.selected = selected }
+                    .padding(horizontal = 16.dp, vertical = 7.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (selected) {
+                    Doodle(Doodles.TICK, c.onGreen, Modifier.size(14.dp), key = "addr-tick-$fem", durationMillis = 320)
+                    Spacer(Modifier.width(6.dp))
+                }
+                Text(label, style = KhType.label, color = if (selected) c.onGreen else c.ink)
             }
         }
     }

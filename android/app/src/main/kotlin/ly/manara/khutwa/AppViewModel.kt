@@ -1,5 +1,6 @@
 package ly.manara.khutwa
 
+import ly.manara.khutwa.ui.components.t
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
@@ -80,7 +81,7 @@ class AppViewModel(
                 screen = Screen.Urgent(auto = true, returnTo = Screen.Chat)) }
             return
         }
-        askedForHelp = message == Texts.WHO_TO_TALK_MESSAGE
+        askedForHelp = message == t(Texts.WHO_TO_TALK_MESSAGE)
         val redacted = privacy.redact(message)
         _state.update { it.copy(lines = it.lines + Line(true, message, sent = redacted), failed = false) }
         pending = redacted
@@ -147,7 +148,7 @@ class AppViewModel(
 
     fun revealed(id: Long) = _state.update { s -> s.copy(lines = s.lines.map { if (it.id == id) it.copy(reveal = false) else it }) }
 
-    fun askWhoToTalkTo() = send(Texts.WHO_TO_TALK_MESSAGE)
+    fun askWhoToTalkTo() = send(t(Texts.WHO_TO_TALK_MESSAGE))
 
     fun openUrgent() = _state.update {
         val from = it.screen

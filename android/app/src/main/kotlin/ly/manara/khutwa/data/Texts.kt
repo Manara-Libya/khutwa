@@ -73,6 +73,64 @@ object Texts {
     const val RETRY = "عاود"
     const val NEW_CHAT = "محادثة جديدة"
 
+    const val DECLINED_BODY = "ما بعتنا شي وما خزنا شي. ترجع وقت ما تبي، وإذا احتجت مساعدة توا اضغط «نحتاج مساعدة توا» فوق."
+    const val NEW_CHAT_BODY = "المحادثة هذي بتنمسح من تلفونك، وما تقدرش ترجعلها."
+    const val ADDRESS_LABEL = "نكلموك بصيغة:"
+    const val ADDRESS_M = "ولد"
+    const val ADDRESS_F = "بنت"
+
+    /**
+     * Feminine forms of every text that speaks to the user, picked on the consent screen (kept in memory only).
+     * Keyed by the masculine text, so a text the server sends with the same wording is switched too.
+     * Needs the same Libyan Arabic review as the masculine texts.
+     */
+    val FEMININE: Map<String, String> by lazy { mapOf(
+        CONSENT_INTRO to "خطوة تساعدك تاخذي أول خطوة باش تحكي مع حد تثقي فيه، مش بديل على الناس، ومش بديل على مختص.",
+        CONSENT_EMERGENCY to "خطوة مش خدمة طوارئ، لو انتي في خطر توا، اضغطي على «نحتاج مساعدة توا» في أي وقت.",
+        CONSENT_ACCEPT to "فاهمة، نبي نبدا",
+        URGENT_INTRO_AUTO to "شكرًا إنك كتبتي اللي في قلبك، اللي كتبتيه يخلينا نبو نتأكدوا إنك بخير، وهادي خطوات تقدري تديريها توا.",
+        URGENT_STEP_PERSON to "قولي لحد قريب منك توا: صاحبتك، حد من العيلة تثقي فيه، جارتك، أي حد تحسي روحك معاه في أمان، ما تقعديش بروحك.",
+        URGENT_STEP_HOSPITAL to "لو حاسة إنك ممكن تأذي روحك، امشي لأقرب مستشفى، وبرا لقسم الطوارئ، أو خلي حد يوصلك.",
+        URGENT_STEP_SAFE to "بعّدي على روحك أي حاجة ممكن تأذيك، وخليك في مكان فيه ناس.",
+        URGENT_NO_CONTACTS to "لتوا ما قدرناش نتأكدوا من أي رقم يرد، عشان هكي ما حطيناش أرقام، الخطوات اللي فوق تقدري تديريها توا.",
+        URGENT_MESSAGE_TITLE to "اكتبي رسالة لحد تثقي فيه",
+        URGENT_MESSAGE_TEXT to "أنا مش كويسة توا ومحتاجتك، تقدر تجيني أو تكلمني؟",
+        URGENT_COPY to "انسخي الرسالة",
+        URGENT_SHARE to "ابعتيها بنفسك",
+        CARD_BREATH_BODY to "اقعدي في مكان مريح، تنفسي من خشمك على راحتك وانتي تعدي من لعند 4، وطلّعيه من فمك على راحتك وانتي تعدي لين 6. عاوديها 5 مرات، لو حسيتي بدوخة، ارجعي تنفسي عادي.",
+        CARD_GROUND_BODY to "شوفي حواليك وسمّي في بالك:\n5 حوايج تشوفيهم،\n4 حوايج تسمعيهم،\n3 حوايج تقدري تلمسيهم،\n2 ريحات تشميهم،\nوحاجة وحدة تقدري تذوقيها.\nعلى راحتك، ما فيش استعجال.",
+        GREETING to "أهلاً بيكي. احكيلي شن اللي في بالك، على راحتك وبالكلام اللي يجيك.",
+        COMPOSER_HINT to "اكتبي هنا…",
+        WHO_TO_TALK_MESSAGE to "مش عارفة مع مني نحكي",
+        SEE_OPTIONS to "نشوفوا مع مني تقدري تحكي",
+        OPTIONS_SUB to "اختاري اللي تحسي روحك مرتاحة معاه. ما نبعتوا شي بدالك.",
+        DRAFT_SUB to "عدّليها كيف تبي، وبعدها ابعتيها بنفسك من المسنجر ولا أي تطبيق.",
+        DRAFT_SHARE to "ابعتيها بنفسك",
+        DRAFT_COPY to "انسخي الرسالة",
+        "انسخ" to "انسخي",
+        ERROR_NETWORK to "ما قدرناش نوصلوا للخادم. تقدري تعاودي، وإذا تحسي روحك مش في أمان اضغطي «نحتاج مساعدة توا».",
+        RETRY to "عاودي",
+        RECEIPT_HIDDEN to "تخبّى اللي يعرّف بيكي",
+        RECEIPT_CLEAN to "ما فيهاش حاجة تعرّف بيكي",
+        RECEIPT_SHOW to "شوفي شن وصل",
+        RECEIPT_HIDE to "سكّري",
+        RECEIPT_LIMIT to "الكلام نفسه ممكن يبيّن شكون انتي، فخلي بالك من التفاصيل.",
+        AFTER_SEND_NOTE to "لو ما ردّش زي ما تبي، هذا مش ذنبك. تقدري تجربي حد ثاني.",
+        CALM_TITLE to "خوذي نفس على راحتك",
+        BREATH_IN to "دخّلي النفس من خشمك",
+        BREATH_OUT to "طلّعيه من فمك على راحتك",
+        BREATH_STOP to "وقّفي",
+        BREATH_AGAIN to "عاودي",
+        DECLINED_BODY to "ما بعتنا شي وما خزنا شي. ترجعي وقت ما تبي، وإذا احتجتي مساعدة توا اضغطي «نحتاج مساعدة توا» فوق.",
+        NEW_CHAT_BODY to "المحادثة هذي بتنمسح من تلفونك، وما تقدريش ترجعيلها.",
+        "مضغوط من القراية" to "مضغوطة من القراية",
+        "حاس روحي وحدي" to "حاسة روحي وحدي",
+        "مش عارف من وين نبدا" to "مش عارفة من وين نبدا",
+        "صاحب تثق فيه" to "صاحبة تثقي فيها",
+        "حد من العيلة تثق فيه" to "حد من العيلة تثقي فيه",
+        "شخص من المجتمع تثق فيه" to "شخص من المجتمع تثقي فيه",
+    ) }
+
     /** Generic support options, used when the AI's suggestions are unavailable. Never promises confidentiality. */
     val GENERIC_OPTIONS = listOf(
         Option("trusted_friend", "صاحب يسمعك من غير ما يحكم عليك.", "عندك شوية وقت نحكوا؟ نبي نحكيلك على حاجة شاغلتني."),

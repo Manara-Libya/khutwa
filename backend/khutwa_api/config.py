@@ -34,6 +34,8 @@ AGY_BIN = os.environ.get("KHUTWA_AGY_BIN", "agy")
 RUNTIME_DIR = ROOT / "runtime"
 
 TIMEOUT_SECONDS = float(os.environ.get("KHUTWA_TIMEOUT", "15"))
+# The first model gets less time: normal answers take 3-8 s, so a stall hands over to the fallback model sooner.
+PRIMARY_TIMEOUT_SECONDS = float(os.environ.get("KHUTWA_PRIMARY_TIMEOUT", "10"))
 POOL_SIZE = _int("KHUTWA_POOL_SIZE", 2)  # warm workers per primary (task, model)
 MAX_PROCESSES = _int("KHUTWA_MAX_PROCESSES", 10)  # each agy process uses ~300 MB
 

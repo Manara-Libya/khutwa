@@ -5,6 +5,19 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.Image
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import ly.manara.khutwa.ui.components.Appear
+import ly.manara.khutwa.ui.components.KhMotion
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -21,6 +34,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -32,6 +46,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -42,6 +57,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -57,11 +77,14 @@ import ly.manara.khutwa.UiState
 import ly.manara.khutwa.data.Option
 import ly.manara.khutwa.data.Texts
 import ly.manara.khutwa.ui.components.BackButton
+import ly.manara.khutwa.ui.components.A2uiView
 import ly.manara.khutwa.ui.components.Bubble
 import ly.manara.khutwa.ui.components.ButtonKind
 import ly.manara.khutwa.ui.components.KhButton
 import ly.manara.khutwa.ui.components.KhIcon
 import ly.manara.khutwa.ui.components.Note
+import ly.manara.khutwa.ui.components.copyText
+import ly.manara.khutwa.ui.components.shareText
 import ly.manara.khutwa.ui.components.ScreenTitle
 import ly.manara.khutwa.ui.components.PenWidth
 import ly.manara.khutwa.ui.components.SupportCard
@@ -81,17 +104,29 @@ fun ConsentScreen(onAccept: () -> Unit, onDecline: () -> Unit, onUrgent: () -> U
     Column(Modifier.fillMaxSize()) {
         TopBar(onUrgent)
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = Gutter)) {
-            Image(painterResource(R.drawable.ill_scene_private), contentDescription = null,
-                modifier = Modifier.size(180.dp).align(Alignment.CenterHorizontally))
-            ScreenTitle(Texts.CONSENT_TITLE)
-            Spacer(Modifier.height(8.dp))
-            Text(Texts.CONSENT_INTRO, style = KhType.body, color = c.inkMuted)
+            // A staged entrance: illustration, title, then each point a beat after the previous one.
+            Appear("consent-ill") {
+                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    Image(painterResource(R.drawable.ill_scene_private), contentDescription = null, modifier = Modifier.size(180.dp))
+                }
+            }
+            Appear("consent-title", 80) {
+                Column {
+                    ScreenTitle(Texts.CONSENT_TITLE)
+                    Spacer(Modifier.height(8.dp))
+                    Text(Texts.CONSENT_INTRO, style = KhType.body, color = c.inkMuted)
+                }
+            }
             Spacer(Modifier.height(20.dp))
-            ConsentPoint(R.drawable.ic_kh_sparkle, Texts.CONSENT_AI)
-            ConsentPoint(R.drawable.ic_kh_shield_check, Texts.CONSENT_REDACTION)
-            ConsentPoint(R.drawable.ic_kh_info, Texts.CONSENT_GOOGLE)
-            ConsentPoint(R.drawable.ic_kh_lock, Texts.CONSENT_SERVER)
-            ConsentPoint(R.drawable.ic_kh_urgent, Texts.CONSENT_EMERGENCY, urgent = true)
+            listOf(
+                Triple(R.drawable.ic_kh_sparkle, Texts.CONSENT_AI, false),
+                Triple(R.drawable.ic_kh_shield_check, Texts.CONSENT_REDACTION, false),
+                Triple(R.drawable.ic_kh_info, Texts.CONSENT_GOOGLE, false),
+                Triple(R.drawable.ic_kh_lock, Texts.CONSENT_SERVER, false),
+                Triple(R.drawable.ic_kh_urgent, Texts.CONSENT_EMERGENCY, true),
+            ).forEachIndexed { i, (icon, text, urgent) ->
+                Appear("consent-point-$i", 160L + 70L * i) { ConsentPoint(icon, text, urgent) }
+            }
             Spacer(Modifier.height(12.dp))
         }
         Column(Modifier.padding(horizontal = Gutter, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -122,7 +157,6 @@ fun ChatScreen(
     onSend: (String) -> Unit,
     onRetry: () -> Unit,
     onWhoToTalk: () -> Unit,
-    onOptions: () -> Unit,
     onNewChat: () -> Unit,
     onUrgent: () -> Unit,
     onRevealed: (Long) -> Unit = {},
@@ -130,23 +164,50 @@ fun ChatScreen(
     val c = Kh.colors
     val list = rememberLazyListState()
     val scope = rememberCoroutineScope()
-    val extra = (if (state.waiting) 1 else 0) + (if (state.failed) 1 else 0) + (if (state.supportReady && !state.waiting) 1 else 0)
-    LaunchedEffect(state.lines.size, state.waiting, state.failed, state.supportReady) {
-        list.animateScrollToItem((state.lines.size + extra - 1).coerceAtLeast(0))
+    // Item 0 is the welcome illustration, so line i sits at list index i + 1.
+    var seen by remember { mutableIntStateOf(state.lines.size) }
+    LaunchedEffect(state.lines.size, state.waiting, state.failed) {
+        val firstNew = seen
+        seen = state.lines.size
+        val newLine = state.lines.getOrNull(firstNew)
+        if (newLine != null && !newLine.mine) {
+            // Khutwa answered: bring the start of the answer into view, with the options (if any) below it.
+            list.animateScrollToItem(firstNew + 1)
+        } else {
+            list.animateScrollToItem((list.layoutInfo.totalItemsCount - 1).coerceAtLeast(0))
+        }
     }
+    val density = LocalDensity.current
+    var composerHeight by remember { mutableIntStateOf(0) }
     Column(Modifier.fillMaxSize().imePadding()) {
         TopBar(onUrgent)
+        // The composer floats over the conversation; the list scrolls underneath it, padded so nothing hides.
+        Box(Modifier.weight(1f).fillMaxWidth()) {
         LazyColumn(
-            Modifier.weight(1f).fillMaxWidth(),
+            Modifier.fillMaxSize(),
             state = list,
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = Gutter, vertical = 8.dp),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                start = Gutter, end = Gutter, top = 8.dp, bottom = with(density) { composerHeight.toDp() } + 8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            itemsIndexed(state.lines, key = { _, l -> l.id }) { _, line: Line ->
-                Bubble(line.text, line.mine, reveal = line.reveal, onRevealed = { onRevealed(line.id) },
-                    onGrow = { scope.launch { list.animateScrollToItem((list.layoutInfo.totalItemsCount - 1).coerceAtLeast(0)) } })
+            item(key = "welcome") {
+                Image(painterResource(R.drawable.ill_listen), contentDescription = null,
+                    modifier = Modifier.fillMaxWidth().height(150.dp).padding(bottom = 4.dp))
             }
-            if (state.waiting) item { Typing() }
+            itemsIndexed(state.lines, key = { _, l -> l.id }) { index, line: Line ->
+                Box(Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null)) {
+                    Appear(line.id) {
+                        val surface = line.surface
+                        when {
+                            surface != null -> A2uiView(surface)
+                            line.loadingSurface -> OptionsPlaceholder()
+                            else -> Bubble(line.text, line.mine, reveal = line.reveal, onRevealed = { onRevealed(line.id) },
+                                onGrow = { scope.launch { keepInView(list, index + 1) } })
+                        }
+                    }
+                }
+            }
+            if (state.waiting) item(key = "typing") { Box(Modifier.animateItem()) { Appear("typing-${state.lines.size}") { Typing() } } }
             if (state.failed) item {
                 Column(
                     Modifier.fillMaxWidth().background(c.sunSoft, KhShapes.card).border(PenWidth, c.ink, KhShapes.card).padding(16.dp),
@@ -159,34 +220,34 @@ fun ChatScreen(
                     }
                 }
             }
-            if (state.supportReady && !state.waiting) item {
-                Column(
-                    Modifier.fillMaxWidth().background(c.claySoft, KhShapes.card).border(PenWidth, c.ink, KhShapes.card).padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        KhIcon(R.drawable.ic_kh_users, c.ink, size = 22.dp)
-                        Spacer(Modifier.width(10.dp))
-                        Text("لما تكون جاهز، فيه ناس ممكن يسمعوك.", style = KhType.bodyStrong, color = c.ink)
-                    }
-                    KhButton(Texts.SEE_OPTIONS, onOptions, Modifier.fillMaxWidth())
-                }
-            }
         }
-        Composer(state, onSend, onWhoToTalk, onNewChat)
+        Composer(state, onSend, onWhoToTalk, onNewChat,
+            Modifier.align(Alignment.BottomCenter).onSizeChanged { composerHeight = it.height })
+        }
     }
 }
 
 @Composable
-private fun Composer(state: UiState, onSend: (String) -> Unit, onWhoToTalk: () -> Unit, onNewChat: () -> Unit) {
+private fun Composer(
+    state: UiState,
+    onSend: (String) -> Unit,
+    onWhoToTalk: () -> Unit,
+    onNewChat: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val c = Kh.colors
+    val haptics = LocalHapticFeedback.current
     var text by rememberSaveable { mutableStateOf("") }
-    Column(Modifier.fillMaxWidth().background(c.paper).padding(horizontal = 16.dp, vertical = 8.dp)) {
+    // No bar behind it: each control carries its own outlined shape, so the composer floats.
+    Column(modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 8.dp)) {
             if (!state.supportReady) Chip(Texts.WHO_TO_TALK, onWhoToTalk, enabled = !state.waiting)
             if (state.lines.size > 1) Chip(Texts.NEW_CHAT, onNewChat, enabled = !state.waiting)
         }
         Row(verticalAlignment = Alignment.Bottom) {
+            Box(Modifier.weight(1f).padding(end = 3.dp, bottom = 4.dp)) {
+            // the brand's hard print shadow lifts the field off the conversation
+            Box(Modifier.matchParentSize().absoluteOffset(3.dp, 4.dp).background(c.shadow.copy(alpha = if (c.isDark) 1f else 0.9f), KhShapes.field))
             BasicTextField(
                 value = text,
                 onValueChange = { text = it },
@@ -194,10 +255,10 @@ private fun Composer(state: UiState, onSend: (String) -> Unit, onWhoToTalk: () -
                 cursorBrush = SolidColor(c.ink),
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Default),
                 modifier = Modifier
-                    .weight(1f)
+                    .fillMaxWidth()
                     .heightIn(min = 52.dp, max = 140.dp)
                     .background(c.paperRaised, KhShapes.field)
-                    .border(PenWidth, c.border, KhShapes.field)
+                    .border(PenWidth, c.ink, KhShapes.field)
                     .padding(horizontal = 16.dp, vertical = 12.dp)
                     .semantics { contentDescription = "اكتب رسالتك" },
                 decorationBox = { inner ->
@@ -207,13 +268,21 @@ private fun Composer(state: UiState, onSend: (String) -> Unit, onWhoToTalk: () -
                     }
                 },
             )
+            }
             Spacer(Modifier.width(10.dp))
             val canSend = text.isNotBlank() && !state.waiting
+            val sendBg by animateColorAsState(if (canSend) c.green else c.paperSunk, tween(220), label = "sendBg")
+            val sendEdge by animateColorAsState(if (canSend) c.onGreen else c.border, tween(220), label = "sendEdge")
+            val sendScale by animateFloatAsState(if (canSend) 1f else 0.92f, KhMotion.snappy(), label = "sendScale")
             Box(
                 Modifier.size(52.dp)
-                    .background(if (canSend) c.green else c.paperSunk, KhShapes.chip)
-                    .border(PenWidth, if (canSend) c.onGreen else c.border, KhShapes.chip)
-                    .clickable(enabled = canSend, role = Role.Button) { onSend(text); text = "" }
+                    .graphicsLayer { scaleX = sendScale; scaleY = sendScale }
+                    .background(sendBg, KhShapes.chip)
+                    .border(PenWidth, sendEdge, KhShapes.chip)
+                    .clickable(enabled = canSend, role = Role.Button) {
+                        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        onSend(text); text = ""
+                    }
                     .semantics { contentDescription = "ابعت" },
                 contentAlignment = Alignment.Center,
             ) {
@@ -222,7 +291,11 @@ private fun Composer(state: UiState, onSend: (String) -> Unit, onWhoToTalk: () -
                     Modifier.graphicsMirror(), size = 22.dp)
             }
         }
-        Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            Modifier.padding(top = 8.dp).background(c.paperRaised.copy(alpha = 0.92f), KhShapes.chip)
+                .padding(horizontal = 10.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             KhIcon(R.drawable.ic_kh_shield_check, c.greenDeep, size = 16.dp)
             Spacer(Modifier.width(6.dp))
             Text(Texts.PRIVACY_LINE, style = KhType.small, color = c.inkMuted)
@@ -232,77 +305,54 @@ private fun Composer(state: UiState, onSend: (String) -> Unit, onWhoToTalk: () -
 
 private fun Modifier.graphicsMirror(): Modifier = this.graphicsLayer(scaleX = -1f)
 
+/** While a reply types itself out, keep its bottom edge on screen without jumping past it. */
+private suspend fun keepInView(list: androidx.compose.foundation.lazy.LazyListState, index: Int) {
+    val info = list.layoutInfo
+    val item = info.visibleItemsInfo.firstOrNull { it.index == index } ?: return list.animateScrollToItem(index)
+    val overflow = item.offset + item.size - info.viewportEndOffset + 24
+    if (overflow > 0) list.animateScrollBy(overflow.toFloat())
+}
+
+/** Shown in place of the support options for the second or two they take to arrive. */
+@Composable
+private fun OptionsPlaceholder() {
+    val c = Kh.colors
+    val t = rememberInfiniteTransition(label = "shimmer")
+    val x by t.animateFloat(-1f, 2f, infiniteRepeatable(tween(1300, easing = LinearEasing)), label = "x")
+    val brush = Brush.linearGradient(
+        listOf(c.paperSunk, c.paperRaised, c.paperSunk),
+        start = Offset(x * 900f, 0f), end = Offset(x * 900f + 600f, 300f),
+    )
+    Column(
+        Modifier.fillMaxWidth().background(c.paperRaised, KhShapes.card).border(PenWidth, c.line, KhShapes.card).padding(18.dp)
+            .semantics { contentDescription = "نجهزوا في ناس ممكن تحكي معاهم" },
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Text("نجهزوا في ناس ممكن تحكي معاهم…", style = KhType.label, color = c.inkMuted)
+        Box(Modifier.fillMaxWidth(0.55f).height(18.dp).background(brush, KhShapes.chip))
+        Box(Modifier.fillMaxWidth().height(14.dp).background(brush, KhShapes.chip))
+        Box(Modifier.fillMaxWidth(0.8f).height(14.dp).background(brush, KhShapes.chip))
+        Box(Modifier.fillMaxWidth().height(56.dp).background(brush, KhShapes.bubbleMe))
+    }
+}
+
 @Composable
 private fun Chip(text: String, onClick: () -> Unit, enabled: Boolean) {
     val c = Kh.colors
+    val source = remember { MutableInteractionSource() }
+    val pressed by source.collectIsPressedAsState()
+    val scale by animateFloatAsState(if (pressed) 0.95f else 1f, KhMotion.snappy(), label = "chip")
     Text(
         text,
         style = KhType.label,
         color = if (enabled) c.ink else c.inkMuted,
         modifier = Modifier
+            .graphicsLayer { scaleX = scale; scaleY = scale }
             .background(c.paperRaised, KhShapes.chip)
             .border(1.5.dp, c.border, KhShapes.chip)
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .clickable(interactionSource = source, indication = null, enabled = enabled, role = Role.Button, onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 7.dp),
     )
-}
-
-// ---------------------------------------------------------------- support options
-
-@Composable
-fun OptionsScreen(options: List<Option>, onChoose: (Option) -> Unit, onBack: () -> Unit, onUrgent: () -> Unit) {
-    val c = Kh.colors
-    Column(Modifier.fillMaxSize()) {
-        TopBar(onUrgent) { BackButton(onBack) }
-        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = Gutter),
-            verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Image(painterResource(R.drawable.ill_together), contentDescription = null,
-                modifier = Modifier.size(150.dp).align(Alignment.CenterHorizontally))
-            ScreenTitle(Texts.OPTIONS_TITLE)
-            Text(Texts.OPTIONS_SUB, style = KhType.body, color = c.inkMuted)
-            options.forEachIndexed { i, o ->
-                SupportCard(Texts.TYPE_LABELS[o.type] ?: o.type, o.why, i, onClick = { onChoose(o) })
-            }
-            Spacer(Modifier.height(12.dp))
-        }
-    }
-}
-
-// ---------------------------------------------------------------- draft
-
-@Composable
-fun DraftScreen(option: Option, onBack: () -> Unit, onUrgent: () -> Unit) {
-    val c = Kh.colors
-    val context = LocalContext.current
-    var text by rememberSaveable(option) { mutableStateOf(option.draft) }
-    var copied by remember { mutableStateOf(false) }
-    LaunchedEffect(copied) { if (copied) { delay(1800); copied = false } }
-    Column(Modifier.fillMaxSize().imePadding()) {
-        TopBar(onUrgent) { BackButton(onBack) }
-        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = Gutter),
-            verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Image(painterResource(R.drawable.ill_letter), contentDescription = null,
-                modifier = Modifier.size(140.dp).align(Alignment.CenterHorizontally))
-            ScreenTitle("${Texts.DRAFT_TITLE} لـ${Texts.TYPE_LABELS[option.type] ?: ""}")
-            Text(Texts.DRAFT_SUB, style = KhType.body, color = c.inkMuted)
-            BasicTextField(
-                value = text,
-                onValueChange = { text = it },
-                textStyle = KhType.bubble.copy(color = c.onGreen),
-                cursorBrush = SolidColor(c.onGreen),
-                modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp)
-                    .background(c.green, KhShapes.bubbleMe).border(PenWidth, c.onGreen, KhShapes.bubbleMe)
-                    .padding(18.dp)
-                    .semantics { contentDescription = "الرسالة" },
-            )
-            Note(Texts.DRAFT_NOTE, R.drawable.ic_kh_lock, c.paperSunk)
-        }
-        Column(Modifier.padding(horizontal = Gutter, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            KhButton(Texts.DRAFT_SHARE, { share(context, text) }, Modifier.fillMaxWidth(), icon = R.drawable.ic_kh_share)
-            KhButton(if (copied) Texts.DRAFT_COPIED else Texts.DRAFT_COPY, { copy(context, text); copied = true },
-                Modifier.fillMaxWidth(), kind = ButtonKind.Quiet, icon = if (copied) R.drawable.ic_kh_check else R.drawable.ic_kh_copy)
-        }
-    }
 }
 
 // ---------------------------------------------------------------- urgent help
@@ -331,9 +381,9 @@ fun UrgentScreen(auto: Boolean, onBack: () -> Unit) {
                 }
                 if (auto) Text(Texts.URGENT_INTRO_AUTO, style = KhType.body, color = c.ink)
             }
-            Step(1, Texts.URGENT_STEP_PERSON)
-            Step(2, Texts.URGENT_STEP_HOSPITAL)
-            Step(3, Texts.URGENT_STEP_SAFE)
+            listOf(Texts.URGENT_STEP_PERSON, Texts.URGENT_STEP_HOSPITAL, Texts.URGENT_STEP_SAFE).forEachIndexed { i, step ->
+                Appear("urgent-step-$i-$auto", 120L + 80L * i) { Step(i + 1, step) }
+            }
             Note(Texts.URGENT_NO_CONTACTS, R.drawable.ic_kh_info, c.sunSoft)
             Column(
                 Modifier.fillMaxWidth().background(c.claySoft, KhShapes.card).border(PenWidth, c.ink, KhShapes.card).padding(18.dp),
@@ -343,8 +393,8 @@ fun UrgentScreen(auto: Boolean, onBack: () -> Unit) {
                 Text(Texts.URGENT_MESSAGE_TEXT, style = KhType.bubble, color = c.onGreen,
                     modifier = Modifier.fillMaxWidth().background(c.green, KhShapes.bubbleMe).border(PenWidth, c.onGreen, KhShapes.bubbleMe).padding(14.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    KhButton(Texts.URGENT_SHARE, { share(context, Texts.URGENT_MESSAGE_TEXT) }, Modifier.weight(1f), icon = R.drawable.ic_kh_share)
-                    KhButton(if (copied) Texts.DRAFT_COPIED else Texts.URGENT_COPY, { copy(context, Texts.URGENT_MESSAGE_TEXT); copied = true },
+                    KhButton(Texts.URGENT_SHARE, { shareText(context, Texts.URGENT_MESSAGE_TEXT) }, Modifier.weight(1f), icon = R.drawable.ic_kh_share)
+                    KhButton(if (copied) Texts.DRAFT_COPIED else Texts.URGENT_COPY, { copyText(context, Texts.URGENT_MESSAGE_TEXT); copied = true },
                         Modifier.weight(1f), kind = ButtonKind.Quiet, icon = if (copied) R.drawable.ic_kh_check else R.drawable.ic_kh_copy)
                 }
             }
@@ -387,14 +437,3 @@ private fun CopingCard(image: Int, title: String, body: String) {
     }
 }
 
-// ---------------------------------------------------------------- helpers
-
-private fun share(context: Context, text: String) {
-    val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text)
-    context.startActivity(Intent.createChooser(send, null).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-}
-
-private fun copy(context: Context, text: String) {
-    val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-    cm.setPrimaryClip(ClipData.newPlainText("خطوة", text))
-}

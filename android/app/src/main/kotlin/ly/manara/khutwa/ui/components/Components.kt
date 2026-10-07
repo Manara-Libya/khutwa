@@ -1,7 +1,9 @@
 package ly.manara.khutwa.ui.components
 
 import androidx.annotation.DrawableRes
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -43,6 +45,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
@@ -91,7 +94,9 @@ fun KhButton(
         else -> Triple(c.paperRaised, c.ink, c.ink)
     }
     val shadow = enabled && kind != ButtonKind.Quiet
-    Box(modifier.padding(end = if (shadow) 3.dp else 0.dp, bottom = if (shadow) 4.dp else 0.dp)) {
+    val scale by animateFloatAsState(if (pressed) 0.97f else 1f, KhMotion.snappy(), label = "press")
+    Box(modifier.graphicsLayer { scaleX = scale; scaleY = scale }
+        .padding(end = if (shadow) 3.dp else 0.dp, bottom = if (shadow) 4.dp else 0.dp)) {
         if (shadow && !pressed) {
             Box(Modifier.matchParentSize().absoluteOffset(3.dp, 4.dp).background(c.shadow, KhShapes.pill))
         }
@@ -196,7 +201,7 @@ fun Bubble(text: String, mine: Boolean, modifier: Modifier = Modifier, reveal: B
 fun Typing(modifier: Modifier = Modifier) {
     val c = Kh.colors
     val t = rememberInfiniteTransition(label = "typing")
-    val phase by t.animateFloat(0f, 3f, infiniteRepeatable(tween(1200), RepeatMode.Restart), label = "phase")
+    val phase by t.animateFloat(0f, 1f, infiniteRepeatable(tween(1100, easing = LinearEasing), RepeatMode.Restart), label = "phase")
     Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
         Row(
             Modifier.background(c.paperRaised, KhShapes.bubbleBot).border(PenWidth, c.ink, KhShapes.bubbleBot)
@@ -205,7 +210,11 @@ fun Typing(modifier: Modifier = Modifier) {
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             repeat(3) { i ->
-                Box(Modifier.size(8.dp).alpha(if (phase.toInt() == i) 1f else 0.3f).background(c.ink, KhShapes.chip))
+                // each dot rises and settles a third of a cycle after the previous one
+                val local = ((phase - i * 0.18f) % 1f + 1f) % 1f
+                val lift = if (local < 0.4f) kotlin.math.sin(local / 0.4f * Math.PI).toFloat() else 0f
+                Box(Modifier.size(8.dp).graphicsLayer { translationY = -lift * 6.dp.toPx() }
+                    .alpha(0.35f + 0.65f * lift).background(c.ink, KhShapes.chip))
             }
         }
     }

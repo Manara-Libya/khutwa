@@ -15,9 +15,13 @@ data class Analysis(
     val reflection: String?,
     val supportReady: Boolean,
     val suggestions: List<Option>,
+    /** A2UI v0.8 messages for the inline support options (empty until support is ready). */
+    val a2ui: JSONArray = JSONArray(),
 )
 
-class ApiException(message: String, val unauthorized: Boolean = false) : IOException(message)
+class ApiException(message: String, val unauthorized: Boolean = false, val notFound: Boolean = false) : IOException(message)
+
+data class SupportResult(val a2ui: JSONArray, val fallback: Boolean)
 
 /**
  * The Khutwa API. Only redacted text is ever passed in (the caller enforces it by passing what the
@@ -31,27 +35,39 @@ class KhutwaApi(
 ) {
     @Volatile private var baseUrl: String? = fallbackUrl.ifBlank { null }
 
-    fun analyze(redactedText: String, history: List<Turn>): Analysis {
-        val body = JSONObject()
+    fun analyze(redactedText: String, history: List<Turn>): Analysis = parse(call("/v1/analyze", body(redactedText, history, deferSupport = true)))
+
+    /** The support options and their A2UI surface for the conversation so far (after a deferred analyze). */
+    fun support(redactedText: String, history: List<Turn>): SupportResult {
+        val o = JSONObject(call("/v1/support", body(redactedText, history, deferSupport = false)))
+        return SupportResult(o.optJSONArray("a2ui") ?: JSONArray(), o.optBoolean("fallback", true))
+    }
+
+    private fun body(redactedText: String, history: List<Turn>, deferSupport: Boolean): JSONObject =
+        JSONObject()
             .put("text", redactedText)
             .put("history", JSONArray().apply {
                 history.takeLast(12).forEach { put(JSONObject().put("role", it.role).put("text", it.text)) }
             })
+            .put("defer_support", deferSupport)
+
+    /** POSTs to the current server; if it moved (tunnel restarted), reads the new URL once and retries. */
+    private fun call(path: String, body: JSONObject): String {
         val first = baseUrl ?: discover() ?: throw ApiException("no server URL")
         return try {
-            parse(post(first, body))
+            post(first, path, body)
         } catch (e: ApiException) {
-            if (e.unauthorized) throw e
-            retryOnNewUrl(first, body)
+            if (e.unauthorized || e.notFound) throw e
+            retryOnNewUrl(first, path, body)
         } catch (e: IOException) {
-            retryOnNewUrl(first, body)
+            retryOnNewUrl(first, path, body)
         }
     }
 
-    private fun retryOnNewUrl(tried: String, body: JSONObject): Analysis {
+    private fun retryOnNewUrl(tried: String, path: String, body: JSONObject): String {
         val fresh = discover() ?: throw ApiException("server unreachable")
         if (fresh == tried) throw ApiException("server unreachable")
-        return parse(post(fresh, body))
+        return post(fresh, path, body)
     }
 
     /** Reads the current URL from the gist's raw link (no rate limit), skipping its 5-minute cache. */
@@ -68,8 +84,8 @@ class KhutwaApi(
         }
     }
 
-    private fun post(base: String, body: JSONObject): String {
-        val conn = (URL("$base/v1/analyze").openConnection() as HttpURLConnection).apply {
+    private fun post(base: String, path: String, body: JSONObject): String {
+        val conn = (URL("$base$path").openConnection() as HttpURLConnection).apply {
             requestMethod = "POST"
             connectTimeout = 10_000
             readTimeout = 40_000
@@ -80,6 +96,7 @@ class KhutwaApi(
         conn.outputStream.use { it.write(body.toString().toByteArray(Charsets.UTF_8)) }
         val code = conn.responseCode
         if (code == 401 || code == 403) throw ApiException("unauthorized", unauthorized = true)
+        if (code == 404) throw ApiException("not found", notFound = true)
         if (code != 200) throw ApiException("HTTP $code")
         return conn.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
     }
@@ -104,6 +121,7 @@ class KhutwaApi(
                 reflection = o.optString("reflection").ifBlank { null },
                 supportReady = o.optBoolean("support_ready", true),
                 suggestions = options.take(3),
+                a2ui = o.optJSONArray("a2ui") ?: JSONArray(),
             )
         }
     }

@@ -5,7 +5,17 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.Image
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.window.Dialog
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
@@ -17,6 +27,8 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import ly.manara.khutwa.ui.components.Appear
+import ly.manara.khutwa.ui.components.Doodle
+import ly.manara.khutwa.ui.components.Doodles
 import ly.manara.khutwa.ui.components.KhMotion
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -108,11 +120,15 @@ fun ConsentScreen(onAccept: () -> Unit, onDecline: () -> Unit, onUrgent: () -> U
             Appear("consent-ill") {
                 Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                     Image(painterResource(R.drawable.ill_scene_private), contentDescription = null, modifier = Modifier.size(180.dp))
+                    Doodle(Doodles.SPARKLES, c.ink, Modifier.size(54.dp).align(Alignment.TopEnd).padding(end = 24.dp),
+                        key = "consent-sparkles", delayMillis = 450, durationMillis = 900)
                 }
             }
             Appear("consent-title", 80) {
                 Column {
                     ScreenTitle(Texts.CONSENT_TITLE)
+                    Doodle(Doodles.UNDERLINE, c.green, Modifier.width(190.dp).height(14.dp),
+                        key = "consent-underline", delayMillis = 520, durationMillis = 700)
                     Spacer(Modifier.height(8.dp))
                     Text(Texts.CONSENT_INTRO, style = KhType.body, color = c.inkMuted)
                 }
@@ -191,8 +207,11 @@ fun ChatScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item(key = "welcome") {
-                Image(painterResource(R.drawable.ill_listen), contentDescription = null,
-                    modifier = Modifier.fillMaxWidth().height(150.dp).padding(bottom = 4.dp))
+                Box(Modifier.fillMaxWidth().padding(bottom = 4.dp), contentAlignment = Alignment.Center) {
+                    Image(painterResource(R.drawable.ill_listen), contentDescription = null, modifier = Modifier.height(150.dp))
+                    Doodle(Doodles.SPARKLES, c.ink, Modifier.size(48.dp).align(Alignment.TopStart).padding(start = 40.dp),
+                        key = "welcome-sparkles", delayMillis = 350, durationMillis = 900)
+                }
             }
             itemsIndexed(state.lines, key = { _, l -> l.id }) { index, line: Line ->
                 Box(Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null)) {
@@ -201,8 +220,10 @@ fun ChatScreen(
                         when {
                             surface != null -> A2uiView(surface)
                             line.loadingSurface -> OptionsPlaceholder()
-                            else -> Bubble(line.text, line.mine, reveal = line.reveal, onRevealed = { onRevealed(line.id) },
-                                onGrow = { scope.launch { keepInView(list, index + 1) } })
+                            else -> Bubble(line.text, line.mine, reveal = line.reveal,
+                                onRevealed = { onRevealed(line.id); scope.launch { keepInView(list, index + 1) } },
+                                onGrow = { scope.launch { keepInView(list, index + 1) } },
+                                showWho = state.lines.getOrNull(index - 1)?.let { it.mine } ?: true)
                         }
                     }
                 }
@@ -221,8 +242,18 @@ fun ChatScreen(
                 }
             }
         }
-        Composer(state, onSend, onWhoToTalk, onNewChat,
+        // Jump to the latest message when the user has scrolled up.
+        val atEnd by remember { derivedStateOf { !list.canScrollForward } }
+        JumpToLatest(
+            visible = !atEnd && state.lines.size > 2,
+            onClick = { scope.launch { list.animateScrollToItem((list.layoutInfo.totalItemsCount - 1).coerceAtLeast(0)) } },
+            modifier = Modifier.align(Alignment.BottomEnd)
+                .padding(end = 18.dp, bottom = with(density) { composerHeight.toDp() } + 10.dp),
+        )
+        var confirmNew by remember { mutableStateOf(false) }
+        Composer(state, onSend, onWhoToTalk, { confirmNew = true },
             Modifier.align(Alignment.BottomCenter).onSizeChanged { composerHeight = it.height })
+        if (confirmNew) ConfirmNewChat(onConfirm = { confirmNew = false; onNewChat() }, onDismiss = { confirmNew = false })
         }
     }
 }
@@ -305,11 +336,54 @@ private fun Composer(
 
 private fun Modifier.graphicsMirror(): Modifier = this.graphicsLayer(scaleX = -1f)
 
+@Composable
+private fun JumpToLatest(visible: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val c = Kh.colors
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(tween(160)) + scaleIn(KhMotion.snappy(), initialScale = 0.7f),
+        exit = fadeOut(tween(120)) + scaleOut(tween(120), targetScale = 0.7f),
+        modifier = modifier,
+    ) {
+        Box(
+            Modifier.size(44.dp).background(c.paperRaised, KhShapes.chip).border(PenWidth, c.ink, KhShapes.chip)
+                .clickable(role = Role.Button, onClick = onClick)
+                .semantics { contentDescription = "آخر رسالة" },
+            contentAlignment = Alignment.Center,
+        ) { KhIcon(R.drawable.ic_kh_arrow_down, c.ink, size = 22.dp) }
+    }
+}
+
+/** A new chat erases the current one from the phone, so ask first. */
+@Composable
+private fun ConfirmNewChat(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    val c = Kh.colors
+    Dialog(onDismissRequest = onDismiss) {
+        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+            Column(
+                Modifier.fillMaxWidth().background(c.paperRaised, KhShapes.panel).border(PenWidth, c.ink, KhShapes.panel).padding(22.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    KhIcon(R.drawable.ic_kh_trash, c.ink, size = 22.dp)
+                    Spacer(Modifier.width(10.dp))
+                    Text("نبداو محادثة جديدة؟", style = KhType.heading, color = c.ink)
+                }
+                Text("المحادثة هذي بتنمسح من تلفونك، وما تقدرش ترجعلها.", style = KhType.body, color = c.inkMuted)
+                Spacer(Modifier.height(4.dp))
+                KhButton("إيه، محادثة جديدة", onConfirm, Modifier.fillMaxWidth())
+                KhButton("لا، نكمل", onDismiss, Modifier.fillMaxWidth(), kind = ButtonKind.Quiet)
+            }
+        }
+    }
+}
+
 /** While a reply types itself out, keep its bottom edge on screen without jumping past it. */
 private suspend fun keepInView(list: androidx.compose.foundation.lazy.LazyListState, index: Int) {
     val info = list.layoutInfo
     val item = info.visibleItemsInfo.firstOrNull { it.index == index } ?: return list.animateScrollToItem(index)
-    val overflow = item.offset + item.size - info.viewportEndOffset + 24
+    // the visible area ends above the floating composer (the list's bottom content padding)
+    val overflow = item.offset + item.size - (info.viewportEndOffset - info.afterContentPadding) + 24
     if (overflow > 0) list.animateScrollBy(overflow.toFloat())
 }
 

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- The splash: the small stone drops in and lands, then the green stone grows in from a slight tilt and settles.
-     About 900 ms, matching windowSplashScreenAnimationDuration. -->
+     Then the green underline draws itself under the mark, right to left. About 1.2 s. -->
 <animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
     android:drawable="@drawable/splash_mark">
@@ -42,6 +42,18 @@
         <aapt:attr name="android:animation">
             <objectAnimator android:propertyName="fillAlpha" android:valueFrom="0" android:valueTo="1"
                 android:duration="240" android:startOffset="300" android:interpolator="@android:interpolator/linear_out_slow_in"/>
+        </aapt:attr>
+    </target>
+    <target android:name="under0">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="trimPathEnd" android:valueFrom="0" android:valueTo="1"
+                android:duration="380" android:startOffset="620" android:interpolator="@android:interpolator/fast_out_slow_in"/>
+        </aapt:attr>
+    </target>
+    <target android:name="under1">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="trimPathEnd" android:valueFrom="0" android:valueTo="1"
+                android:duration="260" android:startOffset="900" android:interpolator="@android:interpolator/fast_out_slow_in"/>
         </aapt:attr>
     </target>
 </animated-vector>

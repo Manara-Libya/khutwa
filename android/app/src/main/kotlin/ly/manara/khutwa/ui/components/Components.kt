@@ -170,7 +170,7 @@ fun BackButton(onClick: () -> Unit) {
 
 @Composable
 fun Bubble(text: String, mine: Boolean, modifier: Modifier = Modifier, reveal: Boolean = false, onRevealed: () -> Unit = {},
-           onGrow: () -> Unit = {}) {
+           onGrow: () -> Unit = {}, showWho: Boolean = false) {
     val c = Kh.colors
     // Word-by-word reveal of a reply the server has already checked; the full text is never different.
     val words = remember(text) { text.split(" ") }
@@ -182,7 +182,9 @@ fun Bubble(text: String, mine: Boolean, modifier: Modifier = Modifier, reveal: B
     }
     val visible = if (shown >= words.size) text else words.take(shown).joinToString(" ")
     val shape: Shape = if (mine) KhShapes.bubbleMe else KhShapes.bubbleBot
-    Row(modifier.fillMaxWidth(), horizontalArrangement = if (mine) Arrangement.Start else Arrangement.End) {
+    Column(modifier.fillMaxWidth(), horizontalAlignment = if (mine) Alignment.Start else Alignment.End) {
+        // Who is speaking, above the first of Khutwa's messages in a run (kh-bubble__who in the brand stylesheet).
+        if (showWho && !mine) Text("خطوة", style = KhType.small, color = c.inkMuted, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
         Text(
             visible,
             style = KhType.bubble,

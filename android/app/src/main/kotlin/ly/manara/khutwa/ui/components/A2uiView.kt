@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -59,8 +60,13 @@ private fun Node(surface: A2ui.Surface, id: String, data: MutableMap<String, Str
     val c = Kh.colors
     when (val comp = surface.components[id]) {
         is A2ui.Text -> when (comp.hint) {
-            "h1", "h2", "h3" -> Text(comp.text, style = KhType.heading.copy(fontSize = KhType.title.fontSize.times(0.8f)),
-                color = c.ink, modifier = Modifier.semantics { heading() })
+            "h1", "h2", "h3" -> Column {
+                Text(comp.text, style = KhType.heading.copy(fontSize = KhType.title.fontSize.times(0.8f)),
+                    color = c.ink, modifier = Modifier.semantics { heading() })
+                // the brand's hand-drawn underline draws itself under the surface title
+                Doodle(Doodles.UNDERLINE, c.green, Modifier.width(150.dp).height(12.dp), key = "${surface.id}/$id/underline",
+                    delayMillis = 250, durationMillis = 650)
+            }
             "h4", "h5" -> Text(comp.text, style = KhType.heading, color = c.ink)
             "caption" -> Text(comp.text, style = KhType.small, color = c.inkMuted)
             else -> Text(comp.text, style = KhType.body, color = c.inkMuted)

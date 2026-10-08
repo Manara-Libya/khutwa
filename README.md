@@ -16,7 +16,6 @@ Built for the AI4LY Codathon: Mental Health in Libya. Final pitch: 8 October 202
 </p>
 <p align="center">
   <picture><source media="(prefers-color-scheme: dark)" srcset="docs/media/app/urgent-dark.png"><img src="docs/media/app/urgent-light.png" width="250" alt="The fixed urgent-help screen, which works offline"></picture>
-  <picture><source media="(prefers-color-scheme: dark)" srcset="docs/media/app/drawer-dark.png"><img src="docs/media/app/drawer-light.png" width="250" alt="The drawer with saved chats and settings"></picture>
   <picture><source media="(prefers-color-scheme: dark)" srcset="docs/media/app/saved-chats-dark.png"><img src="docs/media/app/saved-chats-light.png" width="250" alt="Settings: saved chats and the notes Khutwa keeps, off by default and erasable"></picture>
 </p>
 

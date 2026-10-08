@@ -35,7 +35,9 @@ All `/v1` endpoints need `Authorization: Bearer <key>` or `X-API-Key: <key>`.
 | Method | Path | What it does |
 |---|---|---|
 | GET | `/health` | Liveness and warm-worker counts (no auth) |
-| POST | `/v1/analyze` | **Main call.** Runs risk, reflection and suggestions in parallel. Any risk other than `none` returns `urgent: true` with no AI text. |
+| POST | `/v1/analyze` | **Main call.** Runs risk, reflection and suggestions in parallel. Any risk other than `none` returns `urgent: true` with no AI text. Takes the redacted `history` (last 12 turns), optional `memory` notes, and `defer_support` to return the reply before the options. |
+| POST | `/v1/support` | The support options for the conversation so far, as an A2UI v0.8 surface (used after `analyze` with `defer_support: true`) |
+| POST | `/v1/remember` | Updates the short notes Khutwa keeps across chats, for users who turned on saved chats in the app. Never records risk, conditions or medicine. |
 | POST | `/v1/risk` | Risk check only |
 | POST | `/v1/reflect` | Reflection in Libyan Arabic (no diagnosis) |
 | POST | `/v1/suggest` | 2–3 support types from the fixed list, each with a "why" and a draft message |
@@ -93,7 +95,8 @@ A draft is run in a throwaway copy of the agent, so it doesn't affect the team u
 
 ## How it works
 
-- `runtime/.agents/agents/` holds the minimal agents: `khutwa-risk`, `khutwa-reflect`, `khutwa-suggest`, `khutwa-chat`
+- `runtime/.agents/agents/` holds the minimal agents: `khutwa-risk`, `khutwa-reflect`, `khutwa-suggest`, `khutwa-remember`, `khutwa-chat`
+- The reflection follows the arc of Psychological First Aid (look, listen, link): listen first, then gently ask about the people in the user's life; it never coaches, diagnoses or repeats the user's words back. It may end with one Khutwa stone shortcode (`:kh-heavy:`), which the app shows as a sticker. Sources: `docs/evidence.md`.
 - Warm pools of pre-started `agy` processes (`--input-format stream-json`) keep the ~3 s startup off the request path
 - Risk runs on GPT-OSS 120B (fastest); text tasks run on Gemini Flash (best Libyan Arabic). Each falls back to the other model on errors or timeouts.
 - `runtime/risk_keywords.txt` is checked before any model call. The language and testing lead owns it.

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Khutwa brand icon "shield-check" (icons/current-color), converted for Android. Tinted at use. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <path android:pathData="M12 3C13.3 3 14.8 4.3 16 4.6C17.2 5 18.8 4.1 19.4 5.1C19.9 6.2 19.6 9.2 19.4 11C19.2 12.8 19.3 14.2 18 15.8C16.8 17.5 13.8 21 11.9 21C9.9 21 7.4 17.6 6.1 15.9C4.9 14.2 4.7 12.8 4.4 11C4.1 9.2 3.8 6.2 4.5 5.1C5.1 4 6.9 4.8 8.2 4.5C9.4 4.1 10.7 3 12 3Z"
+        android:strokeColor="#FF000000" android:strokeWidth="1.8"
+        android:strokeLineCap="round" android:strokeLineJoin="round" android:fillColor="#00000000"/>
+    <path android:pathData="M8.7 12.2L11.1 14.5L15.7 9.6"
+        android:strokeColor="#FF000000" android:strokeWidth="1.8"
+        android:strokeLineCap="round" android:strokeLineJoin="round" android:fillColor="#00000000"/>
+</vector>

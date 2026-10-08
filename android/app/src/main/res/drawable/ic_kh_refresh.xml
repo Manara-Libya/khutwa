@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Khutwa brand icon "refresh" (icons/current-color), converted for Android. Tinted at use. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <path android:pathData="M15.8 19C15.2 19.1 13.2 19.9 11.9 20C10.7 20 9.2 19.8 8.1 19.1C6.9 18.5 5.9 17.3 5.2 16.2C4.5 15 4 13.5 3.9 12.2C3.9 10.9 4.4 9.4 5 8.3C5.6 7.2 6.4 6.1 7.5 5.4C8.6 4.7 10.3 4.1 11.6 4C12.9 4 14.1 4.4 15.3 4.9C16.5 5.5 18.1 7 18.7 7.4"
+        android:strokeColor="#FF000000" android:strokeWidth="1.8"
+        android:strokeLineCap="round" android:strokeLineJoin="round" android:fillColor="#00000000"/>
+    <path android:pathData="M19.4 3.3L19.3 7.9L14.5 8"
+        android:strokeColor="#FF000000" android:strokeWidth="1.8"
+        android:strokeLineCap="round" android:strokeLineJoin="round" android:fillColor="#00000000"/>
+</vector>

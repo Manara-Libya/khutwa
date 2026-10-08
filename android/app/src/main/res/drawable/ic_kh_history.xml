@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Saved chats: a hand-drawn clock with a turning-back arrow, in the style of the Khutwa brand icons. Tinted at use. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <path android:pathData="M4.4 12.3C4.5 16.4 7.9 19.8 12.1 19.7C16.3 19.6 19.7 16.2 19.6 12C19.5 7.8 16.1 4.4 11.9 4.5C9.3 4.6 7.1 5.9 5.7 7.9M5.3 4.7C5.4 5.8 5.6 6.9 5.7 7.9C6.8 7.8 7.8 7.7 8.9 7.6M12 8.4C12 9.7 12.1 11 12 12.2C13.1 12.9 14.1 13.6 15.1 14.2"
+        android:strokeColor="#FF000000" android:strokeWidth="1.8" android:strokeLineCap="round" android:strokeLineJoin="round" android:fillColor="#00000000"/>
+</vector>

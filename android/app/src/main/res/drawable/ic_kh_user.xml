@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Khutwa brand icon "user" (icons/current-color), converted for Android. Tinted at use. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <path android:pathData="M14.8 10.8C14.1 11.5 12.9 12.2 12 12.2C11 12.2 9.8 11.5 9.2 10.8C8.5 10.1 8 8.9 8.1 8C8.1 7 8.5 5.8 9.2 5.2C9.9 4.5 11.1 4 12 4C13 4 14.3 4.4 14.9 5.1C15.6 5.8 15.9 7.1 15.9 8C15.9 9 15.4 10.1 14.8 10.8Z"
+        android:strokeColor="#FF000000" android:strokeWidth="1.8"
+        android:strokeLineCap="round" android:strokeLineJoin="round" android:fillColor="#00000000"/>
+    <path android:pathData="M4.7 20.1C4.9 19.4 4.9 16.8 6.1 15.7C7.4 14.7 10.1 13.6 12.1 13.5C14 13.5 16.7 14.5 17.9 15.6C19.2 16.6 19.2 19.2 19.4 19.9"
+        android:strokeColor="#FF000000" android:strokeWidth="1.8"
+        android:strokeLineCap="round" android:strokeLineJoin="round" android:fillColor="#00000000"/>
+</vector>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Khutwa.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#151B14</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_mark_animated</item>
+        <item name="windowSplashScreenAnimationDuration">1300</item>
+        <item name="postSplashScreenTheme">@style/Theme.Khutwa</item>
+    </style>
+    <style name="Theme.Khutwa" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/paper</item>
+    </style>
+    <color name="paper">#151B14</color>
+</resources>

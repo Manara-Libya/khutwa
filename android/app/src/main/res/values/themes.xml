@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Splash: the paper ground with the Khutwa mark (brand splash README, Android native). -->
+    <style name="Theme.Khutwa.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#F4F1EA</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_mark_animated</item>
+        <item name="windowSplashScreenAnimationDuration">1300</item>
+        <item name="postSplashScreenTheme">@style/Theme.Khutwa</item>
+    </style>
+    <style name="Theme.Khutwa" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/paper</item>
+    </style>
+    <color name="paper">#F4F1EA</color>
+</resources>

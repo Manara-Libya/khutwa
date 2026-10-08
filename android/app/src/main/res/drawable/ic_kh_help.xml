@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Khutwa brand icon "help" (icons/current-color), converted for Android. Tinted at use. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <path android:pathData="M15.1 20.4C13.1 21.2 10.1 21.3 8.1 20.4C6.2 19.5 4.1 17.1 3.5 15.1C2.9 13.2 3.5 10.5 4.3 8.5C5.2 6.5 6.8 4 8.8 3.2C10.7 2.4 14 2.6 15.9 3.6C17.8 4.5 19.3 7 20 9C20.8 11.1 21 13.9 20.2 15.8C19.4 17.7 17.1 19.7 15.1 20.4Z"
+        android:strokeColor="#FF000000" android:strokeWidth="1.8"
+        android:strokeLineCap="round" android:strokeLineJoin="round" android:fillColor="#00000000"/>
+    <path android:pathData="M9.2 9.7C9.4 9.3 9.4 7.8 9.9 7.3C10.4 6.8 11.5 6.7 12.2 6.8C12.9 6.9 13.9 7.4 14.2 7.9C14.6 8.5 14.5 9.6 14.2 10.2C13.9 10.8 12.8 11.1 12.4 11.7C12.1 12.2 12.2 13.3 12.2 13.7"
+        android:strokeColor="#FF000000" android:strokeWidth="1.8"
+        android:strokeLineCap="round" android:strokeLineJoin="round" android:fillColor="#00000000"/>
+    <path android:pathData="M13.2 16.9C13.2 17.2 12.8 17.7 12.6 17.9C12.3 18 11.7 18 11.4 17.9C11.1 17.7 10.8 17.2 10.8 16.9C10.8 16.6 11.1 16 11.4 15.9C11.7 15.7 12.2 15.8 12.5 16C12.8 16.1 13.2 16.6 13.2 16.9Z"
+        android:fillColor="#FF000000"/>
+</vector>

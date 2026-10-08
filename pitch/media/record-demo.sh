@@ -22,12 +22,12 @@ adb -s "$DEV" shell screenrecord --bit-rate 10000000 --time-limit 180 /sdcard/kh
 REC=$!
 sleep 4.5
 tapt 'class="android.widget.EditText"'; sleep 1.2
-say "مش عارف خيرها صاحبي يوسف هكي معاي، ما عادش يرد عليا"
+say "صاحبي يوسف ما عادش يحكي معاي، ومش عارف علاش"
 sleep 1.5; tapt 'content-desc="ابعت"'
 waitreply 'text="خطوة"' 2; sleep 3
 tapt 'text="شوف شن وصل"' || tapt 'text="شوفي شن وصل"'; sleep 5
 tapt 'class="android.widget.EditText"'; sleep 0.8
-# answer what Khutwa actually asked: someone else in his life, since when, does anyone know, or did he try
+# answer what Khutwa actually asked: did he try, since when, a mutual friend, does anyone know, someone else in his life
 R1=$(adb -s "$DEV" shell cat /sdcard/u.xml | grep -o 'text="[^"]*؟"' | grep -v 'text="مع مني نحكي؟"' | tail -1)
 echo "khutwa asked: $R1"
 BASE="تخاصمنا من شهر على حاجة تافهة، وبعتتله مرتين وما ردش"
@@ -35,12 +35,14 @@ if echo "$R1" | grep -q "وجه لوجه\|تتلاقى\|تلاقيت\|تشوفه
   say "لا، $BASE"
 elif echo "$R1" | grep -q "امتا\|امتى\|قداش\|من وقتاش"; then
   say "من شهر تقريبًا. تخاصمنا على حاجة تافهة، وبعتتله مرتين وما ردش"
+elif echo "$R1" | grep -q "مشترك\|بينكم\|بيناتكم"; then
+  say "لا، ما فيش حد بينا. $BASE"
 elif echo "$R1" | grep -q "حد يعرف\|حد عارف\|حد دري"; then
   say "حتى حد ما يعرف. $BASE"
 elif echo "$R1" | grep -q "حد ثاني\|حد قريب\|حد في\|تثق\|ترتاح\|تقدر تحكي\|تفضفض"; then
   say "هو أقرب واحد ليا، ما عنديش غيره. $BASE"
 else
-  say "$BASE"
+  say "مش عارف والله. $BASE"
 fi
 sleep 1.2; tapt 'content-desc="ابعت"'
 waitreply 'text="خطوة"' 3; sleep 4

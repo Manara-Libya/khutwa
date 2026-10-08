@@ -67,6 +67,7 @@ class MainActivity : ComponentActivity() {
                     store = ly.manara.khutwa.data.ChatStore(applicationContext)) as T
         }
         ly.manara.khutwa.ui.components.Prefs.load(this)
+        applyDemoExtras(intent)
         setContent {
             val prefs = ly.manara.khutwa.ui.components.Prefs
             val dark = when (prefs.theme) {
@@ -94,6 +95,13 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+}
+
+/** The demo-video extras (see [ly.manara.khutwa.ui.components.Demo]). */
+private fun applyDemoExtras(intent: android.content.Intent?) {
+    intent?.getStringExtra("khutwa.welcome")?.let { ly.manara.khutwa.ui.components.Demo.welcome = it }
+    if (intent?.hasExtra("khutwa.feminine") == true)
+        ly.manara.khutwa.ui.components.Addressing.feminine = intent.getBooleanExtra("khutwa.feminine", false)
 }
 
 @Composable

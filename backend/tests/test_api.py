@@ -284,10 +284,8 @@ def test_pool_never_keeps_more_than_its_size_warm(monkeypatch):
     assert len(started) - len(workers) == 2  # exactly `size` spares, however the calls interleave
 
 
-def test_first_model_gets_the_shorter_timeout(monkeypatch):
-    """A stalled first model should hand over to the fallback after PRIMARY_TIMEOUT, not the full timeout."""
+def _fake_router(fail_model):
     from khutwa_api import agy
-
     seen = []
 
     class FakeWorker:
@@ -296,7 +294,9 @@ def test_first_model_gets_the_shorter_timeout(monkeypatch):
 
         def ask_json(self, content, schema, timeout):
             seen.append((self.model, timeout))
-            return None if self.model == config.QUALITY_MODEL else schema(reflection="ok", fallback=False)
+            if self.model == fail_model:
+                return None
+            return schema(risk="none") if schema.__name__ == "RiskModelOut" else schema(reflection="ok")
 
     class FakePool:
         def __init__(self, model):
@@ -306,16 +306,28 @@ def test_first_model_gets_the_shorter_timeout(monkeypatch):
             return FakeWorker(self.model)
 
     router = agy.AgyRouter.__new__(agy.AgyRouter)
-    router.pools = {("reflect", m): FakePool(m) for m in (config.QUALITY_MODEL, config.FAST_MODEL)}
-    from khutwa_api.schemas import ReflectOut
-    result, model = router.json_task("reflect", "x", ReflectOut)
-    assert model == config.FAST_MODEL
-    assert seen == [(config.QUALITY_MODEL, config.PRIMARY_TIMEOUT_SECONDS), (config.FAST_MODEL, config.TIMEOUT_SECONDS)]
+    router.pools = {(t, m): FakePool(m) for t in ("risk", "reflect") for m in (config.QUALITY_MODEL, config.FAST_MODEL)}
+    return router, seen
 
 
 HISTORY = [{"role": "user", "text": "راني تعبان من الخدمة"}, {"role": "assistant", "text": "فاهمك. من قداش؟"},
-           {"role": "user", "text": "من شهرين"}, {"role": "assistant", "text": "حاسس بيك. شن يصير؟"}]
+           {"role": "user", "text": "من شهرين"}, {"role": "assistant", "text": "حاس بيك. شن يصير؟"}]
 
+
+def test_risk_falls_back_after_the_shorter_timeout():
+    """A stalled first model hands the risk check over after PRIMARY_TIMEOUT, not the full timeout."""
+    router, seen = _fake_router(fail_model=config.FAST_MODEL)
+    result, model = router.json_task("risk", "x", RiskModelOut)
+    assert model == config.QUALITY_MODEL
+    assert seen == [(config.FAST_MODEL, config.PRIMARY_TIMEOUT_SECONDS), (config.QUALITY_MODEL, config.TIMEOUT_SECONDS)]
+
+
+def test_libyan_text_never_falls_back_to_the_fast_model():
+    """Replies the user reads retry the quality model, then give up (the endpoint shows fixed text)."""
+    router, seen = _fake_router(fail_model=config.QUALITY_MODEL)
+    result, model = router.json_task("reflect", "x", ReflectModelOut)
+    assert result is None and model is None
+    assert seen == [(config.QUALITY_MODEL, config.TEXT_TIMEOUT_SECONDS), (config.QUALITY_MODEL, config.TIMEOUT_SECONDS)]
 
 def test_listen_first_holds_back_support_options(client):
     with client() as c:

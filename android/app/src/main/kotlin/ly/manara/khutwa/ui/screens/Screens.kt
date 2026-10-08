@@ -54,7 +54,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.window.Dialog
@@ -89,6 +88,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -265,7 +266,23 @@ fun ChatScreen(
             // Khutwa answered: bring the start of the answer into view, with the options (if any) below it.
             list.animateScrollToItem(firstNew + 1)
         } else {
-            list.animateScrollToItem((list.layoutInfo.totalItemsCount - 1).coerceAtLeast(0))
+            scrollToEnd(list)
+        }
+    }
+    // Follows the end of the conversation until the user scrolls up, and again once they come back down. While following,
+    // the list stays pinned to the end when the space above the composer changes (chips showing, keyboard, a longer draft),
+    // so the starter chips and the jump button can't flicker each other on and off.
+    val endSlop = with(LocalDensity.current) { 48.dp.roundToPx() }
+    var following by remember { mutableStateOf(true) }
+    LaunchedEffect(list) {
+        snapshotFlow { list.isScrollInProgress to distanceToEnd(list) }.collect { (moving, d) ->
+            if (d <= endSlop) following = true else if (moving) following = false
+        }
+    }
+    LaunchedEffect(list) {
+        snapshotFlow { list.layoutInfo.let { it.viewportEndOffset - it.afterContentPadding } }.collect {
+            val d = distanceToEnd(list)
+            if (following && !list.isScrollInProgress && d in 1 until Int.MAX_VALUE) list.scrollBy(d.toFloat())
         }
     }
     val density = LocalDensity.current
@@ -325,17 +342,16 @@ fun ChatScreen(
             }
         }
         // Jump to the latest message when the user has scrolled up.
-        val atEnd by remember { derivedStateOf { !list.canScrollForward } }
         JumpToLatest(
-            visible = !atEnd && state.lines.size > 2,
-            onClick = { scope.launch { list.animateScrollToItem((list.layoutInfo.totalItemsCount - 1).coerceAtLeast(0)) } },
+            visible = !following && state.lines.size > 2,
+            onClick = { scope.launch { scrollToEnd(list) } },
             modifier = Modifier.align(Alignment.BottomEnd)
                 .padding(end = 18.dp, bottom = with(density) { composerHeight.toDp() } + 10.dp),
         )
         var confirmNew by remember { mutableStateOf(false) }
         val online = rememberOnline()
         var calm by remember { mutableStateOf(false) }
-        Composer(state, onSend, onWhoToTalk, { confirmNew = true }, showChips = atEnd || state.lines.size <= 2,
+        Composer(state, onSend, onWhoToTalk, { confirmNew = true }, showChips = following || state.lines.size <= 2,
             online = online, onCalm = { calm = true },
             modifier = Modifier.align(Alignment.BottomCenter).onSizeChanged { composerHeight = it.height })
         if (calm) CalmSheet(onDismiss = { calm = false }, onUrgent = onUrgent)
@@ -589,6 +605,27 @@ private fun ConfirmNewChat(onConfirm: () -> Unit, onDismiss: () -> Unit) {
             }
         }
     }
+}
+
+/** How far the end of the last item is below the visible area (above the composer); MAX_VALUE when it isn't laid out. */
+private fun distanceToEnd(list: androidx.compose.foundation.lazy.LazyListState): Int {
+    val info = list.layoutInfo
+    val last = info.visibleItemsInfo.lastOrNull() ?: return 0
+    if (last.index < info.totalItemsCount - 1) return Int.MAX_VALUE
+    return (last.offset + last.size - (info.viewportEndOffset - info.afterContentPadding)).coerceAtLeast(0)
+}
+
+/** Scrolls to the very end of the conversation, the bottom of the last item included, even when it is taller than the screen. */
+private suspend fun scrollToEnd(list: androidx.compose.foundation.lazy.LazyListState) {
+    val last = list.layoutInfo.totalItemsCount - 1
+    if (last < 0) return
+    if (list.layoutInfo.visibleItemsInfo.none { it.index == last }) {
+        // far up: skip most of the way at once, then glide the rest
+        if (list.firstVisibleItemIndex < last - 3) list.scrollToItem(last - 2)
+        list.animateScrollToItem(last)
+    }
+    val d = distanceToEnd(list)
+    if (d in 1 until Int.MAX_VALUE) list.animateScrollBy(d.toFloat())
 }
 
 /** While a reply types itself out, keep its bottom edge on screen without jumping past it. */

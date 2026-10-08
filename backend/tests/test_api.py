@@ -360,3 +360,49 @@ def test_dev_try_can_run_a_draft_mid_conversation(dev_client):
         main.app.state.agy.try_once = lambda task, text, model, prompt=None: seen.setdefault(task, text) and '{"reflection": "ok"}'
         assert c.post("/v1/dev/try", headers=DEV, json=body).status_code == 200
     assert seen["reflect"].startswith("earlier user: حد يتمسخر عليا") and seen["reflect"].endswith("new: سكتت")
+
+
+def test_support_options_come_as_a_valid_a2ui_surface(client):
+    with client() as c:
+        r = c.post("/v1/analyze", headers=AUTH, json={"text": "مش عارف نحكي مع مني", "history": []}).json()
+    msgs = r["a2ui"]
+    assert [next(iter(m)) for m in msgs] == ["surfaceUpdate", "dataModelUpdate", "beginRendering"]
+    sid = msgs[0]["surfaceUpdate"]["surfaceId"]
+    assert all(next(iter(m.values()))["surfaceId"] == sid for m in msgs)
+    comps = {x["id"]: x["component"] for x in msgs[0]["surfaceUpdate"]["components"]}
+    allowed = {"Text", "Button", "Card", "Column", "Row", "TextField"}
+    for cid, comp in comps.items():
+        (kind, props), = comp.items()
+        assert kind in allowed
+        refs = props.get("children", {}).get("explicitList", []) + [props[k] for k in ("child",) if k in props]
+        assert all(ref in comps for ref in refs), cid  # every reference resolves
+        if kind == "Text":
+            assert "text" in props and props.get("usageHint", "body") in {"h1", "h2", "h3", "h4", "h5", "caption", "body"}
+        if kind == "Button":
+            assert props["action"]["name"] in {"khutwa.share", "khutwa.copy"}  # nothing is ever sent for the user
+        if kind == "TextField":
+            assert "label" in props and props["text"]["path"].startswith("/drafts/")
+    assert msgs[2]["beginRendering"]["root"] in comps
+    drafts = msgs[1]["dataModelUpdate"]
+    assert drafts["path"] == "/drafts" and drafts["contents"][0]["valueString"] == "فاضي نحكوا شوية؟"
+
+
+def test_no_a2ui_while_still_listening(client):
+    with client() as c:
+        r = c.post("/v1/analyze", headers=AUTH, json={"text": "راني تعبان من الخدمة", "history": []}).json()
+    assert r["support_ready"] is False and r["a2ui"] == []
+
+
+def test_deferred_support_returns_the_reply_without_waiting_for_options(client):
+    with client() as c:
+        r = c.post("/v1/analyze", headers=AUTH, json={"text": "مش عارف نحكي مع مني", "history": [], "defer_support": True}).json()
+        assert r["support_ready"] is True and r["suggestions"] == [] and r["a2ui"] == [] and r["reflection"]
+        assert "suggest" not in [task for task, _ in main.app.state.agy.calls]
+        s = c.post("/v1/support", headers=AUTH, json={"text": "مش عارف نحكي مع مني", "history": HISTORY}).json()
+        assert s["suggestions"] and not s["fallback"]
+        assert [next(iter(m)) for m in s["a2ui"]] == ["surfaceUpdate", "dataModelUpdate", "beginRendering"]
+
+
+def test_support_needs_the_api_key(client):
+    with client() as c:
+        assert c.post("/v1/support", json={"text": "x"}).status_code == 401

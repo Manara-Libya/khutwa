@@ -30,6 +30,11 @@ class AnalyzeIn(TextIn):
                     "When `history` is sent (even empty), suggestions are held back until the user's "
                     f"{config.SUGGEST_AFTER}th message or until they ask who to talk to (`support_ready`). "
                     "Omit it for the old behaviour (suggestions on every message).")
+    defer_support: bool = Field(
+        default=False,
+        description="When true, /v1/analyze does not wait for the support options: it returns the reply as soon as it "
+                    "is ready, with support_ready set, and the app fetches the options from /v1/support.")
+
 
 
 # --- what the models must return (validated before use) ---
@@ -78,7 +83,17 @@ class AnalyzeOut(BaseModel):
     suggestions: list[Suggestion] = []
     fallback: bool = False
     support_ready: bool = Field(default=True, description="False while Khutwa is still listening: no support options yet, keep the conversation going. True: show the support options (`suggestions`, or the generic ones if empty).")
+    a2ui: list[dict] = Field(default=[], description="A2UI v0.8 messages (surfaceUpdate, dataModelUpdate, beginRendering) that render the "
+                             "support options inline: a card per option with its reason, the editable draft and send-it-yourself / copy "
+                             "buttons. Built by the server from validated suggestions; empty until support_ready.")
     elapsed_ms: int
+
+
+class SupportOut(BaseModel):
+    situation: list[Situation] = []
+    suggestions: list[Suggestion] = []
+    fallback: bool = Field(description="True when the suggestions are unavailable; show the generic options.")
+    a2ui: list[dict] = Field(default=[], description="A2UI v0.8 messages rendering the options inline (see AnalyzeOut.a2ui).")
 
 
 # --- OpenAI-compatible chat (development use) ---

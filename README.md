@@ -3,27 +3,27 @@
   <img src="docs/media/brand/khutwa-banner.png" alt="Khutwa (خطوة): a first step toward someone you trust">
 </picture>
 
-**A private first step toward a real person.** Khutwa is an AI assistant for young Libyans (18–25). It listens in Libyan dialect and Arabizi, removes identifying details on the phone before the AI sees any text, and helps the user reach someone they trust: it suggests the right kind of person, with a reason, and drafts the first message, which the user sends themselves. It never diagnoses.
+**A private first step toward a real person.** Khutwa is an AI assistant for young Libyans (18–25). It listens in Libyan dialect, removes identifying details on the phone before the AI sees any text, and helps the user reach someone they trust: it suggests the right kind of person, with a reason, and drafts the first message, which the user sends themselves. It never diagnoses.
 
 Built for the AI4LY Codathon: Mental Health in Libya. Final pitch: 8 October 2026.
 
 > Khutwa is not a therapist, a diagnostic tool or an emergency service.
 
 <p align="center">
-  <img src="docs/media/app/welcome.png" width="250" alt="A new chat: a doodle and a welcome line for the time of day">
-  <img src="docs/media/app/chat.png" width="250" alt="A conversation with the receipt showing what left the phone: the name became [اسم1]">
-  <img src="docs/media/app/support-options.png" width="250" alt="People the user could talk to, each with a reason and a drafted message they send themselves">
+  <picture><source media="(prefers-color-scheme: dark)" srcset="docs/media/app/welcome-dark.png"><img src="docs/media/app/welcome-light.png" width="250" alt="A new chat: a doodle and a welcome line for the time of day"></picture>
+  <picture><source media="(prefers-color-scheme: dark)" srcset="docs/media/app/chat-dark.png"><img src="docs/media/app/chat-light.png" width="250" alt="A conversation with the receipt showing what left the phone: the name became [اسم1]"></picture>
+  <picture><source media="(prefers-color-scheme: dark)" srcset="docs/media/app/support-options-dark.png"><img src="docs/media/app/support-options-light.png" width="250" alt="People the user could talk to, each with a reason and a drafted message they send themselves"></picture>
 </p>
 <p align="center">
-  <img src="docs/media/app/urgent.png" width="250" alt="The fixed urgent-help screen, which works offline">
-  <img src="docs/media/app/drawer.png" width="250" alt="The drawer with saved chats and settings">
-  <img src="docs/media/app/saved-chats.png" width="250" alt="Settings: saved chats and the notes Khutwa keeps, off by default and erasable">
+  <picture><source media="(prefers-color-scheme: dark)" srcset="docs/media/app/urgent-dark.png"><img src="docs/media/app/urgent-light.png" width="250" alt="The fixed urgent-help screen, which works offline"></picture>
+  <picture><source media="(prefers-color-scheme: dark)" srcset="docs/media/app/drawer-dark.png"><img src="docs/media/app/drawer-light.png" width="250" alt="The drawer with saved chats and settings"></picture>
+  <picture><source media="(prefers-color-scheme: dark)" srcset="docs/media/app/saved-chats-dark.png"><img src="docs/media/app/saved-chats-light.png" width="250" alt="Settings: saved chats and the notes Khutwa keeps, off by default and erasable"></picture>
 </p>
 
 ## How it works
 
 1. **Private start.** No account, no phone number. The consent screen says it's an AI, what is sent where, and that nothing is stored on our server.
-2. **Say it your way.** Libyan dialect, Arabizi or Modern Standard Arabic. While typing, names, places and numbers are marked; they are removed **on the phone** before anything is sent, and a receipt under each message shows exactly what left the phone.
+2. **Say it your way.** Libyan dialect or Modern Standard Arabic. While typing, names, places and numbers are marked; they are removed **on the phone** before anything is sent, and a receipt under each message shows exactly what left the phone.
 3. **Listen, then link.** The AI listens first with one easy question at a time, then gently turns toward the people in the user's life. It follows the arc of WHO Psychological First Aid (look, listen, link) and never coaches, diagnoses or repeats the user's words back.
 4. **The right person.** After a few messages, or whenever the user asks, it suggests 2–3 kinds of people from a fixed list, each with a one-line reason. It never assumes family is safe; the user chooses.
 5. **The first step.** A short drafted message, in the user's voice, that they edit, copy or share themselves. Nothing is ever sent to another person automatically.

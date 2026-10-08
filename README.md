@@ -10,10 +10,14 @@ Built for the AI4LY Codathon: Mental Health in Libya. Final pitch: 8 October 202
 > Khutwa is not a therapist, a diagnostic tool or an emergency service.
 
 <p align="center">
-  <img src="docs/media/app/welcome.png" width="200" alt="A new chat: a doodle and a welcome line for the time of day">
-  <img src="docs/media/app/chat.png" width="200" alt="A conversation with the redaction receipt and a Khutwa stone">
-  <img src="docs/media/app/drawer.png" width="200" alt="The drawer with saved chats and settings">
-  <img src="docs/media/app/saved-chats.png" width="200" alt="Settings: saved chats and memory, off by default">
+  <img src="docs/media/app/welcome.png" width="250" alt="A new chat: a doodle and a welcome line for the time of day">
+  <img src="docs/media/app/chat.png" width="250" alt="A conversation with the receipt showing what left the phone: the name became [اسم1]">
+  <img src="docs/media/app/support-options.png" width="250" alt="People the user could talk to, each with a reason and a drafted message they send themselves">
+</p>
+<p align="center">
+  <img src="docs/media/app/urgent.png" width="250" alt="The fixed urgent-help screen, which works offline">
+  <img src="docs/media/app/drawer.png" width="250" alt="The drawer with saved chats and settings">
+  <img src="docs/media/app/saved-chats.png" width="250" alt="Settings: saved chats and the notes Khutwa keeps, off by default and erasable">
 </p>
 
 ## How it works

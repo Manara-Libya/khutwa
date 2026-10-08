@@ -304,10 +304,10 @@ fun ChatScreen(
         drawerContent = {
             androidx.compose.material3.ModalDrawerSheet(
                 drawerState = drawer,
-                drawerContainerColor = c.paperRaised,
-                drawerShape = androidx.compose.foundation.shape.RoundedCornerShape(topEnd = 24.dp, bottomEnd = 24.dp),
+                drawerContainerColor = c.paper,
+                drawerShape = androidx.compose.foundation.shape.RoundedCornerShape(topEnd = 28.dp, bottomEnd = 28.dp),
                 drawerTonalElevation = 0.dp,
-                modifier = Modifier.width(300.dp),
+                modifier = Modifier.width(316.dp),
             ) {
                 ChatDrawer(state, onNewChat = { closeThen { if (Prefs.keepHistory || state.lines.size <= 1) onNewChat() else confirmNew = true } },
                     onOpenChat = { id -> closeThen { onOpenChat(id) } }, onAllChats = { closeThen(onAllChats) },
@@ -389,7 +389,7 @@ fun ChatScreen(
     }
 }
 
-/** The drawer, kept quiet like other chat apps: a new chat, the saved chats by day (or how to turn saving on), settings. */
+/** The drawer: a new chat, the saved chats by day (or a friendly word on turning saving on), and settings. */
 @Composable
 private fun ChatDrawer(
     state: UiState,
@@ -399,74 +399,85 @@ private fun ChatDrawer(
     onSettings: () -> Unit,
 ) {
     val c = Kh.colors
-    Column(Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 16.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 12.dp)) {
+    Column(Modifier.fillMaxSize().padding(start = 14.dp, end = 14.dp, top = 18.dp, bottom = 14.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 8.dp)) {
             Image(painterResource(if (c.isDark) R.drawable.logo_mark_dark else R.drawable.logo_mark), contentDescription = null,
-                modifier = Modifier.size(28.dp))
+                modifier = Modifier.size(34.dp))
             Spacer(Modifier.width(10.dp))
-            Text("خطوة", style = KhType.heading, color = c.ink)
+            Text("خطوة", style = KhType.title.copy(fontSize = KhType.title.fontSize * 0.86f), color = c.ink)
         }
-        Spacer(Modifier.height(20.dp))
-        DrawerRow(R.drawable.ic_kh_edit, Texts.NEW_CHAT, onNewChat)
-        Spacer(Modifier.height(18.dp))
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 12.dp)) {
-            Text(Texts.HISTORY, style = KhType.small, color = c.inkMuted, modifier = Modifier.weight(1f))
-            if (Prefs.keepHistory && state.savedChats.isNotEmpty()) Text(Texts.SEE_ALL, style = KhType.small, color = c.greenDeep,
+        Spacer(Modifier.height(22.dp))
+        // new chat: the one obvious action, a soft green pill
+        Row(
+            Modifier.fillMaxWidth().height(54.dp).clip(KhShapes.chip).background(c.green)
+                .clickable(role = Role.Button, onClick = onNewChat).padding(horizontal = 18.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            KhIcon(R.drawable.ic_kh_edit, c.onGreen, size = 21.dp)
+            Spacer(Modifier.width(12.dp))
+            Text(Texts.NEW_CHAT, style = KhType.label.copy(fontSize = KhType.body.fontSize), color = c.onGreen)
+        }
+        Spacer(Modifier.height(26.dp))
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 8.dp)) {
+            Text(Texts.HISTORY, style = KhType.heading.copy(fontSize = KhType.body.fontSize), color = c.ink, modifier = Modifier.weight(1f))
+            if (Prefs.keepHistory && state.savedChats.isNotEmpty()) Text(Texts.SEE_ALL, style = KhType.label, color = c.greenDeep,
                 modifier = Modifier.clip(KhShapes.chip).clickable(role = Role.Button, onClick = onAllChats)
                     .padding(horizontal = 12.dp, vertical = 6.dp))
         }
-        when {
-            !Prefs.keepHistory -> {
-                Text(t(Texts.DRAWER_NOT_SAVED), style = KhType.small, color = c.inkMuted,
-                    modifier = Modifier.padding(start = 12.dp, end = 12.dp, top = 6.dp))
-                Text(t(Texts.TURN_ON_SAVING), style = KhType.label, color = c.greenDeep,
-                    modifier = Modifier.padding(start = 2.dp, top = 2.dp).clip(KhShapes.chip)
-                        .clickable(role = Role.Button, onClick = onSettings).padding(horizontal = 10.dp, vertical = 8.dp))
-                Spacer(Modifier.weight(1f))
+        Spacer(Modifier.height(4.dp))
+        if (!Prefs.keepHistory || state.savedChats.isEmpty()) {
+            // nothing to list: one of the brand's stones and a short word, centred in the space
+            Column(Modifier.weight(1f).fillMaxWidth().padding(horizontal = 18.dp),
+                horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                Image(painterResource(if (c.isDark) R.drawable.kh_stone_tea_dark else R.drawable.kh_stone_tea), contentDescription = null,
+                    modifier = Modifier.size(88.dp))
+                Spacer(Modifier.height(12.dp))
+                Text(t(if (Prefs.keepHistory) Texts.HISTORY_EMPTY else Texts.DRAWER_NOT_SAVED), style = KhType.small, color = c.inkMuted,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                if (!Prefs.keepHistory) Text(t(Texts.TURN_ON_SAVING), style = KhType.label, color = c.greenDeep,
+                    modifier = Modifier.padding(top = 6.dp).clip(KhShapes.chip).clickable(role = Role.Button, onClick = onSettings)
+                        .padding(horizontal = 14.dp, vertical = 8.dp))
             }
-            state.savedChats.isEmpty() -> {
-                Text(t(Texts.HISTORY_EMPTY), style = KhType.small, color = c.inkMuted,
-                    modifier = Modifier.padding(start = 12.dp, end = 12.dp, top = 6.dp))
-                Spacer(Modifier.weight(1f))
-            }
-            else -> LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
+        } else {
+            LazyColumn(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 state.savedChats.groupBy { dayGroup(it.updatedAt) }.forEach { (day, chats) ->
                     item(key = "day-$day") {
-                        Text(day, style = KhType.small, color = c.inkMuted.copy(alpha = 0.75f),
-                            modifier = Modifier.padding(start = 12.dp, top = 10.dp, bottom = 2.dp))
+                        Text(day, style = KhType.small, color = c.inkMuted, modifier = Modifier.padding(start = 10.dp, top = 12.dp, bottom = 4.dp))
                     }
                     items(chats, key = { it.id }) { chat -> DrawerChatRow(chat, chat.id == state.chatId) { onOpenChat(chat.id) } }
                 }
             }
         }
-        Spacer(Modifier.height(8.dp))
-        DrawerRow(R.drawable.ic_kh_sliders, Texts.SETTINGS, onSettings)
-    }
-}
-
-@Composable
-private fun DrawerRow(icon: Int, label: String, onClick: () -> Unit) {
-    val c = Kh.colors
-    Row(
-        Modifier.fillMaxWidth().clip(KhShapes.chip).clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        KhIcon(icon, c.ink, size = 21.dp)
-        Spacer(Modifier.width(14.dp))
-        Text(label, style = KhType.label, color = c.ink)
+        Spacer(Modifier.height(10.dp))
+        // settings: a quiet card at the foot
+        Row(
+            Modifier.fillMaxWidth().clip(KhShapes.card).background(c.paperRaised)
+                .clickable(role = Role.Button, onClick = onSettings).padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(Modifier.size(36.dp).background(c.greenSoft, KhShapes.chip), contentAlignment = Alignment.Center) {
+                KhIcon(R.drawable.ic_kh_sliders, c.greenDeep, size = 20.dp)
+            }
+            Spacer(Modifier.width(12.dp))
+            Text(Texts.SETTINGS, style = KhType.label.copy(fontSize = KhType.body.fontSize), color = c.ink, modifier = Modifier.weight(1f))
+            KhIcon(R.drawable.ic_kh_arrow_left, c.inkMuted, size = 18.dp)
+        }
     }
 }
 
 @Composable
 private fun DrawerChatRow(chat: ly.manara.khutwa.data.SavedChat, current: Boolean, onClick: () -> Unit) {
     val c = Kh.colors
-    Text(
-        chat.lines.firstOrNull { it.mine }?.text.orEmpty(), style = KhType.body, color = c.ink, maxLines = 1,
-        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-        modifier = Modifier.fillMaxWidth().clip(KhShapes.chip).background(if (current) c.greenSoft else Color.Transparent)
-            .clickable(role = Role.Button, onClick = onClick).padding(horizontal = 12.dp, vertical = 10.dp),
-    )
+    Row(
+        Modifier.fillMaxWidth().clip(KhShapes.chip).background(if (current) c.greenSoft else Color.Transparent)
+            .clickable(role = Role.Button, onClick = onClick).padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        KhIcon(R.drawable.ic_kh_chat, if (current) c.greenDeep else c.inkMuted, size = 18.dp)
+        Spacer(Modifier.width(12.dp))
+        Text(chat.lines.firstOrNull { it.mine }?.text.orEmpty(), style = KhType.body, color = c.ink, maxLines = 1,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+    }
 }
 
 private fun dayGroup(millis: Long): String {

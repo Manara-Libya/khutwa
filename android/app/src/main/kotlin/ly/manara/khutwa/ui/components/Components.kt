@@ -145,7 +145,7 @@ fun UrgentPill(onClick: () -> Unit) {
 }
 
 @Composable
-fun TopBar(onUrgent: () -> Unit, modifier: Modifier = Modifier, onSettings: (() -> Unit)? = null, onHistory: (() -> Unit)? = null,
+fun TopBar(onUrgent: () -> Unit, modifier: Modifier = Modifier, onSettings: (() -> Unit)? = null, onMenu: (() -> Unit)? = null,
            leading: @Composable RowScope.() -> Unit = {}) {
     val c = Kh.colors
     Row(
@@ -153,22 +153,21 @@ fun TopBar(onUrgent: () -> Unit, modifier: Modifier = Modifier, onSettings: (() 
         verticalAlignment = Alignment.CenterVertically,
     ) {
         leading()
-        // Settings sit at the start edge, where Arabic apps keep their menu, well away from the urgent button.
+        // The menu (chats and settings) sits at the start edge, where Arabic apps keep it, well away from the urgent button.
+        if (onMenu != null) {
+            Box(
+                Modifier.size(44.dp).clip(KhShapes.chip).clickable(role = Role.Button, onClick = onMenu)
+                    .semantics { contentDescription = ly.manara.khutwa.data.Texts.MENU },
+                contentAlignment = Alignment.Center,
+            ) { KhIcon(R.drawable.ic_kh_menu, c.ink, size = 24.dp) }
+            Spacer(Modifier.width(6.dp))
+        }
         if (onSettings != null) {
             Box(
                 Modifier.size(44.dp).clip(KhShapes.chip).clickable(role = Role.Button, onClick = onSettings)
                     .semantics { contentDescription = ly.manara.khutwa.data.Texts.SETTINGS },
                 contentAlignment = Alignment.Center,
             ) { KhIcon(R.drawable.ic_kh_sliders, c.ink, size = 22.dp) }
-            Spacer(Modifier.width(if (onHistory != null) 2.dp else 6.dp))
-        }
-        // Saved chats, only for users who turned them on.
-        if (onHistory != null) {
-            Box(
-                Modifier.size(44.dp).clip(KhShapes.chip).clickable(role = Role.Button, onClick = onHistory)
-                    .semantics { contentDescription = ly.manara.khutwa.data.Texts.HISTORY },
-                contentAlignment = Alignment.Center,
-            ) { KhIcon(R.drawable.ic_kh_history, c.ink, size = 22.dp) }
             Spacer(Modifier.width(6.dp))
         }
         Image(painterResource(if (c.isDark) R.drawable.logo_mark_dark else R.drawable.logo_mark), contentDescription = null,

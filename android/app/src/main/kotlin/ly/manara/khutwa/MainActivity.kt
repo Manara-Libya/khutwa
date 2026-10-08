@@ -124,7 +124,7 @@ fun KhutwaApp(vm: AppViewModel, onExit: () -> Unit) {
                 Screen.Consent -> ConsentScreen(onAccept = vm::acceptConsent, onDecline = onExit, onUrgent = vm::openUrgent,
                     onSettings = vm::openSettings)
                 Screen.Chat -> ChatScreen(state, vm::send, vm::retry, vm::askWhoToTalkTo, vm::newChat, vm::openUrgent, vm::revealed,
-                    onSettings = vm::openSettings, onHistory = if (ly.manara.khutwa.ui.components.Prefs.keepHistory) vm::openHistory else null)
+                    onSettings = vm::openSettings, onOpenChat = vm::openChat, onAllChats = vm::openHistory)
                 is Screen.Settings -> SettingsScreen(onBack = { vm.back() }, onUrgent = vm::openUrgent,
                     onErase = vm::eraseCurrent, canErase = state.lines.size > 1,
                     savedCount = state.savedChats.size, memory = state.memory,

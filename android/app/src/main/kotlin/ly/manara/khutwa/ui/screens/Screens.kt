@@ -118,6 +118,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -348,9 +349,11 @@ fun ChatScreen(
                                     onRevealed = { onRevealed(line.id); scope.launch { keepInView(list, index + 1) } },
                                     onGrow = { scope.launch { keepInView(list, index + 1) } },
                                     showWho = state.lines.getOrNull(index)?.let { it.mine || index == 0 } ?: true)
-                                if (stone != null) AnimatedVisibility(!line.reveal,
+                                // tucked onto the bubble's lower corner like a sticker, on Khutwa's side
+                                if (stone != null) AnimatedVisibility(!line.reveal, modifier = Modifier.align(Alignment.End)
+                                    .padding(end = 6.dp).offset(y = (-14).dp).zIndex(1f),
                                     enter = fadeIn(tween(160)) + scaleIn(spring(dampingRatio = 0.45f, stiffness = 380f), initialScale = 0.4f)) {
-                                    StoneEmoji(stone, Modifier.padding(start = 10.dp, top = 6.dp).size(56.dp))
+                                    StoneEmoji(stone, Modifier.size(50.dp).graphicsLayer(rotationZ = -8f))
                                 }
                                 if (line.mine && (line.sent != null || line.stayedOnPhone))
                                     SentReceipt(line.sent, line.id, onOpen = { scope.launch { keepInView(list, index + 1) } })

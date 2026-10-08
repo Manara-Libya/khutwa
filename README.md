@@ -11,12 +11,11 @@ Built for the AI4LY Codathon: Mental Health in Libya. Final pitch: 8 October 202
 
 <p align="center">
   <picture><source media="(prefers-color-scheme: dark)" srcset="docs/media/app/welcome-dark.png"><img src="docs/media/app/welcome-light.png" width="250" alt="A new chat: a doodle and a welcome line for the time of day"></picture>
-  <picture><source media="(prefers-color-scheme: dark)" srcset="docs/media/app/chat-dark.png"><img src="docs/media/app/chat-light.png" width="250" alt="A conversation with the receipt showing what left the phone: the name became [اسم1]"></picture>
+  <img src="docs/media/app/chat.png" width="250" alt="A conversation with the receipt showing what left the phone: the name Youssef became [اسم1]">
   <picture><source media="(prefers-color-scheme: dark)" srcset="docs/media/app/support-options-dark.png"><img src="docs/media/app/support-options-light.png" width="250" alt="People the user could talk to, each with a reason and a drafted message they send themselves"></picture>
 </p>
 <p align="center">
   <picture><source media="(prefers-color-scheme: dark)" srcset="docs/media/app/urgent-dark.png"><img src="docs/media/app/urgent-light.png" width="250" alt="The fixed urgent-help screen, which works offline"></picture>
-  <picture><source media="(prefers-color-scheme: dark)" srcset="docs/media/app/drawer-dark.png"><img src="docs/media/app/drawer-light.png" width="250" alt="The drawer with saved chats and settings"></picture>
   <picture><source media="(prefers-color-scheme: dark)" srcset="docs/media/app/saved-chats-dark.png"><img src="docs/media/app/saved-chats-light.png" width="250" alt="Settings: saved chats and the notes Khutwa keeps, off by default and erasable"></picture>
 </p>
 
@@ -49,6 +48,8 @@ The evidence behind each step, and what it does not show, is in [`docs/evidence.
 | [`content/`](content/) | Fixed, reviewed texts: consent, urgent help, coping cards, verified contacts. |
 | [`evals/`](evals/) | Fictional test sets and the runner for risk detection, diagnosis refusal, dialect replies and redaction recall. Results: [`evals/results.md`](evals/results.md). |
 | [`docs/`](docs/) | Proposal, challenge brief and research, evidence for the pitch, brand media. |
+| [`pitch/`](pitch/) | The pitch: an HTML deck with a synced script window, the demo videos, and the same deck as PowerPoint (`khutwa-pitch.pptx`). See [`pitch/README.md`](pitch/README.md). |
+| [`site/`](site/) | The download page, live at [khutwa-pi.vercel.app](https://khutwa-pi.vercel.app): the APK, the demo and how to install. |
 
 ## Run it
 
@@ -66,6 +67,10 @@ uv run pytest -q                     # tests
 cd android && ./gradlew assembleRelease testDebugUnitTest
 adb install -r app/build/outputs/apk/release/app-release.apk
 ```
+
+Or download the demo build from [khutwa-pi.vercel.app](https://khutwa-pi.vercel.app) (Android 8+).
+
+**Download site** (static, on Vercel): copy a new APK to `site/downloads/`, update the release card in `site/index.html`, then `cd site && vercel deploy --prod`.
 
 ## Test results
 

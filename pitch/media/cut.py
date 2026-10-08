@@ -2,12 +2,12 @@
 import subprocess, sys, json
 RAW, OUT = sys.argv[1], sys.argv[2]
 CH = [
-  [(0.0, 1.0, 1), (6.8, 12.0, 2), (12.0, 13.0, 1)],                      # 1 types, the name turns yellow
-  [(17.6, 18.6, 1), (22.4, 23.6, 1), (30.0, 31.5, 1)],                   # 2 sends, reply, opens the receipt
-  [(38.4, 49.7, 3), (49.7, 50.9, 1), (57.6, 59.3, 1)],                   # 3 second message, the reply asks one question
-  [(66.8, 68.0, 1), (69.4, 70.6, 1), (73.7, 74.6, 1), (79.2, 80.8, 1)],  # 4 «مش عارف مع مني نحكي» -> people
-  [(83.8, 85.2, 1)],                                                     # 5 another person, the drafted message
-  [(90.1, 91.7, 1), (94.7, 96.9, 1)],                                    # 6 urgent screen
+  [(0.0, 1.0, 1), (8.6, 13.0, 2), (13.0, 14.0, 1)],                     # 1 types, the name turns yellow
+  [(18.3, 19.3, 1), (22.0, 23.0, 1), (29.0, 30.5, 1), (37.6, 39.2, 1)],  # 2 sends, the reply asks one question, opens the receipt
+  [(45.8, 50.6, 3), (54.2, 55.2, 1), (57.3, 60.3, 1)],                   # 3 second message, a gentle reply
+  [(67.6, 68.8, 1), (70.8, 72.0, 1), (75.2, 76.4, 1), (80.2, 81.8, 1)],  # 4 «مش عارف مع مني نحكي» -> people
+  [(84.8, 87.0, 1)],                                                     # 5 another person, the drafted message
+  [(91.0, 92.8, 1), (95.4, 97.8, 1)],                                    # 6 urgent screen
 ]
 parts, t, ends = [], 0.0, []
 for ch in CH:

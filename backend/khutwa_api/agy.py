@@ -201,6 +201,7 @@ TASKS = {
     "reflect": ("khutwa-reflect", [config.QUALITY_MODEL, config.FAST_MODEL]),
     "suggest": ("khutwa-suggest", [config.QUALITY_MODEL, config.FAST_MODEL]),
     "chat": ("khutwa-chat", [config.QUALITY_MODEL, config.FAST_MODEL]),
+    "remember": ("khutwa-remember", [config.QUALITY_MODEL, config.FAST_MODEL]),
 }
 
 
@@ -214,7 +215,8 @@ class AgyRouter:
         self.pools: dict[tuple[str, str], Pool] = {}
         for task, (agent, models) in TASKS.items():
             for i, model in enumerate(models):
-                warm = pool_size if i == 0 and task != "chat" else (1 if i == 0 else 0)
+                # chat and remember are not on the user's critical path: one warm worker each
+                warm = pool_size if i == 0 and task not in ("chat", "remember") else (1 if i == 0 else 0)
                 self.pools[(task, model)] = Pool(agent, model, warm)
 
     def json_task(self, task: str, text: str, schema: type[BaseModel]) -> tuple[BaseModel | None, str | None]:

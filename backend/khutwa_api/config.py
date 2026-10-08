@@ -38,6 +38,7 @@ TIMEOUT_SECONDS = float(os.environ.get("KHUTWA_TIMEOUT", "15"))
 PRIMARY_TIMEOUT_SECONDS = float(os.environ.get("KHUTWA_PRIMARY_TIMEOUT", "10"))
 # Listen first: support suggestions start with the user's Nth message (or when they ask who to talk to).
 SUGGEST_AFTER = _int("KHUTWA_SUGGEST_AFTER", 3)
+MAX_MEMORY_CHARS = 600  # the notes Khutwa keeps across chats (on the phone)
 POOL_SIZE = _int("KHUTWA_POOL_SIZE", 2)  # warm workers per primary (task, model)
 MAX_PROCESSES = _int("KHUTWA_MAX_PROCESSES", 10)  # each agy process uses ~300 MB
 

@@ -7,7 +7,7 @@ import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
 from khutwa_api import config, main  # noqa: E402
-from khutwa_api.schemas import ReflectModelOut, RiskModelOut, Suggestion, SuggestModelOut  # noqa: E402
+from khutwa_api.schemas import ReflectModelOut, RememberModelOut, RiskModelOut, Suggestion, SuggestModelOut  # noqa: E402
 
 config.API_KEY = os.environ["KHUTWA_API_KEY"]
 AUTH = {"Authorization": f"Bearer {config.API_KEY}"}
@@ -15,8 +15,9 @@ TEXT = {"text": "rani ta3bana barsha min el imti7anat"}
 
 
 class FakeRouter:
-    def __init__(self, risk="none", reflection="واضح إن الضغط كبير عليك. شن اللي يفيدك توا؟", draft="فاضي نحكوا شوية؟"):
-        self.risk, self.reflection, self.draft = risk, reflection, draft
+    def __init__(self, risk="none", reflection="واضح إن الضغط كبير عليك. شن اللي يفيدك توا؟", draft="فاضي نحكوا شوية؟",
+                 memory="عندك امتحان قريب."):
+        self.risk, self.reflection, self.draft, self.memory = risk, reflection, draft, memory
         self.calls = []
 
     def json_task(self, task, text, schema):
@@ -25,6 +26,8 @@ class FakeRouter:
             return (RiskModelOut(risk=self.risk) if self.risk else None), "fake"
         if task == "reflect":
             return ReflectModelOut(reflection=self.reflection), "fake"
+        if task == "remember":
+            return (RememberModelOut(memory=self.memory) if self.memory is not None else None), "fake"
         return SuggestModelOut(situation=["study_pressure"], suggestions=[
             Suggestion(type="trusted_friend", why="يسمعك من غير حكم.", draft=self.draft)]), "fake"
 
@@ -360,3 +363,83 @@ def test_dev_try_can_run_a_draft_mid_conversation(dev_client):
         main.app.state.agy.try_once = lambda task, text, model, prompt=None: seen.setdefault(task, text) and '{"reflection": "ok"}'
         assert c.post("/v1/dev/try", headers=DEV, json=body).status_code == 200
     assert seen["reflect"].startswith("earlier user: حد يتمسخر عليا") and seen["reflect"].endswith("new: سكتت")
+
+
+def test_support_options_come_as_a_valid_a2ui_surface(client):
+    with client() as c:
+        r = c.post("/v1/analyze", headers=AUTH, json={"text": "مش عارف نحكي مع مني", "history": []}).json()
+    msgs = r["a2ui"]
+    assert [next(iter(m)) for m in msgs] == ["surfaceUpdate", "dataModelUpdate", "beginRendering"]
+    sid = msgs[0]["surfaceUpdate"]["surfaceId"]
+    assert all(next(iter(m.values()))["surfaceId"] == sid for m in msgs)
+    comps = {x["id"]: x["component"] for x in msgs[0]["surfaceUpdate"]["components"]}
+    allowed = {"Text", "Button", "Card", "Column", "Row", "TextField"}
+    for cid, comp in comps.items():
+        (kind, props), = comp.items()
+        assert kind in allowed
+        refs = props.get("children", {}).get("explicitList", []) + [props[k] for k in ("child",) if k in props]
+        assert all(ref in comps for ref in refs), cid  # every reference resolves
+        if kind == "Text":
+            assert "text" in props and props.get("usageHint", "body") in {"h1", "h2", "h3", "h4", "h5", "caption", "body"}
+        if kind == "Button":
+            assert props["action"]["name"] in {"khutwa.share", "khutwa.copy"}  # nothing is ever sent for the user
+        if kind == "TextField":
+            assert "label" in props and props["text"]["path"].startswith("/drafts/")
+    assert msgs[2]["beginRendering"]["root"] in comps
+    drafts = msgs[1]["dataModelUpdate"]
+    assert drafts["path"] == "/drafts" and drafts["contents"][0]["valueString"] == "فاضي نحكوا شوية؟"
+
+
+def test_no_a2ui_while_still_listening(client):
+    with client() as c:
+        r = c.post("/v1/analyze", headers=AUTH, json={"text": "راني تعبان من الخدمة", "history": []}).json()
+    assert r["support_ready"] is False and r["a2ui"] == []
+
+
+def test_deferred_support_returns_the_reply_without_waiting_for_options(client):
+    with client() as c:
+        r = c.post("/v1/analyze", headers=AUTH, json={"text": "مش عارف نحكي مع مني", "history": [], "defer_support": True}).json()
+        assert r["support_ready"] is True and r["suggestions"] == [] and r["a2ui"] == [] and r["reflection"]
+        assert "suggest" not in [task for task, _ in main.app.state.agy.calls]
+        s = c.post("/v1/support", headers=AUTH, json={"text": "مش عارف نحكي مع مني", "history": HISTORY}).json()
+        assert s["suggestions"] and not s["fallback"]
+        assert [next(iter(m)) for m in s["a2ui"]] == ["surfaceUpdate", "dataModelUpdate", "beginRendering"]
+
+
+def test_support_needs_the_api_key(client):
+    with client() as c:
+        assert c.post("/v1/support", json={"text": "x"}).status_code == 401
+
+
+def test_memory_goes_before_the_conversation_but_not_to_the_risk_check(client):
+    with client() as c:
+        c.post("/v1/analyze", headers=AUTH, json={"text": "رجعت", "history": [], "memory": "[اسم1] صاحبك تخاصمتوا."})
+        calls = dict(c.app.state.agy.calls)
+        assert calls["risk"] == "رجعت"
+        assert calls["reflect"] == "memory: [اسم1] صاحبك تخاصمتوا.\nnew: رجعت"
+
+
+def test_conversation_text_without_memory_is_unchanged():
+    assert main.conversation_text("x", [], None) == "x"
+    assert main.conversation_text("x", [], "  ") == "x"
+
+
+def test_remember_returns_updated_notes(client):
+    with client() as c:
+        r = c.post("/v1/remember", headers=AUTH, json={"memory": "قديم", "history": [{"role": "user", "text": "عندي امتحان"}]}).json()
+        assert r == {"memory": "عندك امتحان قريب.", "fallback": False}
+        assert c.app.state.agy.calls[-1] == ("remember", "memory: قديم\nuser: عندي امتحان")
+
+
+def test_remember_keeps_old_notes_on_failure_or_guardrail(client):
+    body = {"history": [{"role": "user", "text": "عندي امتحان"}]}
+    with client(memory=None) as c:
+        assert c.post("/v1/remember", headers=AUTH, json=body).json() == {"memory": None, "fallback": True}
+    with client(memory="عندك اكتئاب") as c:
+        assert c.post("/v1/remember", headers=AUTH, json=body).json() == {"memory": None, "fallback": True}
+
+
+def test_remember_needs_key_and_history(client):
+    with client() as c:
+        assert c.post("/v1/remember", json={"history": [{"role": "user", "text": "x"}]}).status_code in (401, 403)
+        assert c.post("/v1/remember", headers=AUTH, json={"history": []}).status_code == 422

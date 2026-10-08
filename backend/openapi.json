@@ -66,7 +66,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TextIn"
+                "$ref": "#/components/schemas/AnalyzeIn"
               }
             }
           }
@@ -78,6 +78,136 @@
               "application/json; charset=utf-8": {
                 "schema": {
                   "$ref": "#/components/schemas/AnalyzeOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/support": {
+      "post": {
+        "tags": [
+          "khutwa"
+        ],
+        "summary": "Support options for the conversation so far, with their A2UI surface",
+        "description": "Used after /v1/analyze with defer_support=true, so the reply is not held back by the options.",
+        "operationId": "support_v1_support_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalyzeIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupportOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/remember": {
+      "post": {
+        "tags": [
+          "khutwa"
+        ],
+        "summary": "Update the short notes Khutwa keeps across chats (only for users who turned on saved chats)",
+        "description": "Takes the redacted conversation and the current notes and returns the updated notes. The phone stores them; the server keeps nothing. Never records anything about risk or danger.",
+        "operationId": "remember_v1_remember_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RememberIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/RememberOut"
                 }
               }
             }
@@ -652,6 +782,60 @@
   },
   "components": {
     "schemas": {
+      "AnalyzeIn": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Text",
+            "description": "User text **after on-device redaction**. Never send raw identifiers.",
+            "examples": [
+              "rani ta3bana barsha min el imti7anat w el 7osh kollah mashakel"
+            ]
+          },
+          "history": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Turn"
+                },
+                "type": "array",
+                "maxItems": 12
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "History",
+            "description": "Earlier turns of this conversation, oldest first, **redacted on the phone** like `text`. The phone keeps them in memory and sends them with each message; the server stores nothing. When `history` is sent (even empty), suggestions are held back until the user's 3th message or until they ask who to talk to (`support_ready`). Omit it for the old behaviour (suggestions on every message)."
+          },
+          "memory": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 600
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Memory",
+            "description": "Short notes from the user's earlier chats (from /v1/remember), **redacted on the phone** like `text`. Only sent when the user turned on saved chats; the phone keeps them, the server stores nothing."
+          },
+          "defer_support": {
+            "type": "boolean",
+            "title": "Defer Support",
+            "description": "When true, /v1/analyze does not wait for the support options: it returns the reply as soon as it is ready, with support_ready set, and the app fetches the options from /v1/support.",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "AnalyzeIn"
+      },
       "AnalyzeOut": {
         "properties": {
           "urgent": {
@@ -708,6 +892,22 @@
             "type": "boolean",
             "title": "Fallback",
             "default": false
+          },
+          "support_ready": {
+            "type": "boolean",
+            "title": "Support Ready",
+            "description": "False while Khutwa is still listening: no support options yet, keep the conversation going. True: show the support options (`suggestions`, or the generic ones if empty).",
+            "default": true
+          },
+          "a2ui": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "A2Ui",
+            "description": "A2UI v0.8 messages (surfaceUpdate, dataModelUpdate, beginRendering) that render the support options inline: a card per option with its reason, the editable draft and send-it-yourself / copy buttons. Built by the server from validated suggestions; empty until support_ready.",
+            "default": []
           },
           "elapsed_ms": {
             "type": "integer",
@@ -857,6 +1057,22 @@
             ],
             "title": "Prompt",
             "description": "Draft prompt body to try. Omit to use the live prompt."
+          },
+          "history": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Turn"
+                },
+                "type": "array",
+                "maxItems": 12
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "History",
+            "description": "Earlier turns, to try a prompt in the middle of a conversation."
           }
         },
         "type": "object",
@@ -945,6 +1161,65 @@
           "fallback"
         ],
         "title": "ReflectOut"
+      },
+      "RememberIn": {
+        "properties": {
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/Turn"
+            },
+            "type": "array",
+            "maxItems": 12,
+            "minItems": 1,
+            "title": "History",
+            "description": "The conversation so far, oldest first, **redacted on the phone**."
+          },
+          "memory": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 600
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Memory",
+            "description": "The current notes, redacted with the same placeholders, to update."
+          }
+        },
+        "type": "object",
+        "required": [
+          "history"
+        ],
+        "title": "RememberIn"
+      },
+      "RememberOut": {
+        "properties": {
+          "memory": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Memory",
+            "description": "The updated notes (placeholders as sent), or null to keep the current ones."
+          },
+          "fallback": {
+            "type": "boolean",
+            "title": "Fallback",
+            "description": "True when the notes could not be updated; the phone keeps what it has."
+          }
+        },
+        "type": "object",
+        "required": [
+          "memory",
+          "fallback"
+        ],
+        "title": "RememberOut"
       },
       "RiskOut": {
         "properties": {
@@ -1044,6 +1319,54 @@
         ],
         "title": "Suggestion"
       },
+      "SupportOut": {
+        "properties": {
+          "situation": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "study_pressure",
+                "family_tension",
+                "loneliness",
+                "low_mood_sleep_worry",
+                "loss_displacement",
+                "harassment"
+              ]
+            },
+            "type": "array",
+            "title": "Situation",
+            "default": []
+          },
+          "suggestions": {
+            "items": {
+              "$ref": "#/components/schemas/Suggestion"
+            },
+            "type": "array",
+            "title": "Suggestions",
+            "default": []
+          },
+          "fallback": {
+            "type": "boolean",
+            "title": "Fallback",
+            "description": "True when the suggestions are unavailable; show the generic options."
+          },
+          "a2ui": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "A2Ui",
+            "description": "A2UI v0.8 messages rendering the options inline (see AnalyzeOut.a2ui).",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "fallback"
+        ],
+        "title": "SupportOut"
+      },
       "TextIn": {
         "properties": {
           "text": {
@@ -1062,6 +1385,30 @@
           "text"
         ],
         "title": "TextIn"
+      },
+      "Turn": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "assistant"
+            ],
+            "title": "Role"
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Text"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role",
+          "text"
+        ],
+        "title": "Turn"
       },
       "ValidationError": {
         "properties": {

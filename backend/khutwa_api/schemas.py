@@ -30,6 +30,21 @@ class AnalyzeIn(TextIn):
                     "When `history` is sent (even empty), suggestions are held back until the user's "
                     f"{config.SUGGEST_AFTER}th message or until they ask who to talk to (`support_ready`). "
                     "Omit it for the old behaviour (suggestions on every message).")
+    memory: str | None = Field(
+        default=None, max_length=config.MAX_MEMORY_CHARS,
+        description="Short notes from the user's earlier chats (from /v1/remember), **redacted on the phone** like `text`. "
+                    "Only sent when the user turned on saved chats; the phone keeps them, the server stores nothing.")
+    defer_support: bool = Field(
+        default=False,
+        description="When true, /v1/analyze does not wait for the support options: it returns the reply as soon as it "
+                    "is ready, with support_ready set, and the app fetches the options from /v1/support.")
+
+
+class RememberIn(BaseModel):
+    history: list[Turn] = Field(min_length=1, max_length=12,
+                                description="The conversation so far, oldest first, **redacted on the phone**.")
+    memory: str | None = Field(default=None, max_length=config.MAX_MEMORY_CHARS,
+                               description="The current notes, redacted with the same placeholders, to update.")
 
 
 # --- what the models must return (validated before use) ---
@@ -39,6 +54,10 @@ class RiskModelOut(BaseModel):
 
 class ReflectModelOut(BaseModel):
     reflection: str = Field(min_length=1, max_length=600)
+
+
+class RememberModelOut(BaseModel):
+    memory: str = Field(max_length=config.MAX_MEMORY_CHARS)
 
 
 class Suggestion(BaseModel):
@@ -64,6 +83,11 @@ class ReflectOut(BaseModel):
     fallback: bool = Field(description="True when approved fixed text replaced the model output.")
 
 
+class RememberOut(BaseModel):
+    memory: str | None = Field(description="The updated notes (placeholders as sent), or null to keep the current ones.")
+    fallback: bool = Field(description="True when the notes could not be updated; the phone keeps what it has.")
+
+
 class SuggestOut(BaseModel):
     situation: list[Situation]
     suggestions: list[Suggestion]
@@ -78,7 +102,17 @@ class AnalyzeOut(BaseModel):
     suggestions: list[Suggestion] = []
     fallback: bool = False
     support_ready: bool = Field(default=True, description="False while Khutwa is still listening: no support options yet, keep the conversation going. True: show the support options (`suggestions`, or the generic ones if empty).")
+    a2ui: list[dict] = Field(default=[], description="A2UI v0.8 messages (surfaceUpdate, dataModelUpdate, beginRendering) that render the "
+                             "support options inline: a card per option with its reason, the editable draft and send-it-yourself / copy "
+                             "buttons. Built by the server from validated suggestions; empty until support_ready.")
     elapsed_ms: int
+
+
+class SupportOut(BaseModel):
+    situation: list[Situation] = []
+    suggestions: list[Suggestion] = []
+    fallback: bool = Field(description="True when the suggestions are unavailable; show the generic options.")
+    a2ui: list[dict] = Field(default=[], description="A2UI v0.8 messages rendering the options inline (see AnalyzeOut.a2ui).")
 
 
 # --- OpenAI-compatible chat (development use) ---

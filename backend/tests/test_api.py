@@ -443,3 +443,15 @@ def test_remember_needs_key_and_history(client):
     with client() as c:
         assert c.post("/v1/remember", json={"history": [{"role": "user", "text": "x"}]}).status_code in (401, 403)
         assert c.post("/v1/remember", headers=AUTH, json={"history": []}).status_code == 422
+
+
+def test_feminine_addressing_goes_first_and_not_to_risk(client):
+    with client() as c:
+        c.post("/v1/analyze", headers=AUTH, json={"text": "تعبانة", "history": [], "addressing": "feminine"})
+        calls = dict(c.app.state.agy.calls)
+        assert calls["risk"] == "تعبانة"
+        assert calls["reflect"] == "addressing: feminine\nnew: تعبانة"
+
+
+def test_masculine_addressing_changes_nothing():
+    assert main.conversation_text("x", [], None, "masculine") == "x"

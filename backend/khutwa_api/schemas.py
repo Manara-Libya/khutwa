@@ -34,6 +34,9 @@ class AnalyzeIn(TextIn):
         default=None, max_length=config.MAX_MEMORY_CHARS,
         description="Short notes from the user's earlier chats (from /v1/remember), **redacted on the phone** like `text`. "
                     "Only sent when the user turned on saved chats; the phone keeps them, the server stores nothing.")
+    addressing: Literal["masculine", "feminine"] | None = Field(
+        default=None, description="How the user chose to be addressed in the app («ولد» or «بنت»). Kept on the phone only; "
+                                  "sent so replies and drafts use the right gender.")
     defer_support: bool = Field(
         default=False,
         description="When true, /v1/analyze does not wait for the support options: it returns the reply as soon as it "

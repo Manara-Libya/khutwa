@@ -134,7 +134,8 @@ class AppViewModel(
         val sentHistory = history.toList()
         val memory = memoryToSend()
         viewModelScope.launch {
-            val result = runCatching { withContext(Dispatchers.IO) { api.analyze(redacted, sentHistory, memory) } }
+            val feminine = ly.manara.khutwa.ui.components.Addressing.feminine
+            val result = runCatching { withContext(Dispatchers.IO) { api.analyze(redacted, sentHistory, memory, feminine) } }
             pending = if (result.isSuccess) null else redacted
             result.fold(onSuccess = { handle(redacted, it) }, onFailure = {
                 _state.update { it.copy(waiting = false, failed = true) }
@@ -179,7 +180,8 @@ class AppViewModel(
         val sentHistory = history.dropLast(if (history.lastOrNull()?.role == "assistant") 2 else 1)
         val memory = memoryToSend()
         viewModelScope.launch {
-            val result = runCatching { withContext(Dispatchers.IO) { api.support(redacted, sentHistory, memory) } }.getOrNull()
+            val feminine = ly.manara.khutwa.ui.components.Addressing.feminine
+            val result = runCatching { withContext(Dispatchers.IO) { api.support(redacted, sentHistory, memory, feminine) } }.getOrNull()
             val parsed = result?.let { A2ui.parse(it.a2ui, privacy::restore) }
             val surface = parsed ?: A2ui.local(Texts.GENERIC_OPTIONS)
             val json = if (parsed != null) result.a2ui.toString() else null

@@ -823,6 +823,22 @@
             "title": "Memory",
             "description": "Short notes from the user's earlier chats (from /v1/remember), **redacted on the phone** like `text`. Only sent when the user turned on saved chats; the phone keeps them, the server stores nothing."
           },
+          "addressing": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "masculine",
+                  "feminine"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Addressing",
+            "description": "How the user chose to be addressed in the app («ولد» or «بنت»). Kept on the phone only; sent so replies and drafts use the right gender."
+          },
           "defer_support": {
             "type": "boolean",
             "title": "Defer Support",

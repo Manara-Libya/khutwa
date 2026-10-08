@@ -178,7 +178,7 @@ def health(request: Request) -> dict:
 def analyze(body: AnalyzeIn, request: Request) -> AnalyzeOut:
     start = time.perf_counter()
     agy = router(request)
-    convo = conversation_text(body.text, body.history or [], body.memory)
+    convo = conversation_text(body.text, body.history or [], body.memory, body.addressing)
     ready = support_ready(body.text, body.history)
     risk_f = _executor.submit(_risk, agy, body.text)  # every message is checked on its own
     reflect_f = _executor.submit(_reflect, agy, convo)
@@ -202,7 +202,7 @@ def analyze(body: AnalyzeIn, request: Request) -> AnalyzeOut:
           summary="Support options for the conversation so far, with their A2UI surface",
           description="Used after /v1/analyze with defer_support=true, so the reply is not held back by the options.")
 def support(body: AnalyzeIn, request: Request) -> SupportOut:
-    suggestions = _suggest(router(request), conversation_text(body.text, body.history or [], body.memory))
+    suggestions = _suggest(router(request), conversation_text(body.text, body.history or [], body.memory, body.addressing))
     if suggestions is None:
         return SupportOut(fallback=True)
     return SupportOut(situation=suggestions.situation, suggestions=suggestions.suggestions, fallback=False,
@@ -225,12 +225,13 @@ def support_ready(text: str, history: list | None) -> bool:
     return user_messages >= config.SUGGEST_AFTER or any(p in low for p in HELP_REQUESTS)
 
 
-def conversation_text(text: str, history: list, memory: str | None = None) -> str:
+def conversation_text(text: str, history: list, memory: str | None = None, addressing: str | None = None) -> str:
     """The new message with the notes from earlier chats and the earlier turns, in the plain format the agents' prompts describe."""
     memory = (memory or "").strip()
-    if not history and not memory:
+    if not history and not memory and addressing != "feminine":
         return text
-    lines = [f"memory: {memory}"] if memory else []
+    lines = ["addressing: feminine"] if addressing == "feminine" else []
+    lines += [f"memory: {memory}"] if memory else []
     lines += [f"earlier {'user' if t.role == 'user' else 'khutwa'}: {t.text}" for t in history]
     return "\n".join(lines + [f"new: {text}"])
 

@@ -35,12 +35,12 @@ class KhutwaApi(
 ) {
     @Volatile private var baseUrl: String? = fallbackUrl.ifBlank { null }
 
-    fun analyze(redactedText: String, history: List<Turn>, redactedMemory: String? = null): Analysis =
-        parse(call("/v1/analyze", body(redactedText, history, deferSupport = true, redactedMemory)))
+    fun analyze(redactedText: String, history: List<Turn>, redactedMemory: String? = null, feminine: Boolean = false): Analysis =
+        parse(call("/v1/analyze", body(redactedText, history, deferSupport = true, redactedMemory, feminine)))
 
     /** The support options and their A2UI surface for the conversation so far (after a deferred analyze). */
-    fun support(redactedText: String, history: List<Turn>, redactedMemory: String? = null): SupportResult {
-        val o = JSONObject(call("/v1/support", body(redactedText, history, deferSupport = false, redactedMemory)))
+    fun support(redactedText: String, history: List<Turn>, redactedMemory: String? = null, feminine: Boolean = false): SupportResult {
+        val o = JSONObject(call("/v1/support", body(redactedText, history, deferSupport = false, redactedMemory, feminine)))
         return SupportResult(o.optJSONArray("a2ui") ?: JSONArray(), o.optBoolean("fallback", true))
     }
 
@@ -59,11 +59,13 @@ class KhutwaApi(
         history.takeLast(12).forEach { put(JSONObject().put("role", it.role).put("text", it.text)) }
     }
 
-    private fun body(redactedText: String, history: List<Turn>, deferSupport: Boolean, redactedMemory: String?): JSONObject =
+    /** [feminine]: the user chose «بنت», so replies and drafts use feminine forms (the choice itself stays in memory). */
+    private fun body(redactedText: String, history: List<Turn>, deferSupport: Boolean, redactedMemory: String?, feminine: Boolean): JSONObject =
         JSONObject()
             .put("text", redactedText)
             .put("history", turns(history))
             .putOpt("memory", redactedMemory?.take(600)?.ifBlank { null })
+            .put("addressing", if (feminine) "feminine" else "masculine")
             .put("defer_support", deferSupport)
 
     /** POSTs to the current server; if it moved (tunnel restarted), reads the new URL once and retries. */

@@ -198,11 +198,14 @@ class Pool:
 # task -> (agent, models in preference order)
 TASKS = {
     "risk": ("khutwa-risk", [config.FAST_MODEL, config.QUALITY_MODEL]),
-    "reflect": ("khutwa-reflect", [config.QUALITY_MODEL, config.FAST_MODEL]),
-    "suggest": ("khutwa-suggest", [config.QUALITY_MODEL, config.FAST_MODEL]),
+    "reflect": ("khutwa-reflect", [config.QUALITY_MODEL]),
+    "suggest": ("khutwa-suggest", [config.QUALITY_MODEL]),
     "chat": ("khutwa-chat", [config.QUALITY_MODEL, config.FAST_MODEL]),
-    "remember": ("khutwa-remember", [config.QUALITY_MODEL, config.FAST_MODEL]),
+    "remember": ("khutwa-remember", [config.QUALITY_MODEL]),
 }
+# What the user reads in Libyan Arabic never falls back to the fast model, whose dialect is poor
+# (امتى، حدا، وش): it gets a second try on the quality model, then the endpoint's fixed text.
+LIBYAN_TEXT = {"reflect", "suggest", "remember"}
 
 
 class AgyRouter:
@@ -220,8 +223,12 @@ class AgyRouter:
                 self.pools[(task, model)] = Pool(agent, model, warm)
 
     def json_task(self, task: str, text: str, schema: type[BaseModel]) -> tuple[BaseModel | None, str | None]:
-        for attempt, model in enumerate(TASKS[task][1]):
-            timeout = config.PRIMARY_TIMEOUT_SECONDS if attempt == 0 else config.TIMEOUT_SECONDS
+        models = TASKS[task][1]
+        if task in LIBYAN_TEXT:
+            plan = [(models[0], config.TEXT_TIMEOUT_SECONDS), (models[0], config.TIMEOUT_SECONDS)]
+        else:
+            plan = [(m, config.PRIMARY_TIMEOUT_SECONDS if k == 0 else config.TIMEOUT_SECONDS) for k, m in enumerate(models)]
+        for model, timeout in plan:
             try:
                 result = self.pools[(task, model)].acquire().ask_json(fence(text), schema, timeout)
             except AgyUnavailable:

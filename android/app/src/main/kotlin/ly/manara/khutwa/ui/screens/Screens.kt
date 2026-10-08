@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.semantics.heading
 import ly.manara.khutwa.ui.components.Prefs
 import ly.manara.khutwa.ui.components.Addressing
+import ly.manara.khutwa.ui.components.Demo
 import androidx.compose.ui.semantics.selected
 import ly.manara.khutwa.ui.components.t
 import ly.manara.khutwa.ui.components.UrgentPill
@@ -1277,7 +1278,7 @@ private fun MemoryCard(memory: String, onClear: () -> Unit) {
 @Composable
 private fun WelcomeHeader(seed: Long, returning: Boolean) {
     val c = Kh.colors
-    val line = remember(seed) {
+    val line = Demo.welcome ?: remember(seed) {
         val pool = when (java.time.LocalTime.now().hour) {
             in 0..4 -> Texts.WELCOME_NIGHT
             in 5..11 -> Texts.WELCOME_MORNING

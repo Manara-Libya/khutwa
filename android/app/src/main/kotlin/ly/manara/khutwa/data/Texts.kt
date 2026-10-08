@@ -39,7 +39,7 @@ object Texts {
     // trimmed to lines that never assume how the user feels, never nudge and never suggest a person is listening.
     val WELCOME_NIGHT = listOf("سهران الليلة؟", "الليل هادي، شن في بالك؟", "الليل هادي، خوذ راحتك واحكي", "ربي يفرّجها عليك",
         "مازال ما رقدتش؟")
-    val WELCOME_MORNING = listOf("أصبحنا وأصبح الملك لله", "صباح الخير، شن الأخبار؟", "يا صباح الخير، ربي ييسرها",
+    val WELCOME_MORNING = listOf("أصبحنا وأصبح الملك لله", "صباح الخير، شن الأخبار؟",
         "ربي ييسرها عليك، يومك مبارك", "يوم جديد، خطوة جديدة.", "بداية نهار هادية، خوذ وقتك")
     val WELCOME_DAY = listOf("نهارك زين؟", "شن الأخبار؟ احكيلي", "ربي يعينك، خوذ نفس واحكي", "بالشوية على روحك",
         "شن صاير معاك اليوم؟")

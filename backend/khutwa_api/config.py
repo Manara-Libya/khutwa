@@ -36,6 +36,8 @@ RUNTIME_DIR = ROOT / "runtime"
 TIMEOUT_SECONDS = float(os.environ.get("KHUTWA_TIMEOUT", "15"))
 # The first model gets less time: normal answers take 3-8 s, so a stall hands over to the fallback model sooner.
 PRIMARY_TIMEOUT_SECONDS = float(os.environ.get("KHUTWA_PRIMARY_TIMEOUT", "10"))
+# Libyan Arabic text only comes from the quality model: a longer first try, then one more try on another worker
+TEXT_TIMEOUT_SECONDS = float(os.environ.get("KHUTWA_TEXT_TIMEOUT", "16"))
 # Listen first: support suggestions start with the user's Nth message (or when they ask who to talk to).
 SUGGEST_AFTER = _int("KHUTWA_SUGGEST_AFTER", 3)
 MAX_MEMORY_CHARS = 600  # the notes Khutwa keeps across chats (on the phone)

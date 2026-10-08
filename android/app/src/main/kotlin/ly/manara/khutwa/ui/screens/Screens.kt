@@ -330,7 +330,7 @@ fun ChatScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item(key = "welcome") {
-                WelcomeHeader(seed = state.lines.firstOrNull()?.id ?: 0L,
+                WelcomeHeader(seed = state.welcomeSeed,
                     returning = Prefs.keepHistory && (state.memory.isNotBlank() || state.savedChats.any { it.id != state.chatId }))
             }
             // Line 0 is the greeting, which the welcome header above now says; line i (i >= 1) sits at list index i.
@@ -1280,9 +1280,8 @@ private fun WelcomeHeader(seed: Long, returning: Boolean) {
             in 5..11 -> Texts.WELCOME_MORNING
             in 12..16 -> Texts.WELCOME_DAY
             else -> Texts.WELCOME_EVENING
-        }.let { it + Texts.WELCOME_SABR.shuffled(kotlin.random.Random(seed)).take(it.size) }
-            .let { if (returning) it + Texts.WELCOME_BACK else it }
-        pool[((seed * 2654435761L) ushr 7).mod(pool.size)]
+        }.let { it + Texts.WELCOME_SABR }.let { if (returning) it + Texts.WELCOME_BACK else it }
+        pool[kotlin.random.Random(seed).nextInt(pool.size)]
     }
     Column(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         WelcomeIllustration(Modifier.size(92.dp), sparkles = 30.dp)

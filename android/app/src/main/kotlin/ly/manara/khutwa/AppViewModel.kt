@@ -70,6 +70,8 @@ data class UiState(
     val memory: String = "",
     /** The saved chat this conversation is, if any. */
     val chatId: Long? = null,
+    /** Picks the welcome line; new for every chat and every launch. */
+    val welcomeSeed: Long = kotlin.random.Random.nextLong(),
 )
 
 /**

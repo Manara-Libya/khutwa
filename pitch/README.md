@@ -16,6 +16,8 @@ An HTML deck with a synced script window, in the Khutwa design system. Works off
 
 Click a line in the script window to jump there. `index.html?slide=8&step=2` opens a given point for rehearsal.
 
-**Demo video:** put the recording at `pitch/media/demo.mp4`; it plays on the first click of slide 8.
+**Demo video (slide 9):** `media/demo.mp4` is a 24-second cut of the full recording, in six chapters. Each click plays one chapter and holds on its last frame while you talk; going back shows the previous chapter's last frame. The chapter end times are in the `<video data-chapters>` attribute; `media/cut.py` makes the cut from the raw recording and prints them.
+
+**Live demo:** an optional backup slide (the first after «الختام»). Use it only if there's time.
 
 **Edit:** slides and their script live together in `src/index.tpl.html` (each `<aside class="notes">` line has the `data-step` it belongs to). Run `python3 build.py` after editing to produce `index.html`.

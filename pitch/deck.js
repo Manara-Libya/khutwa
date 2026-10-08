@@ -139,6 +139,7 @@
       if (!on && el.classList.contains("on")) leave(el);
       el.classList.toggle("on", on);
     });
+    syncChapters(sl, s);
     if (shown !== i) {
       slides.forEach((other, k) => {
         if (k === i) return;
@@ -172,13 +173,50 @@
     el.querySelectorAll("[data-count]").forEach(countUp);
     if (el.matches("[data-count]")) countUp(el);
     if (el.dataset.anim === "type") typeOut(el);
+    if (el.dataset.anim === "type-erase") typeOut(el, true);
     if (el.dataset.addClass) { const t = document.querySelector(el.dataset.target); if (t) t.classList.add(el.dataset.addClass); }
-    if (el.matches("video") || el.querySelector("video")) { const v = el.matches("video") ? el : el.querySelector("video"); try { v.currentTime = 0; v.play(); } catch (e) {} }
+    const v = plainVideo(el);
+    if (v) { try { v.currentTime = 0; v.play(); } catch (e) {} }
   }
   function leave(el) {
     drawOut(el, el);
     if (el.dataset.addClass) { const t = document.querySelector(el.dataset.target); if (t) t.classList.remove(el.dataset.addClass); }
-    if (el.matches("video") || el.querySelector("video")) { const v = el.matches("video") ? el : el.querySelector("video"); try { v.pause(); } catch (e) {} }
+    if (el.dataset.anim === "type-erase" || el.dataset.anim === "type") { const t = el.querySelector(".typed"); if (t) { t.dataset.run = ""; t.textContent = ""; } }
+    const v = plainVideo(el);
+    if (v) { try { v.pause(); } catch (e) {} }
+  }
+  // a video without chapters plays from the start when its step appears
+  function plainVideo(el) {
+    const v = el.matches("video") ? el : el.querySelector("video");
+    return v && !v.dataset.chapters ? v : null;
+  }
+
+  // A video with data-chapters="t1,t2,…" plays one chapter per click: the step marked data-chapter="n" plays
+  // from t(n-1) to t(n) and holds on that frame while the presenter talks. Going back, or jumping, shows the
+  // last frame of the chapter reached, without playing.
+  function syncChapters(sl, s) {
+    sl.querySelectorAll("video[data-chapters]").forEach((v) => {
+      const ends = v.dataset.chapters.split(",").map(Number);
+      const k = Math.max(0, ...Array.from(sl.querySelectorAll("[data-chapter]"))
+        .filter((e) => +e.dataset.step <= s).map((e) => +e.dataset.chapter));
+      const prev = v._chapter ?? -1;
+      v._chapter = k;
+      if (k === prev) return;
+      const at = (n) => (n <= 0 ? 0 : ends[n - 1] - 0.08);
+      cancelAnimationFrame(v._raf);
+      try {
+        if (k === prev + 1 && k > 0) {
+          v.currentTime = at(k - 1);
+          v.play();
+          const stop = at(k);
+          const watch = () => {
+            if (v.currentTime >= stop) { v.pause(); v.currentTime = stop; }
+            else v._raf = requestAnimationFrame(watch);
+          };
+          v._raf = requestAnimationFrame(watch);
+        } else { v.pause(); v.currentTime = at(k); }
+      } catch (e) { /* not loaded yet */ }
+    });
   }
 
   function countUp(el) {
@@ -191,16 +229,28 @@
     requestAnimationFrame(tick);
   }
 
-  function typeOut(el) {
+  // types the text out; with erase, pauses, then deletes it again like a message that was never sent
+  function typeOut(el, erase) {
     const target = el.querySelector(".typed") || el;
     const text = target.dataset.text || target.textContent;
+    const run = String(Math.random());
     target.dataset.text = text;
+    target.dataset.run = run;   // a newer run (or leaving the step) stops this one
     target.textContent = "";
     let k = 0;
     const caret = el.querySelector(".caret");
+    if (caret) caret.style.opacity = "";
+    const live = () => target.dataset.run === run;
+    const del = () => {
+      if (!live()) return;
+      target.textContent = text.slice(0, --k);
+      if (k > 0) setTimeout(del, 28 + Math.random() * 20);
+    };
     const step = () => {
+      if (!live()) return;
       target.textContent = text.slice(0, ++k);
       if (k < text.length) setTimeout(step, 70 + Math.random() * 70);
+      else if (erase) setTimeout(del, 1500);
       else if (caret && el.dataset.keepCaret !== "1") caret.style.opacity = 0;
     };
     setTimeout(step, 250);

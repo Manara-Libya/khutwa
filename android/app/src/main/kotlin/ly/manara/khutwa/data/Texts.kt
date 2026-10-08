@@ -39,7 +39,7 @@ object Texts {
     const val PRIVACY_LINE = "الأسماء والأرقام تنشال على تلفونك قبل ما يطلع أي كلام."
     const val PRIVACY_MARKED = "المعلّم بالأصفر ينشال على تلفونك قبل ما يطلع."
     const val RECEIPT_HIDDEN = "تخبّى اللي يعرّف بيك"
-    const val RECEIPT_CLEAN = "ما فيهاش حاجة تعرّف بيك"
+    const val RECEIPT_CLEAN = "أسرارك محفوظة"
     const val RECEIPT_SHOW = "شوف شن وصل"
     const val RECEIPT_HIDE = "سكّر"
     const val RECEIPT_TITLE = "هذا اللي وصل للذكاء الاصطناعي:"
@@ -111,7 +111,6 @@ object Texts {
         ERROR_NETWORK to "ما قدرناش نوصلوا للخادم. تقدري تعاودي، وإذا تحسي روحك مش في أمان اضغطي «نحتاج مساعدة توا».",
         RETRY to "عاودي",
         RECEIPT_HIDDEN to "تخبّى اللي يعرّف بيكي",
-        RECEIPT_CLEAN to "ما فيهاش حاجة تعرّف بيكي",
         RECEIPT_SHOW to "شوفي شن وصل",
         RECEIPT_HIDE to "سكّري",
         RECEIPT_LIMIT to "الكلام نفسه ممكن يبيّن شكون انتي، فخلي بالك من التفاصيل.",

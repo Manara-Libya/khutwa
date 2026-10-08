@@ -20,7 +20,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from . import a2ui, agents, config, guardrails
 from .agy import TASKS, AgyRouter, AgyUnavailable
 from .schemas import (AnalyzeIn, AnalyzeOut, SupportOut, ChatCompletionRequest, DevPrompt, DevTryIn, DevTryOut, ReflectModelOut, ReflectOut,
-                      RiskModelOut, RiskOut, SuggestModelOut, SuggestOut, TextIn)
+                      RememberIn, RememberModelOut, RememberOut, RiskModelOut, RiskOut, SuggestModelOut, SuggestOut, TextIn)
 
 
 class UTF8JSONResponse(JSONResponse):
@@ -178,7 +178,7 @@ def health(request: Request) -> dict:
 def analyze(body: AnalyzeIn, request: Request) -> AnalyzeOut:
     start = time.perf_counter()
     agy = router(request)
-    convo = conversation_text(body.text, body.history or [])
+    convo = conversation_text(body.text, body.history or [], body.memory)
     ready = support_ready(body.text, body.history)
     risk_f = _executor.submit(_risk, agy, body.text)  # every message is checked on its own
     reflect_f = _executor.submit(_reflect, agy, convo)
@@ -202,7 +202,7 @@ def analyze(body: AnalyzeIn, request: Request) -> AnalyzeOut:
           summary="Support options for the conversation so far, with their A2UI surface",
           description="Used after /v1/analyze with defer_support=true, so the reply is not held back by the options.")
 def support(body: AnalyzeIn, request: Request) -> SupportOut:
-    suggestions = _suggest(router(request), conversation_text(body.text, body.history or []))
+    suggestions = _suggest(router(request), conversation_text(body.text, body.history or [], body.memory))
     if suggestions is None:
         return SupportOut(fallback=True)
     return SupportOut(situation=suggestions.situation, suggestions=suggestions.suggestions, fallback=False,
@@ -225,12 +225,27 @@ def support_ready(text: str, history: list | None) -> bool:
     return user_messages >= config.SUGGEST_AFTER or any(p in low for p in HELP_REQUESTS)
 
 
-def conversation_text(text: str, history: list) -> str:
-    """The new message with the earlier turns, in the plain format the agents' prompts describe."""
-    if not history:
+def conversation_text(text: str, history: list, memory: str | None = None) -> str:
+    """The new message with the notes from earlier chats and the earlier turns, in the plain format the agents' prompts describe."""
+    memory = (memory or "").strip()
+    if not history and not memory:
         return text
-    lines = [f"earlier {'user' if t.role == 'user' else 'khutwa'}: {t.text}" for t in history]
+    lines = [f"memory: {memory}"] if memory else []
+    lines += [f"earlier {'user' if t.role == 'user' else 'khutwa'}: {t.text}" for t in history]
     return "\n".join(lines + [f"new: {text}"])
+
+
+@app.post("/v1/remember", response_model=RememberOut, dependencies=Auth, tags=["khutwa"],
+          summary="Update the short notes Khutwa keeps across chats (only for users who turned on saved chats)",
+          description="Takes the redacted conversation and the current notes and returns the updated notes. "
+                      "The phone stores them; the server keeps nothing. Never records anything about risk or danger.")
+def remember(body: RememberIn, request: Request) -> RememberOut:
+    lines = [f"memory: {body.memory.strip()}"] if body.memory and body.memory.strip() else []
+    lines += [f"{'user' if t.role == 'user' else 'khutwa'}: {t.text}" for t in body.history]
+    result, _ = router(request).json_task("remember", "\n".join(lines), RememberModelOut)
+    if result is None or guardrails.violates(result.memory):
+        return RememberOut(memory=None, fallback=True)
+    return RememberOut(memory=result.memory.strip(), fallback=False)
 
 
 @app.post("/v1/risk", response_model=RiskOut, dependencies=Auth, tags=["khutwa"], summary="Risk check only")

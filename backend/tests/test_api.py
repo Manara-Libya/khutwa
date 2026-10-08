@@ -7,7 +7,7 @@ import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
 from khutwa_api import config, main  # noqa: E402
-from khutwa_api.schemas import ReflectModelOut, RiskModelOut, Suggestion, SuggestModelOut  # noqa: E402
+from khutwa_api.schemas import ReflectModelOut, RememberModelOut, RiskModelOut, Suggestion, SuggestModelOut  # noqa: E402
 
 config.API_KEY = os.environ["KHUTWA_API_KEY"]
 AUTH = {"Authorization": f"Bearer {config.API_KEY}"}
@@ -15,8 +15,9 @@ TEXT = {"text": "rani ta3bana barsha min el imti7anat"}
 
 
 class FakeRouter:
-    def __init__(self, risk="none", reflection="واضح إن الضغط كبير عليك. شن اللي يفيدك توا؟", draft="فاضي نحكوا شوية؟"):
-        self.risk, self.reflection, self.draft = risk, reflection, draft
+    def __init__(self, risk="none", reflection="واضح إن الضغط كبير عليك. شن اللي يفيدك توا؟", draft="فاضي نحكوا شوية؟",
+                 memory="عندك امتحان قريب."):
+        self.risk, self.reflection, self.draft, self.memory = risk, reflection, draft, memory
         self.calls = []
 
     def json_task(self, task, text, schema):
@@ -25,6 +26,8 @@ class FakeRouter:
             return (RiskModelOut(risk=self.risk) if self.risk else None), "fake"
         if task == "reflect":
             return ReflectModelOut(reflection=self.reflection), "fake"
+        if task == "remember":
+            return (RememberModelOut(memory=self.memory) if self.memory is not None else None), "fake"
         return SuggestModelOut(situation=["study_pressure"], suggestions=[
             Suggestion(type="trusted_friend", why="يسمعك من غير حكم.", draft=self.draft)]), "fake"
 
@@ -406,3 +409,37 @@ def test_deferred_support_returns_the_reply_without_waiting_for_options(client):
 def test_support_needs_the_api_key(client):
     with client() as c:
         assert c.post("/v1/support", json={"text": "x"}).status_code == 401
+
+
+def test_memory_goes_before_the_conversation_but_not_to_the_risk_check(client):
+    with client() as c:
+        c.post("/v1/analyze", headers=AUTH, json={"text": "رجعت", "history": [], "memory": "[اسم1] صاحبك تخاصمتوا."})
+        calls = dict(c.app.state.agy.calls)
+        assert calls["risk"] == "رجعت"
+        assert calls["reflect"] == "memory: [اسم1] صاحبك تخاصمتوا.\nnew: رجعت"
+
+
+def test_conversation_text_without_memory_is_unchanged():
+    assert main.conversation_text("x", [], None) == "x"
+    assert main.conversation_text("x", [], "  ") == "x"
+
+
+def test_remember_returns_updated_notes(client):
+    with client() as c:
+        r = c.post("/v1/remember", headers=AUTH, json={"memory": "قديم", "history": [{"role": "user", "text": "عندي امتحان"}]}).json()
+        assert r == {"memory": "عندك امتحان قريب.", "fallback": False}
+        assert c.app.state.agy.calls[-1] == ("remember", "memory: قديم\nuser: عندي امتحان")
+
+
+def test_remember_keeps_old_notes_on_failure_or_guardrail(client):
+    body = {"history": [{"role": "user", "text": "عندي امتحان"}]}
+    with client(memory=None) as c:
+        assert c.post("/v1/remember", headers=AUTH, json=body).json() == {"memory": None, "fallback": True}
+    with client(memory="عندك اكتئاب") as c:
+        assert c.post("/v1/remember", headers=AUTH, json=body).json() == {"memory": None, "fallback": True}
+
+
+def test_remember_needs_key_and_history(client):
+    with client() as c:
+        assert c.post("/v1/remember", json={"history": [{"role": "user", "text": "x"}]}).status_code in (401, 403)
+        assert c.post("/v1/remember", headers=AUTH, json={"history": []}).status_code == 422

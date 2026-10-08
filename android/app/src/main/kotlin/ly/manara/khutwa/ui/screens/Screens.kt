@@ -9,6 +9,8 @@ import androidx.compose.ui.semantics.selected
 import ly.manara.khutwa.ui.components.t
 import ly.manara.khutwa.ui.components.UrgentPill
 import ly.manara.khutwa.ui.components.Stone
+import ly.manara.khutwa.ui.components.Stones
+import ly.manara.khutwa.ui.components.StoneEmoji
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.foundation.horizontalScroll
@@ -54,6 +56,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.scaleOut
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -339,10 +342,16 @@ fun ChatScreen(
                             surface != null -> A2uiView(surface)
                             line.loadingSurface -> OptionsPlaceholder()
                             else -> Column {
-                                Bubble(if (line.mine) line.text else t(line.text), line.mine, reveal = line.reveal,
+                                // Khutwa's reply may end with one of the brand's stones; it pops in once the words are out
+                                val (body, stone) = if (line.mine) line.text to null else Stones.split(line.text)
+                                Bubble(if (line.mine) body else t(body), line.mine, reveal = line.reveal,
                                     onRevealed = { onRevealed(line.id); scope.launch { keepInView(list, index + 1) } },
                                     onGrow = { scope.launch { keepInView(list, index + 1) } },
                                     showWho = state.lines.getOrNull(index)?.let { it.mine || index == 0 } ?: true)
+                                if (stone != null) AnimatedVisibility(!line.reveal,
+                                    enter = fadeIn(tween(160)) + scaleIn(spring(dampingRatio = 0.45f, stiffness = 380f), initialScale = 0.4f)) {
+                                    StoneEmoji(stone, Modifier.padding(start = 10.dp, top = 6.dp).size(56.dp))
+                                }
                                 if (line.mine && (line.sent != null || line.stayedOnPhone))
                                     SentReceipt(line.sent, line.id, onOpen = { scope.launch { keepInView(list, index + 1) } })
                             }

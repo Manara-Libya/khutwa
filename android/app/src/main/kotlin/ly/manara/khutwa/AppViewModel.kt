@@ -22,6 +22,7 @@ import ly.manara.khutwa.data.Texts
 import ly.manara.khutwa.data.Turn
 import ly.manara.khutwa.privacy.ConversationPrivacy
 import ly.manara.khutwa.ui.components.Prefs
+import ly.manara.khutwa.ui.components.Stones
 import org.json.JSONArray
 
 sealed interface Screen {
@@ -146,7 +147,9 @@ class AppViewModel(
             _state.update { it.copy(waiting = false, screen = Screen.Urgent(auto = true, returnTo = Screen.Chat)) }
             return
         }
-        val reply = a.reflection
+        // never a stone two replies running: if the last reply had one, this one goes without
+        val lastReply = _state.value.lines.lastOrNull { !it.mine && it.surface == null && !it.loadingSurface }
+        val reply = a.reflection?.let { if (lastReply != null && Stones.hasStone(lastReply.text)) Stones.strip(it) else it }
         if (reply != null) history += Turn("assistant", reply)
         // The support options appear inline once, when Khutwa has listened enough, and again whenever the user asks.
         val wantSurface = a.supportReady && (!surfaceShown || askedForHelp)

@@ -294,3 +294,16 @@ body.script #stage { display: none; }
 .video-wrap .missing .latin { font-size: 20px; word-break: break-all; }
 .slide .duo:not(.small) { margin-top: 70px; }
 .col > .chip { align-self: flex-start; }
+
+/* hook: a message typed, then erased */
+.step[data-anim="type-erase"] { opacity: 1; transform: none; }
+.hook-box { display: flex; align-items: center; gap: 28px; width: 1240px; }
+.composer-big { flex: 1; min-height: 150px; display: flex; align-items: center; padding: 30px 46px; font: 500 64px/1.3 var(--body); color: var(--ink);
+  background: var(--paper-raised); border: var(--pen) solid var(--ink); border-radius: 48px; box-shadow: var(--print); }
+.composer-big .caret { display: inline-block; width: 5px; height: 70px; background: var(--green-deep); margin-inline-start: 6px; animation: blink 1s steps(1) infinite; }
+.send-dot { flex: none; width: 120px; height: 120px; border-radius: 50%; border: var(--pen) solid var(--ink); background: var(--paper-sunk);
+  background-image: radial-gradient(circle, var(--ink-muted) 0 9px, transparent 10px); opacity: .55; }
+/* close: the same message, sent */
+.sent-bubble { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 26px 40px; background: var(--green);
+  border: var(--pen) solid var(--ink); border-radius: 40px 40px 14px 40px; box-shadow: var(--print); font: 500 50px/1.3 var(--body); color: var(--ink); }
+.sent-bubble small { display: inline-flex; align-items: center; gap: 8px; font: 600 26px/1 var(--display); color: var(--green-deep); align-self: flex-end; }

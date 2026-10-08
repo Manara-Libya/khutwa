@@ -1,13 +1,13 @@
-"""Cut take 8 into a short demo: chapters of (start, end, speed) pieces; prints chapter end times."""
+"""Cut the Omar take into a short demo: chapters of (start, end, speed) pieces; prints chapter end times."""
 import subprocess, sys, json
 RAW, OUT = sys.argv[1], sys.argv[2]
 CH = [
-  [(0.0, 1.0, 1), (7.0, 12.3, 2), (12.3, 13.3, 1)],                      # 1 types, the name turns yellow
-  [(17.7, 18.7, 1), (21.8, 23.0, 1), (29.8, 31.3, 1)],                   # 2 sends, reply, opens the receipt
-  [(38.4, 45.9, 2.5), (49.8, 50.8, 1), (53.3, 55.0, 1)],                 # 3 second message, the reply asks one question
-  [(63.4, 64.6, 1), (66.2, 67.4, 1), (70.1, 71.0, 1), (75.7, 77.3, 1)],  # 4 «مش عارفة مع مني نحكي» -> people
-  [(80.3, 81.8, 1)],                                                     # 5 another person, the drafted message
-  [(86.6, 88.2, 1), (91.2, 93.6, 1)],                   # 6 urgent screen
+  [(0.0, 1.0, 1), (6.8, 12.0, 2), (12.0, 13.0, 1)],                      # 1 types, the name turns yellow
+  [(17.6, 18.6, 1), (22.4, 23.6, 1), (30.0, 31.5, 1)],                   # 2 sends, reply, opens the receipt
+  [(38.4, 49.7, 3), (49.7, 50.9, 1), (57.6, 59.3, 1)],                   # 3 second message, the reply asks one question
+  [(66.8, 68.0, 1), (69.4, 70.6, 1), (73.7, 74.6, 1), (79.2, 80.8, 1)],  # 4 «مش عارف مع مني نحكي» -> people
+  [(83.8, 85.2, 1)],                                                     # 5 another person, the drafted message
+  [(90.1, 91.7, 1), (94.7, 96.9, 1)],                                    # 6 urgent screen
 ]
 parts, t, ends = [], 0.0, []
 for ch in CH:

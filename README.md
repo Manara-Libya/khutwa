@@ -48,7 +48,7 @@ The evidence behind each step, and what it does not show, is in [`docs/evidence.
 | [`content/`](content/) | Fixed, reviewed texts: consent, urgent help, coping cards, verified contacts. |
 | [`evals/`](evals/) | Fictional test sets and the runner for risk detection, diagnosis refusal, dialect replies and redaction recall. Results: [`evals/results.md`](evals/results.md). |
 | [`docs/`](docs/) | Proposal, challenge brief and research, evidence for the pitch, brand media. |
-| [`pitch/`](pitch/) | The pitch: an HTML deck with a synced script window, the demo videos, and the same deck as PowerPoint (`khutwa-pitch.pptx`). See [`pitch/README.md`](pitch/README.md). |
+| [`pitch/`](pitch/) | The pitch: an HTML deck with a synced script window, the demo videos, and the same deck as PowerPoint (`khutwa-pitch.pptx`) and PDF (`khutwa-pitch.pdf`). See [`pitch/README.md`](pitch/README.md). |
 | [`site/`](site/) | The download page, live at [khutwa-pi.vercel.app](https://khutwa-pi.vercel.app): the APK, the demo and how to install. |
 
 ## Run it

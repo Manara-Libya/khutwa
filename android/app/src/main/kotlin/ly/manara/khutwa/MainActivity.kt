@@ -36,6 +36,7 @@ import ly.manara.khutwa.ui.screens.ChatScreen
 import ly.manara.khutwa.ui.screens.ConsentScreen
 import ly.manara.khutwa.ui.screens.UrgentScreen
 import ly.manara.khutwa.ui.screens.SettingsScreen
+import ly.manara.khutwa.ui.screens.HistoryScreen
 import ly.manara.khutwa.ui.components.KhMotion
 import ly.manara.khutwa.ui.theme.Kh
 import ly.manara.khutwa.ui.theme.KhutwaTheme
@@ -62,7 +63,8 @@ class MainActivity : ComponentActivity() {
         val factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                AppViewModel(KhutwaApi(BuildConfig.API_KEY, BuildConfig.API_URL, BuildConfig.URL_GIST_RAW)) as T
+                AppViewModel(KhutwaApi(BuildConfig.API_KEY, BuildConfig.API_URL, BuildConfig.URL_GIST_RAW),
+                    store = ly.manara.khutwa.data.ChatStore(applicationContext)) as T
         }
         ly.manara.khutwa.ui.components.Prefs.load(this)
         setContent {
@@ -122,9 +124,14 @@ fun KhutwaApp(vm: AppViewModel, onExit: () -> Unit) {
                 Screen.Consent -> ConsentScreen(onAccept = vm::acceptConsent, onDecline = onExit, onUrgent = vm::openUrgent,
                     onSettings = vm::openSettings)
                 Screen.Chat -> ChatScreen(state, vm::send, vm::retry, vm::askWhoToTalkTo, vm::newChat, vm::openUrgent, vm::revealed,
-                    onSettings = vm::openSettings)
+                    onSettings = vm::openSettings, onHistory = if (ly.manara.khutwa.ui.components.Prefs.keepHistory) vm::openHistory else null)
                 is Screen.Settings -> SettingsScreen(onBack = { vm.back() }, onUrgent = vm::openUrgent,
-                    onErase = vm::newChat, canErase = state.lines.size > 1)
+                    onErase = vm::eraseCurrent, canErase = state.lines.size > 1,
+                    savedCount = state.savedChats.size, memory = state.memory,
+                    onKeepHistory = vm::setKeepHistory, onUseMemory = vm::setUseMemory, onClearMemory = vm::clearMemory,
+                    onOpenHistory = vm::openHistory)
+                is Screen.History -> HistoryScreen(state.savedChats, state.chatId, onBack = { vm.back() }, onUrgent = vm::openUrgent,
+                    onOpen = vm::openChat, onDelete = vm::deleteChat, onDeleteAll = vm::deleteAllChats)
                 is Screen.Urgent -> UrgentScreen(screen.auto, onBack = { vm.back() })
             }
         }

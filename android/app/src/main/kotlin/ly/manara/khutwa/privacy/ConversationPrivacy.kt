@@ -5,7 +5,8 @@ package ly.manara.khutwa.privacy
  * message and «سند» in the second would both become [اسم1]. Here each name or place keeps one number for
  * the whole chat, so the history the server sees stays consistent and the drafts get the right name back.
  *
- * The mapping lives only in memory on the phone and is dropped with the conversation.
+ * The mapping lives in memory on the phone and is dropped with the conversation, unless the user chose to save
+ * their chats; then it is saved with the chat, encrypted on the phone.
  */
 class ConversationPrivacy(private val redactor: Redactor = LibyanRedactor()) {
     private val numbers = mutableMapOf<String, String>()   // type + word -> placeholder
@@ -46,6 +47,21 @@ class ConversationPrivacy(private val redactor: Redactor = LibyanRedactor()) {
 
     fun clear() {
         numbers.clear(); words.clear(); counts.clear()
+    }
+
+    /** Placeholder -> word, so a saved chat (kept on the phone, only when the user turned that on) can be continued. */
+    fun snapshot(): Map<String, String> = words.toMap()
+
+    /** Starts from a saved chat's mapping, so its placeholders keep pointing at the same names. */
+    fun restoreFrom(saved: Map<String, String>) {
+        clear()
+        for ((placeholder, word) in saved) {
+            val type = if (placeholder.startsWith("[اسم")) IdentifierType.NAME else IdentifierType.PLACE
+            numbers[type.name + word.trim().lowercase()] = placeholder
+            words[placeholder] = word
+            val n = placeholder.filter { it.isDigit() }.toIntOrNull() ?: 0
+            counts[type] = maxOf(counts[type] ?: 0, n)
+        }
     }
 
     private companion object {

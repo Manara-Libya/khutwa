@@ -8,6 +8,7 @@ import ly.manara.khutwa.ui.components.Addressing
 import androidx.compose.ui.semantics.selected
 import ly.manara.khutwa.ui.components.t
 import ly.manara.khutwa.ui.components.UrgentPill
+import ly.manara.khutwa.ui.components.Stone
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.foundation.horizontalScroll
@@ -252,6 +253,7 @@ fun ChatScreen(
     onUrgent: () -> Unit,
     onRevealed: (Long) -> Unit = {},
     onSettings: () -> Unit = {},
+    onHistory: (() -> Unit)? = null,
 ) {
     val c = Kh.colors
     val list = rememberLazyListState()
@@ -264,7 +266,7 @@ fun ChatScreen(
         val newLine = state.lines.getOrNull(firstNew)
         if (newLine != null && !newLine.mine) {
             // Khutwa answered: bring the start of the answer into view, with the options (if any) below it.
-            list.animateScrollToItem(firstNew + 1)
+            list.animateScrollToItem(firstNew)
         } else {
             scrollToEnd(list)
         }
@@ -288,7 +290,7 @@ fun ChatScreen(
     val density = LocalDensity.current
     var composerHeight by remember { mutableIntStateOf(0) }
     Column(Modifier.fillMaxSize().imePadding()) {
-        TopBar(onUrgent, onSettings = onSettings)
+        TopBar(onUrgent, onSettings = onSettings, onHistory = onHistory)
         // The composer floats over the conversation; the list scrolls underneath it, padded so nothing hides.
         Box(Modifier.weight(1f).fillMaxWidth()) {
         LazyColumn(
@@ -299,11 +301,11 @@ fun ChatScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item(key = "welcome") {
-                Box(Modifier.fillMaxWidth().padding(bottom = 4.dp), contentAlignment = Alignment.Center) {
-                    WelcomeIllustration(Modifier.size(150.dp))
-                }
+                WelcomeHeader(seed = state.lines.firstOrNull()?.id ?: 0L,
+                    returning = Prefs.keepHistory && (state.memory.isNotBlank() || state.savedChats.any { it.id != state.chatId }))
             }
-            itemsIndexed(state.lines, key = { _, l -> l.id }) { index, line: Line ->
+            // Line 0 is the greeting, which the welcome header above now says; line i (i >= 1) sits at list index i.
+            itemsIndexed(state.lines.drop(1), key = { _, l -> l.id }) { index, line: Line ->
                 Box(Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null)) {
                     Appear(line.id) {
                         val surface = line.surface
@@ -314,7 +316,7 @@ fun ChatScreen(
                                 Bubble(if (line.mine) line.text else t(line.text), line.mine, reveal = line.reveal,
                                     onRevealed = { onRevealed(line.id); scope.launch { keepInView(list, index + 1) } },
                                     onGrow = { scope.launch { keepInView(list, index + 1) } },
-                                    showWho = state.lines.getOrNull(index - 1)?.let { it.mine } ?: true)
+                                    showWho = state.lines.getOrNull(index)?.let { it.mine || index == 0 } ?: true)
                                 if (line.mine && (line.sent != null || line.stayedOnPhone))
                                     SentReceipt(line.sent, line.id, onOpen = { scope.launch { keepInView(list, index + 1) } })
                             }
@@ -351,7 +353,8 @@ fun ChatScreen(
         var confirmNew by remember { mutableStateOf(false) }
         val online = rememberOnline()
         var calm by remember { mutableStateOf(false) }
-        Composer(state, onSend, onWhoToTalk, { confirmNew = true }, showChips = following || state.lines.size <= 2,
+        // With saved chats on, a new chat loses nothing, so there is nothing to confirm.
+        Composer(state, onSend, onWhoToTalk, { if (Prefs.keepHistory) onNewChat() else confirmNew = true }, showChips = following || state.lines.size <= 2,
             online = online, onCalm = { calm = true },
             modifier = Modifier.align(Alignment.BottomCenter).onSizeChanged { composerHeight = it.height })
         if (calm) CalmSheet(onDismiss = { calm = false }, onUrgent = onUrgent)
@@ -585,7 +588,12 @@ private fun JumpToLatest(visible: Boolean, onClick: () -> Unit, modifier: Modifi
 
 /** A new chat erases the current one from the phone, so ask first. */
 @Composable
-private fun ConfirmNewChat(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+private fun ConfirmNewChat(onConfirm: () -> Unit, onDismiss: () -> Unit, body: String = Texts.NEW_CHAT_BODY) =
+    ConfirmDialog("نبداو محادثة جديدة؟", t(body), "إيه، محادثة جديدة", "لا، نكمل", onConfirm, onDismiss)
+
+/** Asks before anything is deleted for good. */
+@Composable
+private fun ConfirmDialog(title: String, body: String, yes: String, no: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
     val c = Kh.colors
     Dialog(onDismissRequest = onDismiss) {
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
@@ -596,12 +604,12 @@ private fun ConfirmNewChat(onConfirm: () -> Unit, onDismiss: () -> Unit) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     KhIcon(R.drawable.ic_kh_trash, c.ink, size = 22.dp)
                     Spacer(Modifier.width(10.dp))
-                    Text("نبداو محادثة جديدة؟", style = KhType.heading, color = c.ink)
+                    Text(title, style = KhType.heading, color = c.ink)
                 }
-                Text(t(Texts.NEW_CHAT_BODY), style = KhType.body, color = c.inkMuted)
+                Text(body, style = KhType.body, color = c.inkMuted)
                 Spacer(Modifier.height(4.dp))
-                KhButton("إيه، محادثة جديدة", onConfirm, Modifier.fillMaxWidth())
-                KhButton("لا، نكمل", onDismiss, Modifier.fillMaxWidth(), kind = ButtonKind.Quiet)
+                KhButton(yes, onConfirm, Modifier.fillMaxWidth())
+                KhButton(no, onDismiss, Modifier.fillMaxWidth(), kind = ButtonKind.Quiet)
             }
         }
     }
@@ -1005,9 +1013,21 @@ private fun AddressChoice() {
  * Only the display choices are kept on the phone; the conversation and the form of address never are.
  */
 @Composable
-fun SettingsScreen(onBack: () -> Unit, onUrgent: () -> Unit, onErase: () -> Unit, canErase: Boolean) {
+fun SettingsScreen(
+    onBack: () -> Unit,
+    onUrgent: () -> Unit,
+    onErase: () -> Unit,
+    canErase: Boolean,
+    savedCount: Int = 0,
+    memory: String = "",
+    onKeepHistory: (Boolean) -> Unit = {},
+    onUseMemory: (Boolean) -> Unit = {},
+    onClearMemory: () -> Unit = {},
+    onOpenHistory: () -> Unit = {},
+) {
     val c = Kh.colors
     var confirmErase by remember { mutableStateOf(false) }
+    var confirmOff by remember { mutableStateOf(false) }
     Column(Modifier.fillMaxSize()) {
         TopBar(onUrgent, leading = { BackButton(onBack) })
         Column(
@@ -1050,10 +1070,26 @@ fun SettingsScreen(onBack: () -> Unit, onUrgent: () -> Unit, onErase: () -> Unit
                     SettingsToggle("الاهتزاز", "اهتزاز خفيف لما تبعت ولما تتنفس مع خطوة.", Prefs.haptics) { Prefs.haptics = it }
                 }
             }
+            Appear("settings-history", 210) {
+                SettingsSection(R.drawable.ic_kh_history, Texts.HISTORY) {
+                    // Off by default; turning it off deletes everything that was saved, so it asks first.
+                    SettingsToggle(Texts.KEEP_HISTORY, Texts.KEEP_HISTORY_NOTE, Prefs.keepHistory) {
+                        if (it) onKeepHistory(true) else confirmOff = true
+                    }
+                    AnimatedVisibility(Prefs.keepHistory, enter = fadeIn(tween(200)) + expandVertically(KhMotion.gentle()),
+                        exit = fadeOut(tween(150)) + shrinkVertically(tween(220))) {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            KhButton("${Texts.HISTORY} ($savedCount)", onOpenHistory, Modifier.fillMaxWidth(), kind = ButtonKind.Quiet,
+                                icon = R.drawable.ic_kh_history)
+                            SettingsToggle(Texts.USE_MEMORY, t(Texts.USE_MEMORY_NOTE), Prefs.useMemory, onUseMemory)
+                            if (Prefs.useMemory) MemoryCard(memory, onClearMemory)
+                        }
+                    }
+                }
+            }
             Appear("settings-privacy", 240) {
                 SettingsSection(R.drawable.ic_kh_shield_check, "الخصوصية") {
-                    SettingsInfo(R.drawable.ic_kh_lock, "شن ينحفظ على تلفونك؟",
-                        "بس إعدادات الشكل هذي (الألوان والخط والحركة). كلامك وصيغتك ما ينحفظوش، ويمشوا لما تسكر التطبيق.")
+                    SettingsInfo(R.drawable.ic_kh_lock, "شن ينحفظ على تلفونك؟", if (Prefs.keepHistory) Texts.STORED_ON else Texts.STORED_OFF)
                     SettingsInfo(R.drawable.ic_kh_shield, "قائمة التطبيقات المفتوحة", "على أندرويد 13 وأحدث، خطوة يبان فيها فاضي من غير كلامك.")
                     Spacer(Modifier.height(4.dp))
                     KhButton("امسح المحادثة توا", { confirmErase = true }, Modifier.fillMaxWidth(), kind = ButtonKind.Quiet,
@@ -1071,7 +1107,162 @@ fun SettingsScreen(onBack: () -> Unit, onUrgent: () -> Unit, onErase: () -> Unit
             Spacer(Modifier.height(16.dp))
         }
     }
-    if (confirmErase) ConfirmNewChat(onConfirm = { confirmErase = false; onErase() }, onDismiss = { confirmErase = false })
+    if (confirmErase) ConfirmNewChat(onConfirm = { confirmErase = false; onErase() }, onDismiss = { confirmErase = false },
+        body = if (Prefs.keepHistory) Texts.ERASE_SAVED_BODY else Texts.NEW_CHAT_BODY)
+    if (confirmOff) ConfirmDialog(Texts.KEEP_HISTORY_OFF_TITLE, Texts.KEEP_HISTORY_OFF_BODY, "إيه، اقفله وامسح", "لا، خليه",
+        onConfirm = { confirmOff = false; onKeepHistory(false) }, onDismiss = { confirmOff = false })
+}
+
+/** Exactly what Khutwa remembers across chats, in plain words, with a way to wipe it. */
+@Composable
+private fun MemoryCard(memory: String, onClear: () -> Unit) {
+    val c = Kh.colors
+    Column(
+        Modifier.fillMaxWidth().background(c.paper, KhShapes.card).dashedBorder(c.border, KhShapes.card).padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Text(Texts.MEMORY_LABEL, style = KhType.label, color = c.inkMuted)
+        Text(memory.ifBlank { t(Texts.MEMORY_EMPTY) }, style = KhType.body, color = if (memory.isBlank()) c.inkMuted else c.ink)
+        if (memory.isNotBlank()) KhButton(Texts.MEMORY_CLEAR, onClear, Modifier.fillMaxWidth(), kind = ButtonKind.Quiet,
+            icon = R.drawable.ic_kh_trash)
+    }
+}
+
+/**
+ * The top of a new chat: the small looping doodle and one short line for the time of day, like a friend saying hi.
+ * Picked once per chat ([seed]); a returning user (saved chats on) gets a welcome back.
+ */
+@Composable
+private fun WelcomeHeader(seed: Long, returning: Boolean) {
+    val c = Kh.colors
+    val line = remember(seed) {
+        val pool = when (java.time.LocalTime.now().hour) {
+            in 0..4 -> Texts.WELCOME_NIGHT
+            in 5..11 -> Texts.WELCOME_MORNING
+            in 12..16 -> Texts.WELCOME_DAY
+            else -> Texts.WELCOME_EVENING
+        }.let { if (returning) it + Texts.WELCOME_BACK + Texts.WELCOME_BACK else it }
+        pool[((seed * 2654435761L) ushr 7).mod(pool.size)]
+    }
+    Column(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        WelcomeIllustration(Modifier.size(92.dp), sparkles = 30.dp)
+        Spacer(Modifier.height(14.dp))
+        Appear("welcome-line-$seed", delayMillis = 450) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(t(line), style = KhType.title.copy(fontSize = KhType.title.fontSize * 0.9f), color = c.ink,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.semantics { heading() })
+                Spacer(Modifier.height(4.dp))
+                Text(Texts.WELCOME_SUB, style = KhType.body, color = c.inkMuted, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------- saved chats
+
+@Composable
+fun HistoryScreen(
+    chats: List<ly.manara.khutwa.data.SavedChat>,
+    currentId: Long?,
+    onBack: () -> Unit,
+    onUrgent: () -> Unit,
+    onOpen: (Long) -> Unit,
+    onDelete: (Long) -> Unit,
+    onDeleteAll: () -> Unit,
+) {
+    val c = Kh.colors
+    var deleting by remember { mutableStateOf<Long?>(null) }
+    var deletingAll by remember { mutableStateOf(false) }
+    Column(Modifier.fillMaxSize()) {
+        TopBar(onUrgent, leading = { BackButton(onBack) })
+        LazyColumn(
+            Modifier.weight(1f).fillMaxWidth(),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(start = Gutter, end = Gutter, bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            item(key = "title") {
+                Appear("history-title") {
+                    Column {
+                        ScreenTitle(Texts.HISTORY)
+                        Doodle(Doodles.UNDERLINE, c.green, Modifier.width(120.dp).height(12.dp), key = "history-underline",
+                            delayMillis = 300, durationMillis = 650)
+                        Spacer(Modifier.height(4.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            KhIcon(R.drawable.ic_kh_lock, c.inkMuted, size = 16.dp)
+                            Spacer(Modifier.width(6.dp))
+                            Text(Texts.HISTORY_NOTE, style = KhType.small, color = c.inkMuted)
+                        }
+                    }
+                }
+            }
+            if (chats.isEmpty()) item(key = "empty") {
+                Appear("history-empty", 80) {
+                    Column(Modifier.fillMaxWidth().padding(top = 32.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Image(painterResource(R.drawable.ill_on_your_phone), contentDescription = null, modifier = Modifier.size(150.dp))
+                        Spacer(Modifier.height(12.dp))
+                        Text(t(Texts.HISTORY_EMPTY), style = KhType.body, color = c.inkMuted,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                    }
+                }
+            }
+            itemsIndexed(chats, key = { _, chat -> chat.id }) { i, chat ->
+                Box(Modifier.animateItem()) {
+                    Appear("history-${chat.id}", delayMillis = 40L * i.coerceAtMost(6)) {
+                        SavedChatRow(chat, current = chat.id == currentId, onOpen = { onOpen(chat.id) }, onDelete = { deleting = chat.id })
+                    }
+                }
+            }
+            if (chats.isNotEmpty()) item(key = "delete-all") {
+                KhButton(Texts.HISTORY_DELETE_ALL, { deletingAll = true }, Modifier.fillMaxWidth().padding(top = 8.dp),
+                    kind = ButtonKind.Quiet, icon = R.drawable.ic_kh_trash)
+            }
+        }
+    }
+    deleting?.let { id ->
+        ConfirmDialog(Texts.HISTORY_DELETE_TITLE, t(Texts.HISTORY_DELETE_BODY), "إيه، امسحها", "لا، خليها",
+            onConfirm = { deleting = null; onDelete(id) }, onDismiss = { deleting = null })
+    }
+    if (deletingAll) ConfirmDialog(Texts.HISTORY_DELETE_ALL_TITLE, t(Texts.HISTORY_DELETE_ALL_BODY), "إيه، امسح الكل", "لا، خليهم",
+        onConfirm = { deletingAll = false; onDeleteAll() }, onDismiss = { deletingAll = false })
+}
+
+@Composable
+private fun SavedChatRow(chat: ly.manara.khutwa.data.SavedChat, current: Boolean, onOpen: () -> Unit, onDelete: () -> Unit) {
+    val c = Kh.colors
+    val preview = chat.lines.firstOrNull { it.mine }?.text.orEmpty()
+    val stone = when ((chat.id / 1000 % 3).toInt()) { 0 -> c.clay; 1 -> c.sun; else -> c.green }
+    Row(
+        Modifier.fillMaxWidth().clip(KhShapes.card).background(if (current) c.greenSoft else c.paperRaised)
+            .border(PenWidth, c.ink, KhShapes.card)
+            .clickable(role = Role.Button, onClick = onOpen)
+            .padding(start = 14.dp, top = 12.dp, bottom = 12.dp, end = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Stone(stone, if (chat.id % 2 == 0L) -8f else 10f)
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(whenLabel(chat.updatedAt) + if (current) " · ${Texts.HISTORY_OPEN_NOW}" else "", style = KhType.small, color = c.inkMuted)
+            Text(preview, style = KhType.body, color = c.ink, maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+        }
+        Box(
+            Modifier.size(44.dp).clip(KhShapes.chip).clickable(role = Role.Button, onClick = onDelete)
+                .semantics { contentDescription = "امسح المحادثة" },
+            contentAlignment = Alignment.Center,
+        ) { KhIcon(R.drawable.ic_kh_trash, c.inkMuted, size = 20.dp) }
+    }
+}
+
+/** «اليوم 18:40», «امبارح 09:05», or «3/10 21:15», with Western digits like the rest of the app. */
+private fun whenLabel(millis: Long): String {
+    val zone = java.time.ZoneId.systemDefault()
+    val t = java.time.Instant.ofEpochMilli(millis).atZone(zone)
+    val today = java.time.LocalDate.now(zone)
+    val time = String.format(java.util.Locale.US, "%d:%02d", t.hour, t.minute)
+    return when (t.toLocalDate()) {
+        today -> "اليوم $time"
+        today.minusDays(1) -> "امبارح $time"
+        else -> "${t.dayOfMonth}/${t.monthValue} $time"
+    }
 }
 
 @Composable

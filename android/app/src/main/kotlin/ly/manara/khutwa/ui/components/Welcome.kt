@@ -41,7 +41,7 @@ import ly.manara.khutwa.ui.theme.Kh
  * frame-by-frame doodle animation), the brand sparkles are drawn, left, and lifted off again, the dots "type".
  */
 @Composable
-fun WelcomeIllustration(modifier: Modifier = Modifier) {
+fun WelcomeIllustration(modifier: Modifier = Modifier, sparkles: androidx.compose.ui.unit.Dp = 44.dp) {
     val c = Kh.colors
     val p = remember { LAYERS.map { PathParser().parsePathString(it).toPath() } }
     val outlineLen = remember { PathMeasure().apply { setPath(p[1], false) }.length }
@@ -111,7 +111,7 @@ fun WelcomeIllustration(modifier: Modifier = Modifier) {
         }
     }
     // the brand sparkles: drawn by the pen once the bubbles have landed, left a while, lifted off, drawn again
-    DoodleCycle(Doodles.SPARKLES, c.ink, Modifier.align(androidx.compose.ui.AbsoluteAlignment.TopRight).absoluteOffset(x = 18.dp, y = (-2).dp).size(44.dp),
+    DoodleCycle(Doodles.SPARKLES, c.ink, Modifier.align(androidx.compose.ui.AbsoluteAlignment.TopRight).absoluteOffset(x = sparkles * 0.41f, y = -(sparkles * 0.05f)).size(sparkles),
         delayMillis = if (played) 0 else 1700, periodMillis = 4600, mirrorInRtl = false)
     }
 }

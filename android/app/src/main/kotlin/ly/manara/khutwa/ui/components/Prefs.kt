@@ -6,8 +6,8 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 
 /**
- * How the app looks and moves. Only these display choices are kept on the phone (never backed up, never sent);
- * the conversation and how the user is addressed are never stored.
+ * How the app looks and moves, and whether the user chose to save their chats. Only these choices are kept here
+ * (never backed up, never sent). Saved chats themselves live encrypted in [ly.manara.khutwa.data.ChatStore].
  */
 object Prefs {
     enum class Theme { System, Light, Dark }
@@ -18,6 +18,8 @@ object Prefs {
     private val _calmMotion = mutableStateOf(false)
     private val _haptics = mutableStateOf(true)
     private val _instantReplies = mutableStateOf(false)
+    private val _keepHistory = mutableStateOf(false)
+    private val _useMemory = mutableStateOf(true)
 
     var theme: Theme
         get() = _theme.value
@@ -38,6 +40,15 @@ object Prefs {
         get() = _instantReplies.value
         set(v) { _instantReplies.value = v; sp?.edit()?.putBoolean("instantReplies", v)?.apply() }
 
+    /** Off by default: chats are saved on the phone only when the user turns this on. */
+    var keepHistory: Boolean
+        get() = _keepHistory.value
+        set(v) { _keepHistory.value = v; sp?.edit()?.putBoolean("keepHistory", v)?.apply() }
+    /** With saved chats on: Khutwa keeps short notes across chats. */
+    var useMemory: Boolean
+        get() = _useMemory.value
+        set(v) { _useMemory.value = v; sp?.edit()?.putBoolean("useMemory", v)?.apply() }
+
     fun load(context: Context) {
         val p = context.getSharedPreferences("khutwa_display", Context.MODE_PRIVATE)
         val systemAnimationsOff = android.provider.Settings.Global.getFloat(
@@ -47,6 +58,8 @@ object Prefs {
         _calmMotion.value = p.getBoolean("calmMotion", systemAnimationsOff)
         _haptics.value = p.getBoolean("haptics", true)
         _instantReplies.value = p.getBoolean("instantReplies", false)
+        _keepHistory.value = p.getBoolean("keepHistory", false)
+        _useMemory.value = p.getBoolean("useMemory", true)
         sp = p
     }
 }

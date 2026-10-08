@@ -145,7 +145,7 @@ fun UrgentPill(onClick: () -> Unit) {
 }
 
 @Composable
-fun TopBar(onUrgent: () -> Unit, modifier: Modifier = Modifier, onSettings: (() -> Unit)? = null,
+fun TopBar(onUrgent: () -> Unit, modifier: Modifier = Modifier, onSettings: (() -> Unit)? = null, onHistory: (() -> Unit)? = null,
            leading: @Composable RowScope.() -> Unit = {}) {
     val c = Kh.colors
     Row(
@@ -160,6 +160,15 @@ fun TopBar(onUrgent: () -> Unit, modifier: Modifier = Modifier, onSettings: (() 
                     .semantics { contentDescription = ly.manara.khutwa.data.Texts.SETTINGS },
                 contentAlignment = Alignment.Center,
             ) { KhIcon(R.drawable.ic_kh_sliders, c.ink, size = 22.dp) }
+            Spacer(Modifier.width(if (onHistory != null) 2.dp else 6.dp))
+        }
+        // Saved chats, only for users who turned them on.
+        if (onHistory != null) {
+            Box(
+                Modifier.size(44.dp).clip(KhShapes.chip).clickable(role = Role.Button, onClick = onHistory)
+                    .semantics { contentDescription = ly.manara.khutwa.data.Texts.HISTORY },
+                contentAlignment = Alignment.Center,
+            ) { KhIcon(R.drawable.ic_kh_history, c.ink, size = 22.dp) }
             Spacer(Modifier.width(6.dp))
         }
         Image(painterResource(if (c.isDark) R.drawable.logo_mark_dark else R.drawable.logo_mark), contentDescription = null,

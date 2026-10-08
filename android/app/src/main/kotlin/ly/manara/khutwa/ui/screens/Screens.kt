@@ -250,7 +250,6 @@ fun ChatScreen(
     onNewChat: () -> Unit,
     onUrgent: () -> Unit,
     onRevealed: (Long) -> Unit = {},
-    onQuickExit: () -> Unit = {},
     onSettings: () -> Unit = {},
 ) {
     val c = Kh.colors
@@ -272,7 +271,7 @@ fun ChatScreen(
     val density = LocalDensity.current
     var composerHeight by remember { mutableIntStateOf(0) }
     Column(Modifier.fillMaxSize().imePadding()) {
-        TopBar(onUrgent, onQuickExit = onQuickExit, onSettings = onSettings)
+        TopBar(onUrgent, onSettings = onSettings)
         // The composer floats over the conversation; the list scrolls underneath it, padded so nothing hides.
         Box(Modifier.weight(1f).fillMaxWidth()) {
         LazyColumn(
@@ -1016,7 +1015,6 @@ fun SettingsScreen(onBack: () -> Unit, onUrgent: () -> Unit, onErase: () -> Unit
             }
             Appear("settings-privacy", 240) {
                 SettingsSection(R.drawable.ic_kh_shield_check, "الخصوصية") {
-                    SettingsInfo(R.drawable.ic_kh_close, "خروج سريع", "زر ✕ فوق يمسح المحادثة ويسكر التطبيق في لحظة، لو حد قرّب.")
                     SettingsInfo(R.drawable.ic_kh_lock, "شن ينحفظ على تلفونك؟",
                         "بس إعدادات الشكل هذي (الألوان والخط والحركة). كلامك وصيغتك ما ينحفظوش، ويمشوا لما تسكر التطبيق.")
                     SettingsInfo(R.drawable.ic_kh_shield, "قائمة التطبيقات المفتوحة", "على أندرويد 13 وأحدث، خطوة يبان فيها فاضي من غير كلامك.")

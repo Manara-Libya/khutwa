@@ -87,7 +87,7 @@ class MainActivity : ComponentActivity() {
                     androidx.compose.ui.platform.LocalDensity provides androidx.compose.ui.unit.Density(d.density, d.fontScale * prefs.textScale),
                     androidx.compose.ui.platform.LocalHapticFeedback provides if (prefs.haptics) haptics else NoHaptics,
                 ) {
-                    KhutwaApp(viewModel(factory = factory), onExit = ::finish, onQuickExit = ::finishAndRemoveTask)
+                    KhutwaApp(viewModel(factory = factory), onExit = ::finish)
                 }
             }
         }
@@ -95,7 +95,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun KhutwaApp(vm: AppViewModel, onExit: () -> Unit, onQuickExit: () -> Unit = onExit) {
+fun KhutwaApp(vm: AppViewModel, onExit: () -> Unit) {
     val state by vm.state.collectAsStateWithLifecycle()
     BackHandler(enabled = state.screen !is Screen.Consent && state.screen !is Screen.Chat) { vm.back() }
     Box(Modifier.fillMaxSize().background(Kh.colors.paper).windowInsetsPadding(WindowInsets.safeDrawing)) {
@@ -122,7 +122,7 @@ fun KhutwaApp(vm: AppViewModel, onExit: () -> Unit, onQuickExit: () -> Unit = on
                 Screen.Consent -> ConsentScreen(onAccept = vm::acceptConsent, onDecline = onExit, onUrgent = vm::openUrgent,
                     onSettings = vm::openSettings)
                 Screen.Chat -> ChatScreen(state, vm::send, vm::retry, vm::askWhoToTalkTo, vm::newChat, vm::openUrgent, vm::revealed,
-                    onQuickExit = { vm.newChat(); onQuickExit() }, onSettings = vm::openSettings)
+                    onSettings = vm::openSettings)
                 is Screen.Settings -> SettingsScreen(onBack = { vm.back() }, onUrgent = vm::openUrgent,
                     onErase = vm::newChat, canErase = state.lines.size > 1)
                 is Screen.Urgent -> UrgentScreen(screen.auto, onBack = { vm.back() })

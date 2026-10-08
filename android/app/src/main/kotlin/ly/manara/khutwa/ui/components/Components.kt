@@ -145,7 +145,7 @@ fun UrgentPill(onClick: () -> Unit) {
 }
 
 @Composable
-fun TopBar(onUrgent: () -> Unit, modifier: Modifier = Modifier, onQuickExit: (() -> Unit)? = null, onSettings: (() -> Unit)? = null,
+fun TopBar(onUrgent: () -> Unit, modifier: Modifier = Modifier, onSettings: (() -> Unit)? = null,
            leading: @Composable RowScope.() -> Unit = {}) {
     val c = Kh.colors
     Row(
@@ -153,26 +153,19 @@ fun TopBar(onUrgent: () -> Unit, modifier: Modifier = Modifier, onQuickExit: (()
         verticalAlignment = Alignment.CenterVertically,
     ) {
         leading()
-        Image(painterResource(if (c.isDark) R.drawable.logo_mark_dark else R.drawable.logo_mark), contentDescription = null,
-            modifier = Modifier.size(34.dp))
-        Spacer(Modifier.width(8.dp))
-        Text("خطوة", style = KhType.heading, color = c.ink, modifier = Modifier.weight(1f))
+        // Settings sit at the start edge, where Arabic apps keep their menu, well away from the urgent button.
         if (onSettings != null) {
             Box(
                 Modifier.size(44.dp).clip(KhShapes.chip).clickable(role = Role.Button, onClick = onSettings)
                     .semantics { contentDescription = ly.manara.khutwa.data.Texts.SETTINGS },
                 contentAlignment = Alignment.Center,
-            ) { KhIcon(R.drawable.ic_kh_sliders, c.inkMuted, size = 21.dp) }
+            ) { KhIcon(R.drawable.ic_kh_sliders, c.ink, size = 22.dp) }
+            Spacer(Modifier.width(6.dp))
         }
-        // Quick exit: erases the conversation and closes the app at once, for when someone walks in.
-        if (onQuickExit != null) {
-            Box(
-                Modifier.size(44.dp).clip(KhShapes.chip).clickable(role = Role.Button, onClick = onQuickExit)
-                    .semantics { contentDescription = ly.manara.khutwa.data.Texts.QUICK_EXIT },
-                contentAlignment = Alignment.Center,
-            ) { KhIcon(R.drawable.ic_kh_close, c.inkMuted, size = 20.dp) }
-            Spacer(Modifier.width(4.dp))
-        }
+        Image(painterResource(if (c.isDark) R.drawable.logo_mark_dark else R.drawable.logo_mark), contentDescription = null,
+            modifier = Modifier.size(34.dp))
+        Spacer(Modifier.width(8.dp))
+        Text("خطوة", style = KhType.heading, color = c.ink, modifier = Modifier.weight(1f))
         UrgentPill(onUrgent)
     }
 }

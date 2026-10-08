@@ -51,7 +51,6 @@ object Texts {
     const val CALM = "نهدّي شوية"
     const val CALM_TITLE = "خذ نفس على راحتك"
     const val SETTINGS = "الإعدادات"
-    const val QUICK_EXIT = "خروج سريع"
     val STARTERS = listOf("مضغوط من القراية", "حاس روحي وحدي", "مش عارف من وين نبدا")
     const val BREATH_START = "نتنفسوا مع بعض"
     const val BREATH_IN = "دخّل النفس من خشمك"

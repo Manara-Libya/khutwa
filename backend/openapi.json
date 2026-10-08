@@ -160,6 +160,71 @@
         }
       }
     },
+    "/v1/remember": {
+      "post": {
+        "tags": [
+          "khutwa"
+        ],
+        "summary": "Update the short notes Khutwa keeps across chats (only for users who turned on saved chats)",
+        "description": "Takes the redacted conversation and the current notes and returns the updated notes. The phone stores them; the server keeps nothing. Never records anything about risk or danger.",
+        "operationId": "remember_v1_remember_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RememberIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/RememberOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/risk": {
       "post": {
         "tags": [
@@ -745,6 +810,19 @@
             "title": "History",
             "description": "Earlier turns of this conversation, oldest first, **redacted on the phone** like `text`. The phone keeps them in memory and sends them with each message; the server stores nothing. When `history` is sent (even empty), suggestions are held back until the user's 3th message or until they ask who to talk to (`support_ready`). Omit it for the old behaviour (suggestions on every message)."
           },
+          "memory": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 600
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Memory",
+            "description": "Short notes from the user's earlier chats (from /v1/remember), **redacted on the phone** like `text`. Only sent when the user turned on saved chats; the phone keeps them, the server stores nothing."
+          },
           "defer_support": {
             "type": "boolean",
             "title": "Defer Support",
@@ -1083,6 +1161,65 @@
           "fallback"
         ],
         "title": "ReflectOut"
+      },
+      "RememberIn": {
+        "properties": {
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/Turn"
+            },
+            "type": "array",
+            "maxItems": 12,
+            "minItems": 1,
+            "title": "History",
+            "description": "The conversation so far, oldest first, **redacted on the phone**."
+          },
+          "memory": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 600
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Memory",
+            "description": "The current notes, redacted with the same placeholders, to update."
+          }
+        },
+        "type": "object",
+        "required": [
+          "history"
+        ],
+        "title": "RememberIn"
+      },
+      "RememberOut": {
+        "properties": {
+          "memory": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Memory",
+            "description": "The updated notes (placeholders as sent), or null to keep the current ones."
+          },
+          "fallback": {
+            "type": "boolean",
+            "title": "Fallback",
+            "description": "True when the notes could not be updated; the phone keeps what it has."
+          }
+        },
+        "type": "object",
+        "required": [
+          "memory",
+          "fallback"
+        ],
+        "title": "RememberOut"
       },
       "RiskOut": {
         "properties": {

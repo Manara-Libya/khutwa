@@ -18,6 +18,10 @@ Click a line in the script window to jump there. `index.html?slide=8&step=2` ope
 
 **Demo video (slide 9):** `media/demo.mp4` is a 25-second cut of the full recording, in six chapters. Each click plays one chapter and holds on its last frame while you talk; going back shows the previous chapter's last frame. The chapter end times are in the `<video data-chapters>` attribute; `media/cut.py` makes the cut from the raw recording and prints them.
 
-**Live demo:** an optional backup slide (the first after «الختام»). Use it only if there's time.
+**Backup slides** (after «الختام»): «العرض كاملًا» plays `media/demo-full.mp4`, the whole 100-second recording, uncut, on the first click (it has player controls too); «عرض مباشر» is for showing the app live on the phone. Use them only if there's time.
+
+**Re-recording the demo:** `media/record-demo.sh <out-dir>` drives the phone over adb (Omar's messages, Do Not Disturb on while recording) and pulls `raw.mp4`; its header has the ffmpeg commands that make `demo.mp4` (via `media/cut.py`) and `demo-full.mp4`.
+
+**PowerPoint:** `khutwa-pitch.pptx` is the same deck for a computer without Chrome. Every click is a PowerPoint animation (float, zoom, wipe, the typed message that erases itself), the demo plays one chapter per click, and the script is in the speaker notes, one click per HTML step. The slides are pictures of the HTML deck, so the text isn't editable there: edit `src/index.tpl.html`, then `python3 build.py && uv run --with playwright --with python-pptx python tools/export_pptx.py`.
 
 **Edit:** slides and their script live together in `src/index.tpl.html` (each `<aside class="notes">` line has the `data-step` it belongs to). Run `python3 build.py` after editing to produce `index.html`.

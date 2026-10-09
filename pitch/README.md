@@ -2,6 +2,8 @@
 
 An HTML deck with a synced script window, in the Khutwa design system. Works offline from disk.
 
+**3-minute version:** `short.html` is the same deck cut to 9 slides (hook, title, Omar, the gap, where it breaks, the idea, the demo, the results, the close) with a shorter script and a 2:55 timer, for recording. It has its own template, `src/short.tpl.html`; the full deck is untouched. Don't open both decks at once: they share the sync channel.
+
 **Run:** open `pitch/index.html` in Chrome. On the start screen press «افتح نافذة النص» and drag that window to the second monitor, then «ملء الشاشة وابدأ» on the deck.
 
 | Key (either window) | Action |

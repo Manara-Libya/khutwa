@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Builds pitch/index.html from src/index.tpl.html.
+"""Builds pitch/index.html from src/index.tpl.html, and pitch/short.html (the 3-minute version) from src/short.tpl.html.
 
 Inlines the brand's doodles and illustrations so their pen strokes can be animated (a page opened from disk
 cannot fetch SVG files). Tokens in the template:
@@ -36,11 +36,11 @@ def inline(m: re.Match) -> str:
 
 
 def main() -> None:
-    tpl = (HERE / "src/index.tpl.html").read_text(encoding="utf-8")
-    out = TOKEN.sub(inline, tpl)
-    (HERE / "index.html").write_text(out, encoding="utf-8")
-    left = re.findall(r"\{\{[^}]*\}\}", out)
-    print(f"index.html: {len(out) // 1024} KB" + (f", unresolved: {left}" if left else ""))
+    for src, dst in (("src/index.tpl.html", "index.html"), ("src/short.tpl.html", "short.html")):
+        out = TOKEN.sub(inline, (HERE / src).read_text(encoding="utf-8"))
+        (HERE / dst).write_text(out, encoding="utf-8")
+        left = re.findall(r"\{\{[^}]*\}\}", out)
+        print(f"{dst}: {len(out) // 1024} KB" + (f", unresolved: {left}" if left else ""))
 
 
 if __name__ == "__main__":
